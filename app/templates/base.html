@@ -115,6 +115,7 @@
     bgVideo.pause();
     bgVideo.currentTime = 0;
     ytBg.style.display = 'none';
+    document.body.classList.remove('video-playing');
     bgOn = false; playing = false;
     playIcon.textContent = '▶';
     playIcon.style.opacity = '';
@@ -124,6 +125,7 @@
     bgVideo.muted = false;
     bgVideo.play().catch(() => { bgVideo.muted = true; bgVideo.play(); });
     ytBg.style.display = 'block';
+    document.body.classList.add('video-playing');
     bgOn = true; playing = true;
     playIcon.textContent = '⏸';
   }
