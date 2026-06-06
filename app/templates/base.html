@@ -43,22 +43,6 @@
       </div>
     </a>
 
-    <!-- Full-page background video (double-click) -->
-    <div id="ytBg" style="display:none;position:fixed;inset:0;z-index:50;pointer-events:none">
-      <video id="bgVideo" loop playsinline
-        src="/static/uploads/bg_video.mp4"
-        style="position:absolute;top:50%;left:50%;
-               width:100vw;height:56.25vw;
-               min-height:100vh;min-width:177.78vh;
-               transform:translate(-50%,-50%);
-               object-fit:cover;pointer-events:none"></video>
-      <div style="position:absolute;inset:0;background:rgba(0,0,0,.45)"></div>
-      <button onclick="closeBg()" style="pointer-events:auto;position:absolute;top:1rem;right:1rem;
-             background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25);
-             color:#fff;border-radius:6px;padding:.35rem .75rem;cursor:pointer;
-             font-size:.8rem;z-index:10;backdrop-filter:blur(4px)">✕ Close video</button>
-    </div>
-
     <div class="nav-links">
       <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Home</a>
       <a href="/fixtures" class="nav-link {% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
@@ -92,6 +76,23 @@
   <footer>
     <p>WC2026 Predictor — Built for friends &amp; fun · Not affiliated with FIFA</p>
   </footer>
+
+  <!-- Full-page background video — must be a direct child of body, NOT inside
+       any element with backdrop-filter (which would trap position:fixed) -->
+  <div id="ytBg" style="display:none;position:fixed;inset:0;z-index:50;pointer-events:none">
+    <video id="bgVideo" loop playsinline
+      src="/static/uploads/bg_video.mp4"
+      style="position:absolute;top:50%;left:50%;
+             width:100vw;height:56.25vw;
+             min-height:100vh;min-width:177.78vh;
+             transform:translate(-50%,-50%);
+             object-fit:cover;pointer-events:none"></video>
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,.45)"></div>
+    <button onclick="stopAll()" style="pointer-events:auto;position:absolute;top:1rem;right:1rem;
+           background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25);
+           color:#fff;border-radius:6px;padding:.35rem .75rem;cursor:pointer;
+           font-size:.8rem;z-index:10;backdrop-filter:blur(4px)">✕ Close video</button>
+  </div>
 
   <script src="/static/js/app.js"></script>
   <script>
