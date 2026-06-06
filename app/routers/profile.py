@@ -9,10 +9,11 @@ from database import get_db
 import models
 import auth
 from shared import templates
+from image_utils import process_image
 
 UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "avatars")
 ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
-MAX_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_SIZE = 10 * 1024 * 1024
 
 router = APIRouter()
 
@@ -109,10 +110,11 @@ async def upload_avatar(
         return templates.TemplateResponse(
             "profile/edit.html",
             {"request": request, "user": user, "teams": teams,
-             "error": "File too large (max 5 MB)", "success": None},
+             "error": "File too large (max 10 MB)", "success": None},
             status_code=400,
         )
 
+    data, ext = process_image(data, "avatar")
     os.makedirs(UPLOAD_DIR, exist_ok=True)
     filename = f"{user.id}_{uuid.uuid4().hex[:8]}{ext}"
     path = os.path.join(UPLOAD_DIR, filename)

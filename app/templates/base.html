@@ -30,8 +30,9 @@
 
   <!-- Main nav -->
   <nav class="navbar">
-    <a href="/" class="navbar-brand">
-      <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none">
+    <a href="/" class="navbar-brand" id="brandLink">
+      <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none"
+           id="logoBtn" title="Click me 👀">
         <img src="/static/img/logo.jpg" alt="Logo" style="width:36px;height:36px;object-fit:cover;display:block;border-radius:8px">
       </div>
       <div class="brand-text">
@@ -39,6 +40,18 @@
         <div class="brand-year">In The World™</div>
       </div>
     </a>
+
+    <!-- YouTube easter egg modal -->
+    <div id="ytModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;flex-direction:column">
+      <div style="position:relative;width:min(860px,95vw);aspect-ratio:16/9">
+        <iframe id="ytFrame" width="100%" height="100%"
+          src="about:blank"
+          allow="autoplay; encrypted-media"
+          allowfullscreen
+          style="border:none;border-radius:10px;display:block"></iframe>
+      </div>
+      <button onclick="closeYT()" style="margin-top:1.25rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">Close</button>
+    </div>
 
     <div class="nav-links">
       <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Home</a>
@@ -75,6 +88,22 @@
   </footer>
 
   <script src="/static/js/app.js"></script>
+  <script>
+  document.getElementById('logoBtn')?.addEventListener('click', function(e) {
+    e.preventDefault(); e.stopPropagation();
+    const modal = document.getElementById('ytModal');
+    document.getElementById('ytFrame').src = 'https://www.youtube.com/embed/vrY1THC_NQE?autoplay=1';
+    modal.style.display = 'flex';
+  });
+  function closeYT() {
+    document.getElementById('ytFrame').src = 'about:blank';
+    document.getElementById('ytModal').style.display = 'none';
+  }
+  document.getElementById('ytModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeYT();
+  });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeYT(); });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

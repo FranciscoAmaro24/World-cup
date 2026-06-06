@@ -16,13 +16,14 @@ from database import get_db
 import models
 import auth
 from shared import templates
+from image_utils import process_image
 
 router = APIRouter(prefix="/markets")
 
 MIN_BET = 0.1
 MARKET_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "markets")
 ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
-MAX_SIZE = 8 * 1024 * 1024
+MAX_SIZE = 10 * 1024 * 1024
 
 
 def _prob_history(market: models.Market, db: Session) -> str:
@@ -282,6 +283,7 @@ async def upload_market_image(
     if len(data) > MAX_SIZE:
         return RedirectResponse(f"/markets/{market_id}?err=filesize", status_code=303)
 
+    data, ext = process_image(data, "market")
     os.makedirs(MARKET_UPLOAD_DIR, exist_ok=True)
     filename = f"{market_id}_{uuid.uuid4().hex[:8]}{ext}"
     path = os.path.join(MARKET_UPLOAD_DIR, filename)
