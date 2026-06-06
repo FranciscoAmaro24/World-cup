@@ -1,12 +1,11 @@
 services:
   app:
     build: .
-    ports:
-      - "8000:8000"
     volumes:
       - wc_data:/app/data
+      - wc_uploads:/app/app/static/uploads
     environment:
-      - SECRET_KEY=${SECRET_KEY:-change-this-to-a-long-random-secret-before-deploying}
+      - SECRET_KEY=${SECRET_KEY:?Set SECRET_KEY in .env}
       - DATABASE_URL=sqlite:////app/data/worldcup.db
     restart: unless-stopped
     healthcheck:
@@ -23,10 +22,12 @@ services:
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - nginx_certs:/etc/nginx/certs
+      - wc_uploads:/app/static/uploads:ro   # serve uploads directly
     depends_on:
       - app
     restart: unless-stopped
 
 volumes:
   wc_data:
+  wc_uploads:
   nginx_certs:

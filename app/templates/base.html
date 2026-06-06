@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}WC2026 Predictor{% endblock %}</title>
+  <title>{% block title %}Best WC Predictor In The World{% endblock %}</title>
   <link rel="preconnect" href="https://flagcdn.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2020/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  <link rel="icon" href="/static/img/logo.jpg" type="image/jpeg">
   {% block styles %}{% endblock %}
 </head>
 <body>
@@ -31,10 +31,12 @@
   <!-- Main nav -->
   <nav class="navbar">
     <a href="/" class="navbar-brand">
-      <div class="brand-icon">⚽</div>
+      <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none">
+        <img src="/static/img/logo.jpg" alt="Logo" style="width:36px;height:36px;object-fit:cover;display:block;border-radius:8px">
+      </div>
       <div class="brand-text">
-        <div class="brand-title">World Cup</div>
-        <div class="brand-year">2026™ PREDICTOR</div>
+        <div class="brand-title" style="font-size:.65rem">Best WC Predictor</div>
+        <div class="brand-year">In The World™</div>
       </div>
     </a>
 
