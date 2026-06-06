@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}Create League — WC2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="form-card" style="max-width:580px">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2.5rem" id="previewBadge">🏆</div>
+      <h1 class="form-title" style="margin-bottom:0">Create a League</h1>
+      <p class="text-xs text-sub mt-1">Set up your private prediction league</p>
+    </div>
+    {% if error %}<div class="alert alert-error">⚠ {{ error }}</div>{% endif %}
+
+    <form action="/leagues/create" method="post">
+
+      <div class="form-group">
+        <label class="form-label">League Name</label>
+        <input class="form-input" type="text" name="name" required placeholder="e.g. The Lads WC26" maxlength="100">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+        <input class="form-input" type="text" name="description" placeholder="What's this league about?" maxlength="200">
+      </div>
+
+      <!-- Customization -->
+      <div class="form-row" style="align-items:start">
+        <div class="form-group">
+          <label class="form-label">Badge</label>
+          <div class="icon-picker">
+            {% for icon in ["🏆","⚽","🦁","⭐","🔥","⚡","👑","🦅","🎯","🐉","🏅","🌟"] %}
+            <div class="icon-opt {% if loop.first %}selected{% endif %}"
+                 data-icon="{{ icon }}" onclick="selectBadge('{{ icon }}')">{{ icon }}</div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="badge_emoji" id="badgeInput" value="🏆">
+        </div>
+        <div class="form-group">
+          <label class="form-label">League Color</label>
+          <div class="color-picker">
+            {% for color in AVATAR_COLORS %}
+            <div class="color-swatch {% if loop.first %}selected{% endif %}"
+                 style="background:{{ color }}" data-color="{{ color }}"
+                 onclick="selectLeagueColor('{{ color }}')"></div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="accent_color" id="accentColorInput" value="#1a47c0">
+        </div>
+      </div>
+
+      <hr class="form-divider">
+      <p class="text-xs text-sub mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">⚙ Scoring Rules</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Exact Score Pts</label>
+          <input class="form-input" type="number" name="points_exact" value="3" min="0" max="20">
+          <p class="form-hint">Predicted the exact scoreline</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correct Result Pts</label>
+          <input class="form-input" type="number" name="points_result" value="1" min="0" max="20">
+          <p class="form-hint">Win/draw/loss correct, wrong score</p>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+      <p class="text-xs text-sub mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">💰 Sweepstake (Optional)</p>
+      <div class="form-group">
+        <div class="form-switch">
+          <label class="switch">
+            <input type="checkbox" name="sweepstake" id="sweepstakeToggle" value="true">
+            <span class="slider"></span>
+          </label>
+          <span class="text-sm">Enable Sweepstake Mode</span>
+        </div>
+        <p class="form-hint mt-1">Pay in, get random teams assigned. Winner takes all!</p>
+      </div>
+      <div id="sweepstakeFields" style="display:none">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Buy-in (€)</label>
+            <input class="form-input" type="number" name="buy_in" value="10" min="0" step="0.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teams Per Person</label>
+            <input class="form-input" type="number" name="teams_per_person" value="1" min="1" max="10">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:.5rem">Create League</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+document.getElementById('sweepstakeToggle').addEventListener('change', function() {
+  document.getElementById('sweepstakeFields').style.display = this.checked ? '' : 'none';
+});
+function selectBadge(icon) {
+  document.getElementById('badgeInput').value = icon;
+  document.getElementById('previewBadge').textContent = icon;
+  document.querySelectorAll('.icon-opt').forEach(o => o.classList.toggle('selected', o.dataset.icon === icon));
+}
+function selectLeagueColor(color) {
+  document.getElementById('accentColorInput').value = color;
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === color));
+}
+</script>
+{% endblock %}

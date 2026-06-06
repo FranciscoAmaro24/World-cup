@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}{{ target.display_name or target.username }} — WC2026{% endblock %}
+{% block content %}
+
+<div class="profile-hero">
+  <div class="container">
+    <div class="profile-header">
+      {{ avatar_html(target, "xl") | safe }}
+      <div class="profile-info">
+        <h1>{{ target.display_name or target.username }}</h1>
+        <div class="handle">@{{ target.username }}
+          {% if target.is_superadmin %}<span class="tag tag-gold" style="margin-left:.5rem">Admin</span>{% endif %}
+        </div>
+        {% if target.bio %}<p class="bio">{{ target.bio }}</p>{% endif %}
+        {% if target.favorite_team %}
+        <div class="fav-team">
+          <img src="{{ flag_url(target.favorite_team.code) }}" class="flag flag-sm" alt="">
+          Supports {{ target.favorite_team.name }}
+        </div>
+        {% endif %}
+        <div class="profile-stats">
+          <div class="profile-stat">
+            <div class="profile-stat-val">{{ stats.total_pts }}</div>
+            <div class="profile-stat-lbl">Total Pts</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-val">{{ stats.predictions }}</div>
+            <div class="profile-stat-lbl">Predictions</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-val">{{ stats.accuracy }}%</div>
+            <div class="profile-stat-lbl">Accuracy</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-val">{{ stats.exact }}</div>
+            <div class="profile-stat-lbl">Exact Scores</div>
+          </div>
+          <div class="profile-stat">
+            <div class="profile-stat-val">{{ stats.leagues }}</div>
+            <div class="profile-stat-lbl">Leagues</div>
+          </div>
+        </div>
+      </div>
+      {% if is_own %}
+      <a href="/profile/edit" class="btn btn-secondary btn-sm" style="align-self:flex-start;margin-left:auto">Edit Profile</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="container page-content">
+  <div class="grid-2">
+
+    <!-- Leagues -->
+    <div>
+      <div class="section-header"><h2 class="section-title">Leagues</h2></div>
+      {% if leagues %}
+      <div style="display:flex;flex-direction:column;gap:.6rem">
+        {% for league in leagues %}
+        <a href="/leagues/{{ league.id }}" class="bracket-slot" style="text-decoration:none">
+          <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem">{{ league.badge_emoji }}</div>
+          <div>
+            <div style="font-weight:700;font-size:.9rem">{{ league.name }}</div>
+            <div class="text-xs text-muted">{{ league.members|length }} members</div>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card"><div class="card-body empty-state"><p>No leagues yet</p></div></div>
+      {% endif %}
+    </div>
+
+    <!-- Recent predictions -->
+    <div>
+      <div class="section-header"><h2 class="section-title">Recent Results</h2></div>
+      {% if recent_preds %}
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>Match</th><th>Predicted</th><th>Actual</th><th>Pts</th></tr></thead>
+          <tbody>
+            {% for p in recent_preds %}
+            <tr>
+              <td style="font-size:.78rem">
+                {% if p.match and p.match.home_team and p.match.away_team %}
+                <img src="{{ flag_url(p.match.home_team.code) }}" class="flag" style="width:18px;height:12px;display:inline;margin-right:3px" alt="">
+                {{ p.match.home_team.name[:8] }} v
+                <img src="{{ flag_url(p.match.away_team.code) }}" class="flag" style="width:18px;height:12px;display:inline;margin:0 3px" alt="">
+                {{ p.match.away_team.name[:8] }}
+                {% endif %}
+              </td>
+              <td class="font-mono">{{ p.home_score_pred }}–{{ p.away_score_pred }}</td>
+              <td class="font-mono">
+                {% if p.match %}{{ p.match.home_score }}–{{ p.match.away_score }}{% endif %}
+              </td>
+              <td>
+                {% if p.points_awarded > 0 %}
+                <span class="text-blue font-bold">+{{ p.points_awarded }}</span>
+                {% else %}
+                <span class="text-muted">0</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card"><div class="card-body empty-state"><p>No completed predictions yet</p></div></div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

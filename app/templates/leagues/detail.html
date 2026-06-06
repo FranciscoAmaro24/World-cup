@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+{% block title %}{{ league.name }} — WC2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  {% if league.banner_url %}
+  <div style="margin-bottom:1.25rem;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border)">
+    <img src="{{ league.banner_url }}" alt="{{ league.name }}" style="width:100%;height:160px;object-fit:cover;display:block">
+  </div>
+  {% endif %}
+
+  <!-- Header -->
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
+        <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem">{{ league.badge_emoji }}</div>
+        <h1>{{ league.name }}</h1>
+      </div>
+      {% if league.description %}
+      <p class="page-header-sub">{{ league.description }}</p>
+      {% endif %}
+      <div style="display:flex;align-items:center;gap:.75rem;margin-top:.4rem;flex-wrap:wrap">
+        <span class="font-mono text-xs" style="color:var(--text-3)">CODE: <strong style="color:var(--gold);letter-spacing:.15em">{{ league.invite_code }}</strong></span>
+        <button class="btn btn-secondary btn-sm" data-copy="{{ league.invite_code }}" style="font-size:.68rem">Copy Invite</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-end">
+      <a href="/leagues/{{ league.id }}/bracket" class="btn btn-secondary btn-sm">Bracket</a>
+      {% if league.sweepstake_enabled %}
+      <a href="/leagues/{{ league.id }}/sweepstake" class="btn btn-gold btn-sm">Sweepstake</a>
+      {% endif %}
+      {% if is_admin %}
+      <a href="/leagues/{{ league.id }}/settings" class="btn btn-secondary btn-sm">Settings</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Scoring pills -->
+  <div style="display:flex;gap:.4rem;margin-bottom:1.75rem;flex-wrap:wrap">
+    <span class="tag tag-white">Exact score: {{ league.points_exact_score }}pts</span>
+    <span class="tag tag-white">Correct result: {{ league.points_correct_result }}pts</span>
+    <span class="tag tag-gold">Winner pick: {{ league.points_bracket_winner }}pts</span>
+    <span class="tag tag-gold">Finalist: {{ league.points_bracket_finalist }}pts</span>
+    <span class="tag tag-gray">{{ league.members|length }} members</span>
+  </div>
+
+  <div class="grid-2">
+
+    <!-- LEADERBOARD -->
+    <div>
+      <div class="section-header"><h2 class="section-title">Leaderboard</h2></div>
+      <div class="card">
+        {% if leaderboard %}
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th width="36">#</th>
+              <th>Player</th>
+              <th title="Match prediction points">Match</th>
+              <th title="Bracket pick points">Bracket</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in leaderboard %}
+            <tr>
+              <td>
+                <span class="rank-badge {% if row.rank==1 %}rank-1{% elif row.rank==2 %}rank-2{% elif row.rank==3 %}rank-3{% else %}rank-other{% endif %}">{{ row.rank }}</span>
+              </td>
+              <td>
+                {{ avatar_html(row.user, "xs") | safe }}
+                <span style="margin-left:.4rem">{{ row.user.display_name or row.user.username }}</span>
+                {% if row.user.id == user.id %}<span class="you-badge">YOU</span>{% endif %}
+                {% if not row.has_bracket %}<span class="tag tag-gray" style="font-size:.55rem;margin-left:.3rem">no bracket</span>{% endif %}
+              </td>
+              <td class="text-muted" style="font-size:.82rem">{{ row.match_points }}</td>
+              <td class="text-muted" style="font-size:.82rem">{{ row.bracket_points }}</td>
+              <td class="points-cell">{{ row.points }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <div class="card-body empty-state"><p>No predictions yet</p></div>
+        {% endif %}
+      </div>
+
+      {% if not user_bracket_pick %}
+      <div class="alert alert-gold mt-4" style="font-size:.82rem">
+        Submit your bracket picks before the knockout stage!
+        <a href="/leagues/{{ league.id }}/bracket" style="color:var(--gold);font-weight:700;margin-left:.4rem">Pick now →</a>
+      </div>
+      {% endif %}
+
+      <!-- Recent results -->
+      {% if recent_results %}
+      <div class="section-header" style="margin-top:1.5rem"><h2 class="section-title">Recent Results</h2></div>
+      <div class="fixture-list">
+        {% for match in recent_results %}
+        {% set pred = user_preds.get(match.id) %}
+        <div class="fixture-row" style="flex-wrap:wrap;gap:.5rem">
+          <div class="fixture-badge-col">
+            {% if match.group_letter %}
+            <span class="group-badge gb-{{ match.group_letter }}">Grp {{ match.group_letter }}</span>
+            {% else %}
+            <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1)">{{ match.round.upper()[:4] }}</span>
+            {% endif %}
+          </div>
+          <div class="fixture-home">
+            <span class="fixture-team-name" style="font-size:.82rem">{{ match.home_team.name if match.home_team else 'TBD' }}</span>
+            {% if match.home_team %}<img src="{{ flag_url(match.home_team.code) }}" class="flag flag-sm" alt="">{% endif %}
+          </div>
+          <div class="fixture-time-col">
+            <div class="fixture-time-box finished">{{ match.home_score }} – {{ match.away_score }}</div>
+            {% if pred %}
+            <div style="font-size:.6rem;text-align:center;margin-top:2px;
+              color:{% if pred.home_score_pred==match.home_score and pred.away_score_pred==match.away_score %}#4ade80{% elif pred.points_awarded %}var(--gold){% else %}var(--text-3){% endif %}">
+              {% if pred.home_score_pred==match.home_score and pred.away_score_pred==match.away_score %}
+              +{{ league.points_exact_score }}pts
+              {% elif pred.points_awarded %}+{{ pred.points_awarded }}pts
+              {% else %}0pts{% endif %}
+            </div>
+            {% else %}
+            <div style="font-size:.58rem;color:var(--text-3);text-align:center;margin-top:2px">no pred</div>
+            {% endif %}
+          </div>
+          <div class="fixture-away">
+            {% if match.away_team %}<img src="{{ flag_url(match.away_team.code) }}" class="flag flag-sm" alt="">{% endif %}
+            <span class="fixture-team-name" style="font-size:.82rem">{{ match.away_team.name if match.away_team else 'TBD' }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- UPCOMING PREDICTIONS -->
+    <div>
+      <div class="section-header">
+        <h2 class="section-title">Make Predictions</h2>
+        <a href="/fixtures" class="btn btn-secondary btn-sm">All →</a>
+      </div>
+      {% if upcoming_matches %}
+      <div class="fixture-list">
+        {% for match in upcoming_matches %}
+        {% set pred = user_preds.get(match.id) %}
+        <div class="fixture-row" style="flex-wrap:wrap;gap:.5rem">
+          <div class="fixture-badge-col">
+            {% if match.group_letter %}
+            <span class="group-badge gb-{{ match.group_letter }}">Grp {{ match.group_letter }}</span>
+            {% else %}
+            <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1)">{{ match.round.upper()[:4] }}</span>
+            {% endif %}
+          </div>
+          <div class="fixture-home">
+            <span class="fixture-team-name" style="font-size:.82rem">{{ match.home_team.name if match.home_team else match.home_team_tbd or 'TBD' }}</span>
+            {% if match.home_team %}<img src="{{ flag_url(match.home_team.code) }}" class="flag flag-sm" alt="">{% endif %}
+          </div>
+          <div class="fixture-time-col">
+            <div class="fixture-time-box" style="font-size:.85rem">
+              <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%H:%M') }}</span>
+            </div>
+            {% if pred %}
+            <div style="font-size:.6rem;color:#4ade80;text-align:center;margin-top:2px">{{ pred.home_score_pred }}–{{ pred.away_score_pred }}</div>
+            {% endif %}
+          </div>
+          <div class="fixture-away">
+            {% if match.away_team %}<img src="{{ flag_url(match.away_team.code) }}" class="flag flag-sm" alt="">{% endif %}
+            <span class="fixture-team-name" style="font-size:.82rem">{{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}</span>
+          </div>
+          {% if not match.is_locked() %}
+          <div style="flex-basis:100%;display:flex;justify-content:flex-end">
+            <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="btn btn-primary btn-sm">
+              {% if pred %}Edit{% else %}Predict{% endif %}
+            </a>
+          </div>
+          {% elif not pred %}
+          <div style="flex-basis:100%;text-align:right">
+            <span class="tag tag-gray">Locked</span>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card"><div class="card-body empty-state"><p>All caught up! No upcoming matches.</p></div></div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}

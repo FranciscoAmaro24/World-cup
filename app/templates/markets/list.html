@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Prediction Markets — WC2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1>Prediction Markets</h1>
+      <p class="page-header-sub">Bet credits on outcomes · Everyone starts with 10 credits</p>
+    </div>
+    <div style="display:flex;gap:.6rem;align-items:center">
+      {% if user %}
+      <div class="credits-chip">{{ "%.1f"|format(user.credits) }} credits</div>
+      <a href="/markets/create" class="btn btn-primary btn-sm">+ Create Market</a>
+      {% else %}
+      <a href="/register" class="btn btn-primary btn-sm">Sign up to bet</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="section-header"><h2 class="section-title">Open Markets</h2></div>
+  {% if open_markets %}
+  <div class="market-grid">
+    {% for m in open_markets %}
+    {% set user_bet = user_bets.get(m.id) %}
+    <a href="/markets/{{ m.id }}" class="market-card">
+      {% if m.img_url %}
+      <div style="margin:-1.1rem -1.2rem 0.75rem;overflow:hidden;border-radius:var(--radius-lg) var(--radius-lg) 0 0;height:100px">
+        <img src="{{ m.img_url }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      {% endif %}
+      <div class="market-title">{{ m.title }}</div>
+      {% if m.description %}
+      <p class="market-desc">{{ m.description[:80] }}{% if m.description|length > 80 %}…{% endif %}</p>
+      {% endif %}
+
+      <div class="market-options-bars">
+        {% for opt in m.options[:4] %}
+        {% set prob = m.option_prob(opt) %}
+        <div class="mopt-row">
+          <span class="mopt-label">{{ opt.label[:18] }}{% if opt.label|length > 18 %}…{% endif %}</span>
+          <div class="mopt-track"><div class="mopt-fill" style="width:{{ prob }}%"></div></div>
+          <span class="mopt-pct">{{ prob }}%</span>
+        </div>
+        {% endfor %}
+        {% if m.options|length > 4 %}
+        <div class="mopt-more">+{{ m.options|length - 4 }} more options</div>
+        {% endif %}
+      </div>
+
+      <div class="market-footer">
+        <span class="text-xs text-sub">{{ "%.1f"|format(m.total_volume()) }} credits vol.</span>
+        <span class="text-xs text-sub">Closes <span data-utc="{{ m.closes_at.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ m.closes_at.strftime('%d %b') }}</span></span>
+      </div>
+      {% if user_bet %}
+      <div class="market-your-bet">
+        Your bet: <strong>{{ user_bet.option.label }}</strong> · {{ "%.1f"|format(user_bet.amount) }} credits
+      </div>
+      {% endif %}
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="card"><div class="card-body empty-state">
+    <h3>No open markets yet</h3>
+    <p>Be the first to create a prediction market</p>
+    {% if user %}<a href="/markets/create" class="btn btn-primary">Create Market</a>{% endif %}
+  </div></div>
+  {% endif %}
+
+  {% if closed_markets %}
+  <div class="section-header" style="margin-top:2.5rem"><h2 class="section-title">Closed &amp; Resolved</h2></div>
+  <div class="market-grid">
+    {% for m in closed_markets %}
+    {% set user_bet = user_bets.get(m.id) %}
+    {% set winning_opt = namespace(obj=none) %}
+    {% for o in m.options %}{% if o.id == m.winning_option_id %}{% set winning_opt.obj = o %}{% endif %}{% endfor %}
+    <a href="/markets/{{ m.id }}" class="market-card resolved">
+      {% if m.img_url %}
+      <div style="margin:-1.1rem -1.2rem 0.75rem;overflow:hidden;border-radius:var(--radius-lg) var(--radius-lg) 0 0;height:80px">
+        <img src="{{ m.img_url }}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;filter:saturate(0.6)">
+      </div>
+      {% endif %}
+      <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.5rem">
+        <div class="market-title" style="margin:0;flex:1">{{ m.title }}</div>
+        {% if m.resolved and winning_opt.obj %}
+        <span class="tag tag-green" style="flex-shrink:0;white-space:nowrap">{{ winning_opt.obj.label }} won</span>
+        {% elif not m.resolved %}
+        <span class="tag tag-gray" style="flex-shrink:0">Closed</span>
+        {% endif %}
+      </div>
+      <div class="market-options-bars">
+        {% for opt in m.options[:3] %}
+        {% set prob = m.option_prob(opt) %}
+        <div class="mopt-row">
+          <span class="mopt-label">{{ opt.label[:18] }}{% if opt.label|length > 18 %}…{% endif %}</span>
+          <div class="mopt-track">
+            <div class="mopt-fill {% if m.resolved and opt.id == m.winning_option_id %}winning{% endif %}" style="width:{{ prob }}%"></div>
+          </div>
+          <span class="mopt-pct">{{ prob }}%</span>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="market-footer">
+        <span class="text-xs text-sub">{{ "%.1f"|format(m.total_volume()) }} credits</span>
+        {% if user_bet %}
+        <span class="text-xs {% if m.resolved and user_bet.option_id == m.winning_option_id %}text-green{% elif m.resolved %}text-red-soft{% endif %}">
+          {% if m.resolved and user_bet.option_id == m.winning_option_id %}+{{ "%.1f"|format(user_bet.payout) }}
+          {% elif m.resolved %}–{{ "%.1f"|format(user_bet.amount) }}
+          {% else %}{{ user_bet.option.label }} {{ "%.1f"|format(user_bet.amount) }}{% endif %}
+        </span>
+        {% endif %}
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

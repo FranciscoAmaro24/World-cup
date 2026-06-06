@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Predict: {{ match.home_display() }} vs {{ match.away_display() }}{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div style="margin-bottom:1rem">
+    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← Back to {{ league.name }}</a>
+  </div>
+
+  <div class="card" style="max-width:520px;margin:0 auto">
+    <!-- Match header -->
+    <div class="card-header">
+      <div>
+        {% if match.group_letter %}
+        <span class="group-badge gb-{{ match.group_letter }}" style="margin-right:.5rem">Group {{ match.group_letter }}</span>
+        {% else %}
+        <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1);margin-right:.5rem">{{ match.round.upper() }}</span>
+        {% endif %}
+        <span class="text-xs text-sub">{{ league.name }}</span>
+      </div>
+      <span class="text-xs text-sub">
+        <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%d %b %Y %H:%M UTC') }}</span>
+      </span>
+    </div>
+
+    <div class="card-body">
+      <p class="text-xs text-sub" style="text-align:center;margin-bottom:1rem">📍 {{ match.venue }}</p>
+
+      <!-- Points info -->
+      <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap">
+        <span class="tag tag-white">Exact score: <strong>{{ league.points_exact_score }} pts</strong></span>
+        <span class="tag tag-white">Correct result: <strong>{{ league.points_correct_result }} pts</strong></span>
+      </div>
+
+      <form action="/leagues/{{ league.id }}/predict/{{ match.id }}" method="post">
+        <div class="score-predictor">
+          <!-- Home team -->
+          <div class="score-team">
+            {% if match.home_team %}
+            <img src="{{ flag_url(match.home_team.code) }}" class="flag flag-xl" alt="{{ match.home_team.name }}" style="margin:0 auto">
+            <div class="score-team-name">{{ match.home_team.name }}</div>
+            {% else %}
+            <div class="score-team-name" style="color:var(--text-2)">{{ match.home_team_tbd or 'TBD' }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Score inputs -->
+          <div class="score-input-wrap">
+            <input type="number" class="score-input" name="home_score"
+                   value="{{ prediction.home_score_pred if prediction else 0 }}"
+                   min="0" max="20" required>
+            <span class="score-vs">–</span>
+            <input type="number" class="score-input" name="away_score"
+                   value="{{ prediction.away_score_pred if prediction else 0 }}"
+                   min="0" max="20" required>
+          </div>
+
+          <!-- Away team -->
+          <div class="score-team">
+            {% if match.away_team %}
+            <img src="{{ flag_url(match.away_team.code) }}" class="flag flag-xl" alt="{{ match.away_team.name }}" style="margin:0 auto">
+            <div class="score-team-name">{{ match.away_team.name }}</div>
+            {% else %}
+            <div class="score-team-name" style="color:var(--text-2)">{{ match.away_team_tbd or 'TBD' }}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if prediction %}
+        <div class="alert alert-success" style="justify-content:center;font-size:.82rem;margin-bottom:1rem">
+          Your prediction: {{ prediction.home_score_pred }}–{{ prediction.away_score_pred }}
+        </div>
+        {% endif %}
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg">
+          {% if prediction %}Update Prediction{% else %}Submit Prediction{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

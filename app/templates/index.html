@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}WC2026 Predictor{% endblock %}
+{% block content %}
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">⚽ June 11 – July 19, 2026 · USA · Canada · Mexico</div>
+    <h1 class="hero-title">FIFA <span>World Cup</span><br>2026™ Predictor</h1>
+    <p class="hero-sub">Predict every match. Beat your friends. Win the sweepstake.</p>
+
+    {% if first_match %}
+    <div class="countdown" id="countdownBlock">
+      <div class="countdown-unit"><div class="countdown-val" id="cd-d">--</div><div class="countdown-lbl">Days</div></div>
+      <div class="countdown-unit"><div class="countdown-val" id="cd-h">--</div><div class="countdown-lbl">Hours</div></div>
+      <div class="countdown-unit"><div class="countdown-val" id="cd-m">--</div><div class="countdown-lbl">Mins</div></div>
+      <div class="countdown-unit"><div class="countdown-val" id="cd-s">--</div><div class="countdown-lbl">Secs</div></div>
+    </div>
+    {% endif %}
+
+    {% if not user %}
+    <div class="hero-actions">
+      <a href="/register" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="/login" class="btn btn-outline btn-lg">Log In</a>
+    </div>
+    {% else %}
+    <div class="hero-actions">
+      <a href="/leagues/create" class="btn btn-primary btn-lg">+ Create League</a>
+      <a href="/leagues/join" class="btn btn-outline btn-lg">Join with Code</a>
+    </div>
+    {% endif %}
+
+    <div class="hero-stats">
+      <div><div class="hero-stat-val">104</div><div class="hero-stat-lbl">Matches</div></div>
+      <div><div class="hero-stat-val">48</div><div class="hero-stat-lbl">Teams</div></div>
+      <div><div class="hero-stat-val">12</div><div class="hero-stat-lbl">Groups</div></div>
+      <div><div class="hero-stat-val">7</div><div class="hero-stat-lbl">Rounds</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="container page-content">
+
+  <!-- MY LEAGUES -->
+  {% if user %}
+  <div style="margin-bottom:2.5rem">
+    <div class="section-header">
+      <h2 class="section-title">My Leagues</h2>
+      <a href="/leagues" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    {% if user_leagues %}
+    <div class="league-grid">
+      {% for league in user_leagues %}
+      <a href="/leagues/{{ league.id }}" class="league-card" style="text-decoration:none">
+        <div class="league-card-accent" style="background:{{ league.accent_color }}"></div>
+        <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+          <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem">{{ league.badge_emoji }}</div>
+          <div>
+            <div class="league-name">{{ league.name }}</div>
+            <div class="league-code">{{ league.invite_code }}</div>
+          </div>
+        </div>
+        {% if league.description %}
+        <p class="text-xs text-sub" style="margin-bottom:.75rem">{{ league.description }}</p>
+        {% endif %}
+        <div class="league-stats">
+          <div class="league-stat"><div class="league-stat-val">{{ league.members|length }}</div><div class="league-stat-lbl">Members</div></div>
+          <div class="league-stat"><div class="league-stat-val">{{ league.points_exact_score }}</div><div class="league-stat-lbl">Exact pts</div></div>
+        </div>
+        <div class="tags">
+          {% if league.sweepstake_enabled %}<span class="tag tag-gold">💰 Sweepstake</span>{% endif %}
+          {% if league.admin_id == user.id %}<span class="tag tag-white">Admin</span>{% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="card-body empty-state">
+      <div class="empty-state-icon">🏟️</div>
+      <h3>No leagues yet</h3>
+      <p>Create a private league and invite your friends</p>
+      <div style="display:flex;gap:1rem;justify-content:center">
+        <a href="/leagues/create" class="btn btn-primary">Create League</a>
+        <a href="/leagues/join" class="btn btn-secondary">Join with Code</a>
+      </div>
+    </div></div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- UPCOMING FIXTURES — fixture-list style -->
+  <div>
+    <div class="section-header">
+      <h2 class="section-title">Upcoming Matches</h2>
+      <a href="/fixtures" class="btn btn-secondary btn-sm">All 104 Matches →</a>
+    </div>
+    {% if upcoming %}
+    <div class="fixture-list">
+      {% for match in upcoming %}
+      <div class="fixture-row">
+
+        <!-- Group badge -->
+        <div class="fixture-badge-col">
+          {% if match.group_letter %}
+          <span class="group-badge gb-{{ match.group_letter }}">Grp {{ match.group_letter }}</span>
+          {% else %}
+          <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1)">{{ match.round.upper()[:4] }}</span>
+          {% endif %}
+        </div>
+
+        <!-- Home team -->
+        <div class="fixture-home">
+          <span class="fixture-team-name {% if not match.home_team %}tbd{% endif %}">
+            {{ match.home_team.name if match.home_team else match.home_team_tbd or 'TBD' }}
+          </span>
+          {% if match.home_team %}
+          <img src="{{ flag_url(match.home_team.code) }}" class="flag flag-sm" alt="{{ match.home_team.name }}">
+          {% endif %}
+        </div>
+
+        <!-- Time -->
+        <div class="fixture-time-col">
+          <div class="fixture-time-box">
+            <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%H:%M') }}</span>
+          </div>
+          <div style="font-size:.58rem;color:var(--text-3);text-align:center;margin-top:2px">
+            {{ match.match_date.strftime('%d %b') }} UTC
+          </div>
+        </div>
+
+        <!-- Away team -->
+        <div class="fixture-away">
+          {% if match.away_team %}
+          <img src="{{ flag_url(match.away_team.code) }}" class="flag flag-sm" alt="{{ match.away_team.name }}">
+          {% endif %}
+          <span class="fixture-team-name {% if not match.away_team %}tbd{% endif %}">
+            {{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}
+          </span>
+        </div>
+
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="card-body empty-state">
+      <div class="empty-state-icon">📅</div>
+      <h3>No upcoming fixtures</h3>
+      <p>Run <code>python seed_data.py</code> to load the schedule.</p>
+    </div></div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if first_match %}
+<script>
+const target = new Date("{{ first_match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}Z");
+function updateCountdown() {
+  const diff = target - Date.now();
+  if (diff <= 0) {
+    document.getElementById('countdownBlock').innerHTML =
+      '<div class="tag tag-green" style="font-size:1rem;padding:.5rem 1.5rem">🎉 Tournament is LIVE!</div>';
+    return;
+  }
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  document.getElementById('cd-d').textContent = String(d).padStart(2,'0');
+  document.getElementById('cd-h').textContent = String(h).padStart(2,'0');
+  document.getElementById('cd-m').textContent = String(m).padStart(2,'0');
+  document.getElementById('cd-s').textContent = String(s).padStart(2,'0');
+}
+updateCountdown();
+setInterval(updateCountdown, 1000);
+</script>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Sign Up — WC2026 Predictor{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="form-card">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2.5rem">🏆</div>
+      <h1 class="form-title" style="margin-bottom:0">Create Account</h1>
+      <p class="text-sm text-muted mt-1">Join the WC2026 Predictor community</p>
+    </div>
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    <form action="/register" method="post">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username" required autocomplete="username" placeholder="Choose a username" minlength="3" maxlength="30">
+        <p class="form-hint">3–30 characters, visible to other players</p>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input class="form-input" type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" id="password" name="password" required autocomplete="new-password" placeholder="Min. 6 characters" minlength="6">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">Create Account</button>
+    </form>
+    <hr class="form-divider">
+    <p class="text-sm text-muted" style="text-align:center">
+      Already have an account? <a href="/login" class="text-green" style="font-weight:600">Log In</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Group Standings — FIFA World Cup 2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1>Group Standings</h1>
+      <p class="page-header-sub">Live tables — updated as results come in</p>
+    </div>
+    <a href="/fixtures" class="btn btn-secondary btn-sm">View Fixtures</a>
+  </div>
+
+  {% if not groups_data %}
+  <div class="card"><div class="card-body empty-state">
+    <div class="empty-state-icon">📊</div>
+    <h3>No results yet</h3>
+    <p>Standings will update after the first kick-off on June 11.</p>
+  </div></div>
+  {% else %}
+  <div class="standings-grid">
+    {% for letter, rows in groups_data.items() %}
+    <div style="border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden;">
+
+      <!-- Group header with badge color -->
+      <div style="padding: .65rem 1.25rem; display:flex; align-items:center; gap:.75rem; background: var(--bg-2); border-bottom: 1px solid var(--border);">
+        <span class="group-badge gb-{{ letter }}" style="font-size:.72rem;padding:3px 10px">Group {{ letter }}</span>
+        <span class="text-xs text-sub">{{ rows | selectattr("P", "gt", 0) | list | length }} of 4 played</span>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem;background:var(--bg-1)">
+        <thead>
+          <tr style="background:var(--bg-2)">
+            <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);width:28px">#</th>
+            <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Team</th>
+            <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Played">P</th>
+            <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Won">W</th>
+            <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Drawn">D</th>
+            <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Lost">L</th>
+            <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Goal Difference">GD</th>
+            <th style="padding:.45rem .75rem;text-align:center;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border)" title="Points">PTS</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+          <tr style="border-left: 3px solid {% if loop.index <= 2 %}#22c55e{% elif loop.index == 3 %}var(--gold){% else %}transparent{% endif %}">
+            <td style="padding:.6rem .75rem;color:var(--text-3);text-align:center">{{ loop.index }}</td>
+            <td style="padding:.6rem .75rem;border-bottom:1px solid var(--border)">
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <img src="{{ flag_url(row.team.code) }}" class="flag flag-xs" alt="{{ row.team.name }}">
+                <span style="font-weight:{% if loop.index <= 2 %}700{% else %}400{% endif %};color:{% if loop.index <= 2 %}#fff{% else %}var(--text-1){% endif %}">
+                  {{ row.team.name }}
+                </span>
+              </div>
+            </td>
+            <td style="padding:.6rem .5rem;text-align:center;color:var(--text-1);border-bottom:1px solid var(--border)">{{ row.P }}</td>
+            <td style="padding:.6rem .5rem;text-align:center;color:var(--text-1);border-bottom:1px solid var(--border)">{{ row.W }}</td>
+            <td style="padding:.6rem .5rem;text-align:center;color:var(--text-1);border-bottom:1px solid var(--border)">{{ row.D }}</td>
+            <td style="padding:.6rem .5rem;text-align:center;color:var(--text-1);border-bottom:1px solid var(--border)">{{ row.L }}</td>
+            <td style="padding:.6rem .5rem;text-align:center;border-bottom:1px solid var(--border);font-weight:600;color:{% if row.GD > 0 %}#4ade80{% elif row.GD < 0 %}#f87171{% else %}var(--text-1){% endif %}">
+              {% if row.GD > 0 %}+{% endif %}{{ row.GD }}
+            </td>
+            <td style="padding:.6rem .75rem;text-align:center;border-bottom:1px solid var(--border);font-weight:900;font-size:.95rem;color:{% if loop.index <= 2 %}#fff{% else %}var(--text-1){% endif %}">
+              {{ row.Pts }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div style="padding:.45rem 1rem;background:var(--bg-2);display:flex;gap:1rem;border-top:1px solid var(--border)">
+        <span style="display:flex;align-items:center;gap:.4rem;font-size:.62rem;color:var(--text-2)">
+          <span style="display:inline-block;width:3px;height:11px;background:#22c55e;border-radius:1px"></span> Advance
+        </span>
+        <span style="display:flex;align-items:center;gap:.4rem;font-size:.62rem;color:var(--text-2)">
+          <span style="display:inline-block;width:3px;height:11px;background:var(--gold);border-radius:1px"></span> Best 3rd
+        </span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

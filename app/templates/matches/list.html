@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Fixtures & Results — FIFA World Cup 2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1>Fixtures &amp; Results</h1>
+      <p class="page-header-sub">104 matches · June 11 – July 19, 2026</p>
+    </div>
+    <div style="display:flex;gap:.5rem">
+      <a href="/knockout" class="btn btn-secondary btn-sm">Bracket</a>
+      <a href="/standings" class="btn btn-secondary btn-sm">Group Tables</a>
+    </div>
+  </div>
+
+  <div class="fixture-list">
+    {% set current_date = namespace(val="") %}
+    {% set current_round = namespace(val="") %}
+    {% for date_key, matches in grouped.items() %}
+    {% set d = matches[0].match_date %}
+
+    <!-- Knockout round separator -->
+    {% set rnd = matches[0].round %}
+    {% if rnd != "group" and rnd != current_round.val %}
+    {% set current_round.val = rnd %}
+    <div class="fixture-day-header" style="background:var(--bg-3);color:var(--gold);font-weight:900;letter-spacing:.1em;text-transform:uppercase;font-size:.7rem">
+      ── {{ round_labels.get(rnd, rnd) }} ──
+    </div>
+    {% endif %}
+
+    <!-- Date header -->
+    <div class="fixture-day-header">
+      {{ d.strftime('%A %d %B %Y') }}
+    </div>
+
+    {% for match in matches %}
+    <div class="fixture-row">
+
+      <!-- Group badge -->
+      <div class="fixture-badge-col">
+        {% if match.group_letter %}
+        <span class="group-badge gb-{{ match.group_letter }}">Group {{ match.group_letter }}</span>
+        {% else %}
+        <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1)">
+          {{ round_labels.get(match.round, match.round)[:6] }}
+        </span>
+        {% endif %}
+      </div>
+
+      <!-- Home team (right-aligned) -->
+      <div class="fixture-home">
+        <span class="fixture-team-name {% if not match.home_team %}tbd{% endif %}">
+          {{ match.home_team.name if match.home_team else match.home_team_tbd or 'TBD' }}
+        </span>
+        {% if match.home_team %}
+        <img src="{{ flag_url(match.home_team.code) }}" class="flag flag-sm" alt="{{ match.home_team.name }}">
+        {% endif %}
+      </div>
+
+      <!-- Centre: time / score -->
+      <div class="fixture-time-col">
+        {% if match.status == 'finished' %}
+          <div class="fixture-time-box finished">{{ match.home_score }} – {{ match.away_score }}</div>
+          {% if match.is_knockout() and match.winner_team %}
+          <div class="fixture-advance">↑ {{ match.winner_team.name }}</div>
+          {% endif %}
+          {% if match.goals %}
+          <div class="scorer-line" style="max-width:160px;line-height:1.4;margin-top:2px">
+            {%- set home_gs = match.goals | selectattr('team_id', 'equalto', match.home_team_id) | list -%}
+            {%- set away_gs = match.goals | selectattr('team_id', 'equalto', match.away_team_id) | list -%}
+            {% if home_gs %}{{ home_gs | map(attribute='player_name') | join(', ') }}{% endif %}
+            {% if home_gs and away_gs %} · {% endif %}
+            {% if away_gs %}{{ away_gs | map(attribute='player_name') | join(', ') }}{% endif %}
+          </div>
+          {% endif %}
+        {% elif match.status == 'live' %}
+          <div class="fixture-time-box live">LIVE</div>
+        {% else %}
+          <div class="fixture-time-box">
+            <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">
+              {{- match.match_date.strftime('%H:%M') -}}
+            </span>
+          </div>
+          <div class="fixture-status-tag" style="margin-top:2px;background:transparent;color:var(--text-3);font-size:.58rem">UTC</div>
+        {% endif %}
+      </div>
+
+      <!-- Away team (left-aligned) -->
+      <div class="fixture-away">
+        {% if match.away_team %}
+        <img src="{{ flag_url(match.away_team.code) }}" class="flag flag-sm" alt="{{ match.away_team.name }}">
+        {% endif %}
+        <span class="fixture-team-name {% if not match.away_team %}tbd{% endif %}">
+          {{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}
+        </span>
+      </div>
+
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="card-body empty-state">
+      <div class="empty-state-icon">📅</div>
+      <h3>No fixtures loaded</h3>
+      <p>Run <code>python seed_data.py</code> from the project root.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

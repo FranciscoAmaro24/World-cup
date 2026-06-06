@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Log In — WC2026 Predictor{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="form-card">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2.5rem">⚽</div>
+      <h1 class="form-title" style="margin-bottom:0">Log In</h1>
+      <p class="text-sm text-muted mt-1">Welcome back to WC2026 Predictor</p>
+    </div>
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    <form action="/login" method="post">
+      <div class="form-group">
+        <label class="form-label" for="username">Username</label>
+        <input class="form-input" type="text" id="username" name="username" required autocomplete="username" placeholder="Your username">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="password">Password</label>
+        <input class="form-input" type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">Log In</button>
+    </form>
+    <hr class="form-divider">
+    <p class="text-sm text-muted" style="text-align:center">
+      Don't have an account? <a href="/register" class="text-green" style="font-weight:600">Sign Up</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

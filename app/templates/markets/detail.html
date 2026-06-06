@@ -1,0 +1,339 @@
+{% extends "base.html" %}
+{% block title %}{{ market.title }} — WC2026 Markets{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div style="margin-bottom:1rem">
+    <a href="/markets" class="btn btn-secondary btn-sm">← Markets</a>
+  </div>
+
+  <!-- Hero image -->
+  {% if market.img_url %}
+  <div style="margin-bottom:1.5rem;border-radius:var(--radius-lg);overflow:hidden;border:1px solid var(--border);position:relative">
+    <img src="{{ market.img_url }}" alt="{{ market.title }}"
+         style="width:100%;height:220px;object-fit:cover;display:block">
+    {% if user and (user.id == market.creator_id or user.is_superadmin) %}
+    <form action="/markets/{{ market.id }}/image" method="post" enctype="multipart/form-data"
+          id="mktImgForm" style="display:none">
+      <input type="file" id="mktImgInput" name="image" accept="image/jpeg,image/png,image/webp,image/gif">
+    </form>
+    <button type="button" onclick="document.getElementById('mktImgInput').click()"
+            style="position:absolute;bottom:.6rem;right:.6rem;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:6px;padding:.3rem .65rem;font-size:.68rem;cursor:pointer;font-weight:600">
+      Change image
+    </button>
+    {% endif %}
+  </div>
+  {% elif user and (user.id == market.creator_id or user.is_superadmin) %}
+  <form action="/markets/{{ market.id }}/image" method="post" enctype="multipart/form-data"
+        id="mktImgForm" style="display:none">
+    <input type="file" id="mktImgInput" name="image" accept="image/jpeg,image/png,image/webp,image/gif">
+  </form>
+  <div onclick="document.getElementById('mktImgInput').click()"
+       style="margin-bottom:1.5rem;border:1px dashed var(--border-2);border-radius:var(--radius-lg);padding:1.25rem;text-align:center;cursor:pointer;color:var(--text-3);font-size:.8rem;transition:border-color .15s"
+       onmouseenter="this.style.borderColor='#555'" onmouseleave="this.style.borderColor='var(--border-2)'">
+    Add a cover image
+  </div>
+  {% endif %}
+
+  <div class="grid-2" style="align-items:start">
+
+    <!-- LEFT -->
+    <div>
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-header">
+          <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap">
+            {% if market.resolved %}
+            <span class="tag tag-green">Resolved: {{ winning_option.label if winning_option else "—" }}</span>
+            {% elif not market.is_open() %}
+            <span class="tag tag-gray">Closed — awaiting resolution</span>
+            {% else %}
+            <span class="tag tag-white market-live-dot">Open</span>
+            {% endif %}
+            <span class="text-xs text-sub">by <strong>{{ market.creator.display_name or market.creator.username }}</strong></span>
+          </div>
+          <span class="text-xs text-sub">
+            Closes <span data-utc="{{ market.closes_at.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ market.closes_at.strftime('%d %b %Y %H:%M UTC') }}</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:.6rem;line-height:1.35">{{ market.title }}</h2>
+          {% if market.description %}
+          <p style="color:var(--text-1);font-size:.87rem;margin-bottom:1.25rem;line-height:1.6">{{ market.description }}</p>
+          {% endif %}
+
+          <!-- Option probability bars (large) -->
+          <div class="market-options-bars large" style="margin-bottom:1.25rem">
+            {% for opt in market.options %}
+            {% set prob = market.option_prob(opt) %}
+            {% set is_winner = market.resolved and opt.id == market.winning_option_id %}
+            <div class="mopt-row tall {% if is_winner %}winner-row{% endif %}">
+              <span class="mopt-label" style="width:84px;font-size:.77rem">{{ opt.label[:22] }}{% if opt.label|length > 22 %}…{% endif %}</span>
+              <div class="mopt-track" style="height:22px">
+                <div class="mopt-fill {% if is_winner %}winning{% endif %}"
+                     style="width:{{ prob }}%;height:100%;display:flex;align-items:center;padding-left:.4rem;transition:width .6s">
+                  {% if prob > 10 %}<span style="font-size:.67rem;font-weight:700;color:#fff">{{ prob }}%</span>{% endif %}
+                </div>
+              </div>
+              <span class="mopt-pct" style="font-size:.92rem;font-weight:800;width:42px">{{ prob }}%</span>
+              {% if is_winner %}<span class="tag tag-green" style="font-size:.58rem;padding:1px 5px;flex-shrink:0">Won</span>{% endif %}
+            </div>
+            {% endfor %}
+          </div>
+
+          <!-- Stats strip -->
+          <div style="display:flex;gap:1.5rem;padding:.7rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:1rem;flex-wrap:wrap">
+            <div><div style="font-size:1.05rem;font-weight:800;color:var(--gold)">{{ "%.1f"|format(market.total_volume()) }}</div><div class="text-xs text-sub">credits vol.</div></div>
+            <div><div style="font-size:1.05rem;font-weight:800">{{ market.bets|length }}</div><div class="text-xs text-sub">bets</div></div>
+            <div><div style="font-size:1.05rem;font-weight:800">{{ market.options|length }}</div><div class="text-xs text-sub">options</div></div>
+          </div>
+
+          <!-- Your bet alert -->
+          {% if user_bet %}
+          {% set bet_won = market.resolved and user_bet.option_id == market.winning_option_id %}
+          {% set bet_lost = market.resolved and user_bet.option_id != market.winning_option_id %}
+          <div class="alert {% if bet_won %}alert-success{% elif bet_lost %}alert-error{% else %}alert-info{% endif %}" style="font-size:.84rem">
+            {% if bet_won %}Won! Bet {{ user_bet.option.label }} · {{ "%.1f"|format(user_bet.amount) }} → <strong>+{{ "%.1f"|format(user_bet.payout) }} credits</strong>
+            {% elif bet_lost %}Lost · Bet {{ user_bet.option.label }} · {{ "%.1f"|format(user_bet.amount) }} credits gone
+            {% else %}Your bet: <strong>{{ user_bet.option.label }}</strong> · {{ "%.1f"|format(user_bet.amount) }} credits · Est. return: {{ "%.1f"|format(user_bet.amount * payout_rates[user_bet.option_id]) }} if correct{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Probability chart -->
+      {% if chart_data != "null" %}
+      <div class="section-header"><h2 class="section-title">Probability History</h2></div>
+      <div class="card" style="margin-bottom:1.5rem">
+        <div class="card-body" style="padding:1rem">
+          <canvas id="probChart" style="width:100%;height:220px;max-height:220px"></canvas>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Bet history -->
+      {% if recent_bets %}
+      <div class="section-header"><h2 class="section-title">Recent Bets</h2></div>
+      <div class="card">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th>Option</th>
+              <th>Amount</th>
+              {% if market.resolved %}<th>Payout</th>{% endif %}
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bet in recent_bets %}
+            {% set won = market.resolved and bet.option_id == market.winning_option_id %}
+            <tr>
+              <td>
+                {{ avatar_html(bet.user, "xs") | safe }}
+                <span style="margin-left:.4rem;font-size:.83rem">{{ bet.user.display_name or bet.user.username }}</span>
+              </td>
+              <td><span class="tag {% if won %}tag-green{% elif market.resolved %}tag-gray{% else %}tag-white{% endif %}">{{ bet.option.label[:20] }}</span></td>
+              <td style="font-weight:700">{{ "%.1f"|format(bet.amount) }}</td>
+              {% if market.resolved %}
+              <td style="font-weight:700;color:{% if won %}#4ade80{% else %}var(--red){% endif %}">
+                {% if bet.payout is not none %}{{ "%.1f"|format(bet.payout) }}{% else %}—{% endif %}
+              </td>
+              {% endif %}
+              <td class="text-sub text-xs">
+                <span data-utc="{{ bet.placed_at.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ bet.placed_at.strftime('%d %b %H:%M') }}</span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- RIGHT: bet form / resolve -->
+    <div>
+      {% if user and market.is_open() %}
+      <div class="card" style="position:sticky;top:80px">
+        <div class="card-header">
+          <span class="font-bold">{% if user_bet %}Change Bet{% else %}Place Bet{% endif %}</span>
+          <span class="credits-chip">{{ "%.1f"|format(user.credits) }} credits</span>
+        </div>
+        <div class="card-body">
+          {% if user_bet %}
+          <div class="alert alert-info" style="font-size:.8rem;margin-bottom:1rem">
+            Current: <strong>{{ user_bet.option.label }}</strong> · {{ "%.1f"|format(user_bet.amount) }} credits (refunded if you change)
+          </div>
+          {% endif %}
+          <form action="/markets/{{ market.id }}/bet" method="post" id="betForm">
+            <div class="form-group">
+              <label class="form-label">Amount (credits)</label>
+              <input class="form-input" type="number" name="amount" id="betAmt"
+                     value="{% if user_bet %}{{ user_bet.amount }}{% else %}1{% endif %}"
+                     min="0.1" max="{{ "%.1f"|format(user.credits + (user_bet.amount if user_bet else 0)) }}"
+                     step="0.1" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Pick an Option</label>
+              <div class="bet-option-list">
+                {% for opt in market.options %}
+                {% set prob = market.option_prob(opt) %}
+                {% set rate = payout_rates[opt.id] %}
+                <label class="bet-option {% if user_bet and user_bet.option_id == opt.id %}selected{% endif %}">
+                  <input type="radio" name="option_id" value="{{ opt.id }}"
+                         {% if user_bet and user_bet.option_id == opt.id %}checked{% endif %} required>
+                  <div class="bet-option-inner">
+                    <div class="bet-option-bar" style="width:{{ prob }}%"></div>
+                    <span class="bet-option-label">{{ opt.label }}</span>
+                    <span class="bet-option-stats">
+                      <span class="bet-option-pct">{{ prob }}%</span>
+                      <span class="bet-option-rate" data-rate="{{ rate }}">{{ rate }}×</span>
+                    </span>
+                  </div>
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="alert alert-info" style="font-size:.8rem;margin-bottom:.75rem" id="estReturn">
+              Select an option to see estimated return
+            </div>
+            <button type="submit" class="btn btn-primary btn-full btn-lg">Place Bet</button>
+          </form>
+        </div>
+      </div>
+
+      {% elif not user %}
+      <div class="card"><div class="card-body" style="text-align:center;padding:2rem">
+        <p style="margin-bottom:1rem;color:var(--text-1)">Sign in to place bets. Everyone gets 10 free credits!</p>
+        <a href="/register" class="btn btn-primary btn-full">Sign Up Free</a>
+        <a href="/login" class="btn btn-secondary btn-full" style="margin-top:.5rem">Log In</a>
+      </div></div>
+
+      {% elif market.resolved %}
+      <div class="card"><div class="card-body" style="text-align:center;padding:2rem">
+        <div style="font-size:.95rem;font-weight:800;color:var(--gold);margin-bottom:.4rem">Resolved</div>
+        <p class="text-sub text-xs">Winner: <strong style="color:#fff">{{ winning_option.label if winning_option else "—" }}</strong></p>
+      </div></div>
+
+      {% else %}
+      <div class="card"><div class="card-body" style="text-align:center;padding:2rem;color:var(--text-2)">
+        Betting closed — awaiting resolution
+      </div></div>
+      {% endif %}
+
+      <!-- Resolve panel -->
+      {% if can_resolve and not market.resolved %}
+      <div class="card" style="margin-top:1rem">
+        <div class="card-header"><span class="font-bold" style="color:var(--gold)">Resolve Market</span></div>
+        <div class="card-body">
+          <p class="text-xs text-sub" style="margin-bottom:1rem">Select the winning option. Payouts are credited instantly.</p>
+          <form action="/markets/{{ market.id }}/resolve" method="post">
+            <div class="form-group">
+              <select name="winning_option_id" class="form-input" required>
+                <option value="">— Select winner —</option>
+                {% for opt in market.options %}
+                <option value="{{ opt.id }}">{{ opt.label }} ({{ "%.1f"|format(opt.total_credits) }} credits)</option>
+                {% endfor %}
+              </select>
+            </div>
+            <button type="submit" class="btn btn-gold btn-full"
+                    onclick="return confirm('Resolve this market? This cannot be undone.')">
+              Resolve Market
+            </button>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Bet form estimate
+const rates = { {% for opt in market.options %}{{ opt.id }}: {{ payout_rates[opt.id] }},{% endfor %} };
+const amtInput = document.getElementById('betAmt');
+const estDiv   = document.getElementById('estReturn');
+function updateEst() {
+  const checked = document.querySelector('input[name="option_id"]:checked');
+  const amt = parseFloat(amtInput?.value) || 0;
+  if (!checked || !amt) { if(estDiv) estDiv.textContent = 'Select an option to see estimated return'; return; }
+  const rate = rates[parseInt(checked.value)] || 1;
+  if(estDiv) estDiv.textContent = 'Est. return: ' + (amt * rate).toFixed(1) + ' credits (' + rate.toFixed(2) + '×)';
+}
+document.querySelectorAll('input[name="option_id"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.querySelectorAll('.bet-option').forEach(el => el.classList.remove('selected'));
+    r.closest('.bet-option')?.classList.add('selected');
+    updateEst();
+  });
+});
+if(amtInput) amtInput.addEventListener('input', updateEst);
+updateEst();
+
+// Market image upload
+document.getElementById('mktImgInput')?.addEventListener('change', function() {
+  if (this.files.length) document.getElementById('mktImgForm').submit();
+});
+
+// Probability chart
+{% if chart_data != "null" %}
+(function() {
+  const chartData = {{ chart_data | safe }};
+  const canvas = document.getElementById('probChart');
+  if (!canvas || !chartData) return;
+
+  const script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+  script.onload = function() {
+    new Chart(canvas, {
+      type: 'line',
+      data: chartData,
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#888',
+              font: { size: 11, family: 'Inter, sans-serif' },
+              boxWidth: 12,
+              padding: 12,
+            }
+          },
+          tooltip: {
+            backgroundColor: '#1a1a1a',
+            borderColor: '#333',
+            borderWidth: 1,
+            titleColor: '#fff',
+            bodyColor: '#ccc',
+            callbacks: {
+              label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y}%`
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: '#555', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8 },
+            grid: { color: '#1e1e1e' }
+          },
+          y: {
+            min: 0, max: 100,
+            ticks: {
+              color: '#555',
+              font: { size: 10 },
+              callback: v => v + '%'
+            },
+            grid: { color: '#1e1e1e' }
+          }
+        }
+      }
+    });
+  };
+  document.head.appendChild(script);
+})();
+{% endif %}
+</script>
+{% endblock %}

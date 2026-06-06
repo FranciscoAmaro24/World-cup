@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}WC2026 Predictor{% endblock %}</title>
+  <link rel="preconnect" href="https://flagcdn.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2020/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚽</text></svg>">
+  {% block styles %}{% endblock %}
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a href="/fixtures">Fixtures</a>
+    <span class="topbar-sep">|</span>
+    <a href="/knockout">Bracket</a>
+    <span class="topbar-sep">|</span>
+    <a href="/standings">Standings</a>
+    <span class="topbar-sep">|</span>
+    <a href="/leagues">My Leagues</a>
+    {% if user and user.is_superadmin %}
+    <span class="topbar-sep">|</span>
+    <a href="/admin" style="color:var(--gold)">⚙ Admin</a>
+    {% endif %}
+  </div>
+
+  <!-- Main nav -->
+  <nav class="navbar">
+    <a href="/" class="navbar-brand">
+      <div class="brand-icon">⚽</div>
+      <div class="brand-text">
+        <div class="brand-title">World Cup</div>
+        <div class="brand-year">2026™ PREDICTOR</div>
+      </div>
+    </a>
+
+    <div class="nav-links">
+      <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Home</a>
+      <a href="/fixtures" class="nav-link {% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
+      <a href="/knockout" class="nav-link {% if '/knockout' in request.url.path %}active{% endif %}">Bracket</a>
+      <a href="/standings" class="nav-link {% if '/standings' in request.url.path %}active{% endif %}">Standings</a>
+      <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path %}active{% endif %}">Leagues</a>
+      <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
+    </div>
+
+    <div class="nav-right">
+      {% if user %}
+        <a href="/profile/{{ user.username }}" class="avatar-chip" style="text-decoration:none">
+          {{ avatar_html(user, "sm") | safe }}
+          <span style="font-size:.78rem;font-weight:600;color:var(--text-1)">
+            {{ user.display_name or user.username }}
+            {% if user.is_superadmin %}<span class="superadmin-dot"></span>{% endif %}
+          </span>
+        </a>
+        <form action="/logout" method="post" style="margin:0">
+          <button type="submit" class="btn-nav btn-nav-outline">Logout</button>
+        </form>
+      {% else %}
+        <a href="/login" class="btn-nav btn-nav-outline">Log In</a>
+        <a href="/register" class="btn-nav btn-nav-primary">Sign Up</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <main>{% block content %}{% endblock %}</main>
+
+  <footer>
+    <p>WC2026 Predictor — Built for friends &amp; fun · Not affiliated with FIFA</p>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

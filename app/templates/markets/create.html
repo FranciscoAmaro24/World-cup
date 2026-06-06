@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Create Market — WC2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="form-card" style="max-width:540px">
+    <h1 class="form-title">Create a Market</h1>
+    <p class="text-xs text-sub" style="text-align:center;margin-top:-.75rem;margin-bottom:1.25rem">
+      Ask any question with multiple outcomes. Anyone can bet on it.
+    </p>
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+
+    <form action="/markets/create" method="post" id="createForm">
+      <div class="form-group">
+        <label class="form-label">Question / Title</label>
+        <input class="form-input" type="text" name="title" required maxlength="200"
+               placeholder="e.g. Who will win the World Cup?">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description <span class="text-muted">(optional)</span></label>
+        <textarea class="form-input" name="description" rows="2" maxlength="500"
+                  placeholder="Resolution criteria, extra context…" style="resize:vertical"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Closes At (UTC)</label>
+        <input class="form-input" type="datetime-local" name="closes_at" required>
+        <p class="form-hint">Betting stops at this time. You resolve it after.</p>
+      </div>
+
+      <hr class="form-divider">
+      <div class="form-group">
+        <label class="form-label">Options <span class="text-sub" style="text-transform:none;font-weight:400">(2–8)</span></label>
+        <div id="optionsList">
+          <div class="option-row">
+            <input class="form-input" type="text" name="options[]" required maxlength="100" placeholder="Option 1 (e.g. Spain)">
+            <button type="button" class="btn-remove-option" onclick="removeOption(this)" title="Remove">×</button>
+          </div>
+          <div class="option-row">
+            <input class="form-input" type="text" name="options[]" required maxlength="100" placeholder="Option 2 (e.g. France)">
+            <button type="button" class="btn-remove-option" onclick="removeOption(this)" title="Remove">×</button>
+          </div>
+        </div>
+        <button type="button" class="btn btn-outline btn-sm" style="margin-top:.5rem" onclick="addOption()" id="addOptBtn">
+          + Add Option
+        </button>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:.5rem">Create Market</button>
+    </form>
+
+    <hr class="form-divider">
+    <div class="alert alert-info" style="font-size:.78rem">
+      Winners share the total pot proportionally to their stake.
+      Everyone starts with <strong>10 free credits</strong>.
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function addOption() {
+  const list = document.getElementById('optionsList');
+  const count = list.children.length + 1;
+  if (count > 8) { document.getElementById('addOptBtn').disabled = true; return; }
+  const row = document.createElement('div');
+  row.className = 'option-row';
+  row.innerHTML = `<input class="form-input" type="text" name="options[]" maxlength="100" placeholder="Option ${count}">
+    <button type="button" class="btn-remove-option" onclick="removeOption(this)" title="Remove">×</button>`;
+  list.appendChild(row);
+  if (list.children.length >= 8) document.getElementById('addOptBtn').disabled = true;
+  row.querySelector('input').focus();
+}
+function removeOption(btn) {
+  const list = document.getElementById('optionsList');
+  if (list.children.length <= 2) return;
+  btn.closest('.option-row').remove();
+  document.getElementById('addOptBtn').disabled = false;
+  // re-number placeholders
+  [...list.children].forEach((row, i) => {
+    const inp = row.querySelector('input');
+    if (inp) inp.placeholder = `Option ${i + 1}`;
+  });
+}
+</script>
+{% endblock %}

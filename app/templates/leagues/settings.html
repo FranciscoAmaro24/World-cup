@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block title %}League Settings — {{ league.name }}{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="page-header">
+    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm" style="margin-bottom:.75rem">← Back to {{ league.name }}</a>
+    <h1>League Settings</h1>
+    <p class="page-header-sub">{{ league.name }}</p>
+  </div>
+
+  <div class="form-card" style="max-width:580px">
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
+    {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
+
+    <!-- League banner -->
+    {% if league.banner_url %}
+    <div style="margin-bottom:1rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
+      <img src="{{ league.banner_url }}" alt="League banner" style="width:100%;height:120px;object-fit:cover;display:block">
+    </div>
+    {% endif %}
+    <div style="display:flex;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap">
+      <form action="/leagues/{{ league.id }}/banner" method="post" enctype="multipart/form-data" id="bannerForm" style="display:none">
+        <input type="file" id="bannerInput" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
+      </form>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerInput').click()">
+        {% if league.banner_url %}Change banner{% else %}Upload banner{% endif %}
+      </button>
+      {% if league.banner_url %}
+      <form action="/leagues/{{ league.id }}/banner/remove" method="post" style="display:inline">
+        <button type="submit" class="btn btn-outline btn-sm">Remove banner</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <form action="/leagues/{{ league.id }}/settings" method="post">
+
+      <div class="form-group">
+        <label class="form-label">League Name</label>
+        <input class="form-input" type="text" name="name" value="{{ league.name }}" required maxlength="100">
+      </div>
+
+      <hr class="form-divider">
+      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Match Score Predictions</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Exact Score Points</label>
+          <input class="form-input" type="number" name="points_exact" value="{{ league.points_exact_score }}" min="0" max="20">
+          <p class="form-hint">e.g. predicted 2-1 and it's 2-1</p>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Correct Result Points</label>
+          <input class="form-input" type="number" name="points_result" value="{{ league.points_correct_result }}" min="0" max="20">
+          <p class="form-hint">Correct winner/draw, wrong score</p>
+        </div>
+      </div>
+
+      <hr class="form-divider">
+      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Bracket Picks (Pre-tournament)</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.75rem">
+        <div class="form-group">
+          <label class="form-label">Winner</label>
+          <input class="form-input" type="number" name="points_bracket_winner" value="{{ league.points_bracket_winner }}" min="0" max="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Finalist</label>
+          <input class="form-input" type="number" name="points_bracket_finalist" value="{{ league.points_bracket_finalist }}" min="0" max="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Semi</label>
+          <input class="form-input" type="number" name="points_bracket_semi" value="{{ league.points_bracket_semi }}" min="0" max="50">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Quarter</label>
+          <input class="form-input" type="number" name="points_bracket_quarter" value="{{ league.points_bracket_quarter or 1 }}" min="0" max="50">
+        </div>
+      </div>
+
+      <hr class="form-divider">
+      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Sweepstake</p>
+      <div class="form-group">
+        <div class="form-switch">
+          <label class="switch">
+            <input type="checkbox" name="sweepstake" id="sweepstakeToggle" value="true" {% if league.sweepstake_enabled %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+          <span class="text-sm">Enable Sweepstake Mode</span>
+        </div>
+      </div>
+      <div id="sweepstakeFields" style="display:{% if league.sweepstake_enabled %}''{% else %}none{% endif %}">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Buy-in Amount (€)</label>
+            <input class="form-input" type="number" name="buy_in" value="{{ league.sweepstake_buy_in }}" min="0" step="0.5">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teams Per Person</label>
+            <input class="form-input" type="number" name="teams_per_person" value="{{ league.sweepstake_teams_per_person }}" min="1" max="10">
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-full mt-2">Save Settings</button>
+    </form>
+
+    <hr class="form-divider">
+    <div class="invite-code-box">
+      <div class="invite-code-label">Invite Code</div>
+      <div class="invite-code">{{ league.invite_code }}</div>
+      <p class="text-xs text-muted mt-1">Share this code with your friends to join</p>
+      <button class="btn btn-secondary btn-sm mt-2" data-copy="{{ league.invite_code }}">Copy Code</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.getElementById('bannerInput')?.addEventListener('change', function() {
+    if (this.files.length) document.getElementById('bannerForm').submit();
+  });
+  const toggle = document.getElementById('sweepstakeToggle');
+  const fields = document.getElementById('sweepstakeFields');
+  toggle.addEventListener('change', () => { fields.style.display = toggle.checked ? '' : 'none'; });
+</script>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}My Leagues — WC2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="page-header flex items-center justify-between">
+    <div>
+      <h1>My Leagues</h1>
+      <p class="page-header-sub">Manage your prediction leagues</p>
+    </div>
+    <div style="display:flex;gap:0.75rem">
+      <a href="/leagues/join" class="btn btn-secondary">Join League</a>
+      <a href="/leagues/create" class="btn btn-primary">+ Create League</a>
+    </div>
+  </div>
+
+  {% if leagues %}
+  <div class="league-grid">
+    {% for league in leagues %}
+    <a href="/leagues/{{ league.id }}" class="league-card">
+      {% if league.banner_url %}
+      <div style="margin:-1.25rem -1.25rem .9rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;overflow:hidden;height:80px">
+        <img src="{{ league.banner_url }}" alt="{{ league.name }}" style="width:100%;height:100%;object-fit:cover;display:block">
+      </div>
+      {% else %}
+      <div class="league-card-accent" style="background:{{ league.accent_color }}"></div>
+      {% endif %}
+      <div class="league-name">{{ league.name }}</div>
+      <div class="league-code font-mono">CODE: {{ league.invite_code }}</div>
+      <div class="league-stats mt-3">
+        <div class="league-stat">
+          <div class="league-stat-val">{{ league.members | length }}</div>
+          <div class="league-stat-lbl">Members</div>
+        </div>
+        <div class="league-stat">
+          <div class="league-stat-val">{{ league.points_exact_score }}</div>
+          <div class="league-stat-lbl">Exact pts</div>
+        </div>
+        <div class="league-stat">
+          <div class="league-stat-val">{{ league.points_correct_result }}</div>
+          <div class="league-stat-lbl">Result pts</div>
+        </div>
+      </div>
+      <div class="league-tags">
+        {% if league.sweepstake_enabled %}
+        <span class="tag tag-gold">Sweepstake (€{{ "%.0f"|format(league.sweepstake_buy_in) }})</span>
+        {% endif %}
+        {% if league.admin_id == user.id %}
+        <span class="tag tag-blue">Admin</span>
+        {% endif %}
+      </div>
+      <span class="btn btn-outline btn-sm">Open →</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">🏟️</div>
+    <h3>You haven't joined any leagues yet</h3>
+    <p>Create your own league or join one with an invite code</p>
+    <div style="display:flex;gap:1rem;justify-content:center">
+      <a href="/leagues/create" class="btn btn-primary">Create League</a>
+      <a href="/leagues/join" class="btn btn-secondary">Join with Code</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Join League — WC2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+  <div class="form-card">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:2.5rem">🔑</div>
+      <h1 class="form-title" style="margin-bottom:0">Join a League</h1>
+      <p class="text-sm text-muted mt-1">Enter the invite code your friend shared</p>
+    </div>
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    <form action="/leagues/join" method="post">
+      <div class="form-group">
+        <label class="form-label">Invite Code</label>
+        <input class="form-input" type="text" name="invite_code" required
+               placeholder="e.g. AB12CD"
+               style="text-transform:uppercase;font-size:1.5rem;letter-spacing:.2em;text-align:center;font-family:monospace"
+               maxlength="6" autocomplete="off">
+        <p class="form-hint" style="text-align:center">6-character code (case-insensitive)</p>
+      </div>
+      <button type="submit" class="btn btn-primary btn-full">Join League</button>
+    </form>
+    <hr class="form-divider">
+    <p class="text-sm text-muted" style="text-align:center">
+      Want to start your own? <a href="/leagues/create" class="text-green" style="font-weight:600">Create a League</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

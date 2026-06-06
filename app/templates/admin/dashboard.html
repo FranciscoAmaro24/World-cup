@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Admin — Match Results{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div class="page-header">
+    <h1>Admin Panel</h1>
+    <p class="page-header-sub">Enter results or let the auto-fetcher do it</p>
+  </div>
+
+  <!-- Auto-fetch status -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+      <span class="font-bold text-sm">🤖 Auto-Results Fetcher</span>
+      <form action="/admin/fetch" method="post" style="margin:0">
+        <button type="submit" class="btn btn-primary btn-sm">Fetch Now</button>
+      </form>
+    </div>
+    <div class="card-body" style="display:flex;gap:2rem;flex-wrap:wrap">
+      <div>
+        <div class="text-xs text-muted mb-1">Source</div>
+        <div class="text-sm">openfootball/worldcup.json (GitHub, no key) + football-data.org (optional)</div>
+      </div>
+      <div>
+        <div class="text-xs text-muted mb-1">Last Fetched</div>
+        <div class="text-sm">
+          {% if last_fetch %}
+          <span data-utc="{{ last_fetch.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ last_fetch.strftime('%d %b %H:%M UTC') }}</span>
+          {% else %}
+          <span class="text-muted">Never (polls every 5 min automatically)</span>
+          {% endif %}
+        </div>
+      </div>
+      {% if last_error %}
+      <div>
+        <div class="text-xs text-muted mb-1">Last Error</div>
+        <div class="text-sm" style="color:var(--danger)">{{ last_error }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <div class="card-body" style="border-top:1px solid var(--border);padding-top:.75rem">
+      <p class="text-xs text-muted">
+        Set <code style="background:var(--bg-secondary);padding:1px 4px;border-radius:3px">FOOTBALL_DATA_API_KEY</code> env var
+        for additional coverage via football-data.org.
+        Get a free key at <strong>football-data.org</strong>.
+      </p>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <div class="tab active" data-tab="group">Group Stage ({{ group_matches|length }})</div>
+    <div class="tab" data-tab="knockout" id="knockout-tab">Knockout Stage ({{ knockout_matches|length }})</div>
+    <div class="tab" data-tab="create">+ Add Knockout Match</div>
+  </div>
+
+  <!-- GROUP STAGE -->
+  <div data-tab-content="group">
+    {% for match in group_matches %}
+    <div class="match-card" style="margin-bottom:.6rem;{% if match.status == 'finished' %}opacity:.65;{% endif %}">
+      <div class="match-card-meta">
+        {% if match.group_letter %}<span class="group-badge">{{ match.group_letter }}</span>{% endif %}
+        <span class="text-xs text-muted">
+          <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%d %b %H:%M UTC') }}</span>
+        </span>
+        {% if match.status == 'finished' %}<span class="match-badge finished">FT</span>
+        {% else %}<span class="match-badge">Upcoming</span>{% endif %}
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div class="match-teams" style="flex:1;min-width:220px">
+          <div class="match-team">
+            <div class="match-team-flag" style="font-size:1.3rem">{{ match.home_team.flag_emoji if match.home_team else '🏳' }}</div>
+            <div class="match-team-name">{{ match.home_team.name if match.home_team else 'TBD' }}</div>
+          </div>
+          {% if match.status == 'finished' %}
+          <div class="match-score">{{ match.home_score }} – {{ match.away_score }}</div>
+          {% else %}
+          <div class="match-score scheduled">vs</div>
+          {% endif %}
+          <div class="match-team">
+            <div class="match-team-flag" style="font-size:1.3rem">{{ match.away_team.flag_emoji if match.away_team else '🏳' }}</div>
+            <div class="match-team-name">{{ match.away_team.name if match.away_team else 'TBD' }}</div>
+          </div>
+        </div>
+        <form action="/admin/matches/{{ match.id }}" method="post" style="display:flex;align-items:flex-start;gap:.5rem;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:.4rem">
+            <input type="number" name="home_score" placeholder="H"
+                   value="{{ match.home_score if match.home_score is not none else '' }}"
+                   style="width:50px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:1rem"
+                   min="0" max="20" required>
+            <span class="text-muted">–</span>
+            <input type="number" name="away_score" placeholder="A"
+                   value="{{ match.away_score if match.away_score is not none else '' }}"
+                   style="width:50px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:1rem"
+                   min="0" max="20" required>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:.2rem">
+            <textarea name="home_scorers" rows="2" placeholder="Home scorers&#10;e.g. Messi 45&#10;Kane 67pen"
+                      style="width:160px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:.75rem;resize:none">{{ match.goals | selectattr('team_id', 'equalto', match.home_team_id) | map(attribute='player_name') | join('\n') if match.goals else '' }}</textarea>
+            <textarea name="away_scorers" rows="2" placeholder="Away scorers"
+                      style="width:160px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:.75rem;resize:none">{{ match.goals | selectattr('team_id', 'equalto', match.away_team_id) | map(attribute='player_name') | join('\n') if match.goals else '' }}</textarea>
+          </div>
+          <input type="hidden" name="winner_team_id" value="0">
+          <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start">Save</button>
+        </form>
+        {% if match.status == 'finished' %}
+        <form action="/admin/matches/{{ match.id }}/reset" method="post">
+          <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reset this result?')">Reset</button>
+        </form>
+        {% endif %}
+      </div>
+      <div class="match-venue">📍 {{ match.venue }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- KNOCKOUT STAGE -->
+  <div data-tab-content="knockout" style="display:none" id="knockout">
+    {% if not knockout_matches %}
+    <div class="empty-state">
+      <div class="empty-state-icon">/div>
+      <h3>No knockout matches yet</h3>
+      <p>Use the auto-fetcher or the "+ Add Knockout Match" tab to create them.</p>
+    </div>
+    {% endif %}
+    {% for match in knockout_matches %}
+    <div class="match-card" style="margin-bottom:.6rem;{% if match.status == 'finished' %}opacity:.65;{% endif %}">
+      <div class="match-card-meta">
+        <span class="tag tag-blue" style="font-size:.65rem">{{ round_labels.get(match.round, match.round) }}</span>
+        <span class="text-xs text-muted">
+          <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%d %b %H:%M UTC') }}</span>
+        </span>
+        {% if match.status == 'finished' %}<span class="match-badge finished">FT</span>
+        {% else %}<span class="match-badge">Upcoming</span>{% endif %}
+      </div>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <div class="match-teams" style="flex:1;min-width:220px">
+          <div class="match-team">
+            <div class="match-team-flag" style="font-size:1.3rem">{{ match.home_team.flag_emoji if match.home_team else '🏳' }}</div>
+            <div class="match-team-name">{{ match.home_display() }}</div>
+          </div>
+          {% if match.status == 'finished' %}
+          <div class="match-score">{{ match.home_score }} – {{ match.away_score }}</div>
+          {% else %}
+          <div class="match-score scheduled">vs</div>
+          {% endif %}
+          <div class="match-team">
+            <div class="match-team-flag" style="font-size:1.3rem">{{ match.away_team.flag_emoji if match.away_team else '🏳' }}</div>
+            <div class="match-team-name">{{ match.away_display() }}</div>
+          </div>
+        </div>
+        <form action="/admin/matches/{{ match.id }}" method="post" style="display:flex;align-items:center;gap:.4rem;flex-wrap:wrap">
+          <input type="number" name="home_score" placeholder="H"
+                 value="{{ match.home_score if match.home_score is not none else '' }}"
+                 style="width:50px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:1rem"
+                 min="0" max="20" required>
+          <span class="text-muted">–</span>
+          <input type="number" name="away_score" placeholder="A"
+                 value="{{ match.away_score if match.away_score is not none else '' }}"
+                 style="width:50px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:1rem"
+                 min="0" max="20" required>
+          <div style="display:flex;flex-direction:column;gap:.2rem">
+            <span class="text-xs text-muted">Winner (ET/Pens)</span>
+            <select name="winner_team_id" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:.8rem">
+              <option value="0">Auto from score</option>
+              {% if match.home_team %}<option value="{{ match.home_team_id }}" {% if match.winner_team_id == match.home_team_id %}selected{% endif %}>{{ match.home_team.name }}</option>{% endif %}
+              {% if match.away_team %}<option value="{{ match.away_team_id }}" {% if match.winner_team_id == match.away_team_id %}selected{% endif %}>{{ match.away_team.name }}</option>{% endif %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        </form>
+        <div style="display:flex;gap:.4rem">
+          {% if match.status == 'finished' %}
+          <form action="/admin/matches/{{ match.id }}/reset" method="post">
+            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reset?')">Reset</button>
+          </form>
+          {% endif %}
+          <form action="/admin/matches/{{ match.id }}/delete" method="post">
+            <button type="submit" class="btn btn-outline btn-sm" onclick="return confirm('Delete this match?')">Delete</button>
+          </form>
+        </div>
+      </div>
+      <div class="match-venue">📍 {{ match.venue }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- CREATE KNOCKOUT MATCH -->
+  <div data-tab-content="create" style="display:none">
+    <div class="card" style="max-width:600px">
+      <div class="card-header"><span class="font-bold text-sm">Add Knockout Match</span></div>
+      <div class="card-body">
+        <form action="/admin/matches/create" method="post">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Round</label>
+              <select class="form-input" name="round" required>
+                <option value="r32">Round of 32</option>
+                <option value="r16">Round of 16</option>
+                <option value="qf">Quarter-final</option>
+                <option value="sf">Semi-final</option>
+                <option value="third">Third Place</option>
+                <option value="final">Final</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Kick-off (UTC)</label>
+              <input class="form-input" type="datetime-local" name="match_date" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Venue</label>
+            <input class="form-input" type="text" name="venue" placeholder="e.g. MetLife Stadium, East Rutherford" required>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Home Team</label>
+              <select class="form-input" name="home_team_id">
+                <option value="0">TBD / Unknown</option>
+                {% for t in all_teams %}
+                <option value="{{ t.id }}">{{ t.flag_emoji }} {{ t.name }}</option>
+                {% endfor %}
+              </select>
+              <p class="form-hint">Or enter label below if TBD</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Away Team</label>
+              <select class="form-input" name="away_team_id">
+                <option value="0">TBD / Unknown</option>
+                {% for t in all_teams %}
+                <option value="{{ t.id }}">{{ t.flag_emoji }} {{ t.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Home Label (if TBD)</label>
+              <input class="form-input" type="text" name="home_team_tbd" placeholder="e.g. Winner Group A">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Away Label (if TBD)</label>
+              <input class="form-input" type="text" name="away_team_tbd" placeholder="e.g. Runner-up Group B">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Create Match</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+// Auto-activate knockout tab if anchored
+if (window.location.hash === '#knockout') {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('[data-tab-content]').forEach(p => p.style.display = 'none');
+  document.querySelector('[data-tab="knockout"]').classList.add('active');
+  document.querySelector('[data-tab-content="knockout"]').style.display = '';
+}
+</script>
+{% endblock %}
