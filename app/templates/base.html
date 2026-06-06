@@ -30,10 +30,12 @@
 
   <!-- Main nav -->
   <nav class="navbar">
-    <a href="/" class="navbar-brand" id="brandLink">
-      <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none"
-           id="logoBtn" title="Click me 👀">
+    <a href="/" class="navbar-brand">
+      <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none;position:relative;cursor:pointer"
+           id="logoBtn" title="Play / Pause">
         <img src="/static/img/logo.jpg" alt="Logo" style="width:36px;height:36px;object-fit:cover;display:block;border-radius:8px">
+        <!-- play/pause overlay -->
+        <div id="playIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);border-radius:8px;font-size:.9rem;transition:opacity .15s">▶</div>
       </div>
       <div class="brand-text">
         <div class="brand-title" style="font-size:.65rem">Best WC Predictor</div>
@@ -41,16 +43,22 @@
       </div>
     </a>
 
-    <!-- YouTube easter egg modal -->
-    <div id="ytModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;flex-direction:column">
-      <div style="position:relative;width:min(860px,95vw);aspect-ratio:16/9">
+    <!-- Hidden YouTube audio player (background music) -->
+    <iframe id="ytAudio"
+      src="about:blank"
+      allow="autoplay; encrypted-media"
+      style="display:none" tabindex="-1" aria-hidden="true"></iframe>
+
+    <!-- Full-screen player modal (double-click) -->
+    <div id="ytModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column">
+      <div style="position:relative;width:min(900px,95vw);aspect-ratio:16/9">
         <iframe id="ytFrame" width="100%" height="100%"
           src="about:blank"
           allow="autoplay; encrypted-media"
           allowfullscreen
-          style="border:none;border-radius:10px;display:block"></iframe>
+          style="border:none;border-radius:12px;display:block"></iframe>
       </div>
-      <button onclick="closeYT()" style="margin-top:1.25rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">Close</button>
+      <button onclick="closeModal()" style="margin-top:1.25rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">✕ Close</button>
     </div>
 
     <div class="nav-links">
@@ -89,20 +97,52 @@
 
   <script src="/static/js/app.js"></script>
   <script>
-  document.getElementById('logoBtn')?.addEventListener('click', function(e) {
-    e.preventDefault(); e.stopPropagation();
-    const modal = document.getElementById('ytModal');
-    document.getElementById('ytFrame').src = 'https://www.youtube.com/embed/vrY1THC_NQE?autoplay=1';
-    modal.style.display = 'flex';
-  });
-  function closeYT() {
-    document.getElementById('ytFrame').src = 'about:blank';
-    document.getElementById('ytModal').style.display = 'none';
+  const YT_URL = 'https://www.youtube.com/embed/vrY1THC_NQE';
+  let playing = false;
+
+  const logoBtn   = document.getElementById('logoBtn');
+  const playIcon  = document.getElementById('playIcon');
+  const ytAudio   = document.getElementById('ytAudio');
+  const ytModal   = document.getElementById('ytModal');
+  const ytFrame   = document.getElementById('ytFrame');
+
+  function startAudio() {
+    ytAudio.src = YT_URL + '?autoplay=1&loop=1&playlist=vrY1THC_NQE';
+    playing = true;
+    playIcon.textContent = '⏸';
+    playIcon.style.opacity = '0';
   }
-  document.getElementById('ytModal')?.addEventListener('click', function(e) {
-    if (e.target === this) closeYT();
+  function stopAudio() {
+    ytAudio.src = 'about:blank';
+    playing = false;
+    playIcon.textContent = '▶';
+    playIcon.style.opacity = '';
+  }
+
+  // Single click = toggle play/pause
+  logoBtn?.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (playing) { stopAudio(); } else { startAudio(); }
   });
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeYT(); });
+
+  // Show/hide overlay on hover
+  logoBtn?.addEventListener('mouseenter', () => { playIcon.style.opacity = '1'; });
+  logoBtn?.addEventListener('mouseleave', () => { if (playing) playIcon.style.opacity = '0'; });
+
+  // Double click = open full-screen modal player
+  logoBtn?.addEventListener('dblclick', function(e) {
+    e.preventDefault();
+    stopAudio();
+    ytFrame.src = YT_URL + '?autoplay=1';
+    ytModal.style.display = 'flex';
+  });
+
+  function closeModal() {
+    ytFrame.src = 'about:blank';
+    ytModal.style.display = 'none';
+  }
+  ytModal?.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
   </script>
   {% block scripts %}{% endblock %}
 </body>
