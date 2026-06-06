@@ -250,12 +250,22 @@ async def delete_match(request: Request, match_id: int, db: Session = Depends(ge
 
 @router.post("/fetch")
 async def manual_fetch(request: Request, db: Session = Depends(get_db)):
-    """Trigger an immediate auto-fetch of results."""
     user = _require_admin(request, db)
     if not user:
         return RedirectResponse("/", status_code=303)
     asyncio.create_task(results_fetcher.fetch_now(db))
     return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/fetch-squads")
+async def fetch_squads(request: Request, db: Session = Depends(get_db)):
+    """Fetch all 48 squad lists from Wikipedia."""
+    user = _require_admin(request, db)
+    if not user:
+        return RedirectResponse("/", status_code=303)
+    from services.squad_fetcher import fetch_squads as do_fetch
+    result = await do_fetch(db)
+    return RedirectResponse(f"/admin?msg=squads_{result['players']}", status_code=303)
 
 
 @router.post("/video/upload")

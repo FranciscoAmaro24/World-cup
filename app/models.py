@@ -97,6 +97,7 @@ class Team(Base):
     home_matches = relationship("Match", foreign_keys="Match.home_team_id", back_populates="home_team")
     away_matches = relationship("Match", foreign_keys="Match.away_team_id", back_populates="away_team")
     sweepstake_assignments = relationship("SweepstakeAssignment", back_populates="team")
+    players = relationship("Player", back_populates="team", order_by="Player.squad_number")
 
 
 class Match(Base):
@@ -216,6 +217,24 @@ class SweepstakeAssignment(Base):
     league = relationship("League", back_populates="sweepstake_assignments")
     user = relationship("User", back_populates="sweepstake_assignments")
     team = relationship("Team", back_populates="sweepstake_assignments")
+
+
+# ── SQUAD / PLAYERS ──────────────────────────────────────────
+
+class Player(Base):
+    __tablename__ = "players"
+    id            = Column(Integer, primary_key=True, index=True)
+    team_id       = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    squad_number  = Column(Integer, nullable=True)
+    position      = Column(String(3), nullable=False)   # GK / DF / MF / FW
+    name          = Column(String(120), nullable=False)
+    date_of_birth = Column(String(20),  nullable=True)
+    caps          = Column(Integer, default=0)
+    goals         = Column(Integer, default=0)
+    club          = Column(String(120), nullable=True)
+    club_country  = Column(String(3),   nullable=True)
+
+    team = relationship("Team", back_populates="players")
 
 
 # ── PREDICTION MARKET ────────────────────────────────────────

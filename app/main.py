@@ -12,7 +12,7 @@ from markupsafe import Markup
 from database import engine, Base, get_db
 import models
 import auth
-from routers import auth as auth_router, leagues, predictions, sweepstake, matches, admin, bracket, standings, profile, markets
+from routers import auth as auth_router, leagues, predictions, sweepstake, matches, admin, bracket, standings, profile, markets, teams
 from services import results_fetcher
 
 # ── Flag image helpers ──────────────────────────────────────
@@ -96,6 +96,7 @@ app.include_router(bracket.router)
 app.include_router(standings.router)
 app.include_router(profile.router)
 app.include_router(markets.router)
+app.include_router(teams.router)
 
 
 @app.get("/")

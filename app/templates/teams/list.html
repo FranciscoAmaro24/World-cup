@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Teams — FIFA World Cup 2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div class="page-header">
+    <div>
+      <h1>All 48 Teams</h1>
+      <p class="page-header-sub">Click a team to view their squad</p>
+    </div>
+  </div>
+
+  {% for letter, teams in groups.items() %}
+  <div style="margin-bottom:2rem">
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
+      <span class="group-badge gb-{{ letter }}">Group {{ letter }}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.75rem">
+      {% for team in teams %}
+      <a href="/teams/{{ team.code }}" style="text-decoration:none">
+        <div class="card" style="padding:.9rem 1rem;display:flex;align-items:center;gap:.75rem;
+             transition:border-color .15s,transform .15s;border:1px solid var(--border);
+             {% if team.eliminated %}opacity:.55{% endif %}"
+             onmouseover="this.style.borderColor='var(--primary)';this.style.transform='translateY(-1px)'"
+             onmouseout="this.style.borderColor='var(--border)';this.style.transform=''">
+          <img src="{{ flag_url(team.code) }}" class="flag flag-md" alt="{{ team.name }}">
+          <div>
+            <div style="font-weight:600;font-size:.9rem;color:var(--text-1)">{{ team.name }}</div>
+            <div style="font-size:.7rem;color:var(--text-3)">{{ team.code }}
+              {% if team.eliminated %}<span style="color:#f87171">· Eliminated</span>{% endif %}
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+</div>
+{% endblock %}

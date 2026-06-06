@@ -55,6 +55,24 @@
     </div>
   </div>
 
+  <!-- Squad fetcher -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+      <span class="font-bold text-sm">👕 Squad Data (Wikipedia)</span>
+      <form action="/admin/fetch-squads" method="post" style="margin:0">
+        <button type="submit" class="btn btn-secondary btn-sm">Fetch All Squads</button>
+      </form>
+    </div>
+    <div class="card-body">
+      <p class="text-sm text-sub" style="margin:0">Pulls 1,244 players across 48 teams from the 2026 FIFA World Cup squads Wikipedia article. Safe to re-run — replaces existing data per team.</p>
+      {% if request.query_params.get('msg', '').startswith('squads_') %}
+      <div class="tag tag-green" style="margin-top:.5rem;display:inline-block">
+        ✓ {{ request.query_params.get('msg', '').split('_')[1] }} players imported
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
   <!-- Auto-fetch status -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">

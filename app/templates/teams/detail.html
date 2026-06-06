@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}{{ team.flag_emoji }} {{ team.name }} Squad — FIFA World Cup 2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <!-- Team header -->
+  <div class="page-header" style="align-items:flex-start">
+    <div style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap">
+      <img src="{{ flag_url(team.code) }}" alt="{{ team.name }}"
+           style="width:72px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.4)">
+      <div>
+        <h1 style="margin-bottom:.25rem">{{ team.flag_emoji }} {{ team.name }}</h1>
+        <p class="page-header-sub">
+          Group {{ team.group_letter }}
+          {% if team.eliminated %}
+          · <span style="color:#f87171">Eliminated ({{ team.stage_reached | upper }})</span>
+          {% elif team.stage_reached != 'group' %}
+          · <span style="color:#4ade80">Reached {{ team.stage_reached | upper }}</span>
+          {% endif %}
+          {% if player_count %}· {{ player_count }} players{% endif %}
+        </p>
+      </div>
+    </div>
+    <a href="/teams" class="btn btn-secondary btn-sm" style="white-space:nowrap">← All Teams</a>
+  </div>
+
+  {% if not by_pos %}
+  <!-- No squad data yet -->
+  <div class="card">
+    <div class="card-body empty-state">
+      <div class="empty-state-icon">👕</div>
+      <h3>Squad not available yet</h3>
+      <p>An admin can fetch all squads from Wikipedia via the admin panel.</p>
+    </div>
+  </div>
+
+  {% else %}
+  <!-- Squad table -->
+  <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
+    {% for pos, players in by_pos.items() %}
+    <div style="padding:.5rem 1.25rem .25rem;background:var(--bg-2);border-bottom:1px solid var(--border)">
+      <span style="font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)">
+        {{ pos_label[pos] }} ({{ players | length }})
+      </span>
+    </div>
+    <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:.84rem">
+      <colgroup>
+        <col style="width:38px">
+        <col style="min-width:160px">
+        <col style="width:90px">
+        <col style="width:90px">
+        <col style="width:70px">
+        <col style="width:70px">
+        <col style="min-width:140px">
+      </colgroup>
+      <tbody>
+        {% for p in players %}
+        <tr style="border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none{% endif %}"
+            onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">
+          <td style="padding:.55rem .75rem;text-align:center;color:var(--text-3);font-size:.75rem;font-weight:700">
+            {% if p.squad_number %}{{ p.squad_number }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.55rem .75rem;font-weight:600;color:var(--text-1)">{{ p.name }}</td>
+          <td style="padding:.55rem .5rem;color:var(--text-2);font-size:.78rem">
+            {% if p.date_of_birth %}{{ p.date_of_birth }}{% else %}—{% endif %}
+          </td>
+          <td style="padding:.55rem .5rem;color:var(--text-2);font-size:.78rem;text-align:center">
+            {% if p.caps %}{{ p.caps }} caps{% else %}—{% endif %}
+          </td>
+          <td style="padding:.55rem .5rem;text-align:center;font-size:.78rem;
+               color:{% if p.goals > 0 %}#4ade80{% else %}var(--text-3){% endif %};font-weight:{% if p.goals > 0 %}700{% else %}400{% endif %}">
+            {% if p.goals %}{{ p.goals }}g{% else %}—{% endif %}
+          </td>
+          <td style="padding:.55rem .5rem;color:var(--text-2);font-size:.78rem">
+            {% if p.club %}
+              {% if p.club_country %}
+              <img src="{{ flag_url(p.club_country) }}" style="width:14px;height:auto;vertical-align:middle;margin-right:3px" alt="">
+              {% endif %}
+              {{ p.club }}
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Group matches for this team -->
+  {% if matches %}
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+      <span class="font-bold text-sm">Fixtures & Results</span>
+    </div>
+    <div class="card-body" style="padding:0">
+      {% for m in matches %}
+      <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;
+           border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none{% endif %};
+           flex-wrap:wrap">
+        <div style="font-size:.7rem;color:var(--text-3);min-width:80px">
+          {{ m.match_date.strftime('%d %b %H:%M') }}
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:180px;justify-content:flex-end">
+          {% if m.home_team %}
+          <img src="{{ flag_url(m.home_team.code) }}" class="flag flag-xs" alt="">
+          <span style="font-weight:{% if m.home_team_id == team.id %}700{% else %}400{% endif %};
+                color:{% if m.home_team_id == team.id %}var(--text-1){% else %}var(--text-2){% endif %}">
+            {{ m.home_team.name }}
+          </span>
+          {% else %}
+          <span style="color:var(--text-3)">{{ m.home_team_tbd or 'TBD' }}</span>
+          {% endif %}
+        </div>
+        <div style="font-weight:700;font-size:.95rem;min-width:60px;text-align:center;
+             color:{% if m.status == 'finished' %}#4ade80{% else %}var(--text-3){% endif %}">
+          {% if m.status == 'finished' %}
+          {{ m.home_score }} – {{ m.away_score }}
+          {% else %}
+          vs
+          {% endif %}
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:180px">
+          {% if m.away_team %}
+          <span style="font-weight:{% if m.away_team_id == team.id %}700{% else %}400{% endif %};
+                color:{% if m.away_team_id == team.id %}var(--text-1){% else %}var(--text-2){% endif %}">
+            {{ m.away_team.name }}
+          </span>
+          <img src="{{ flag_url(m.away_team.code) }}" class="flag flag-xs" alt="">
+          {% else %}
+          <span style="color:var(--text-3)">{{ m.away_team_tbd or 'TBD' }}</span>
+          {% endif %}
+        </div>
+        <div style="font-size:.7rem;color:var(--text-3);text-align:right;min-width:60px">
+          {{ m.round | upper }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}
