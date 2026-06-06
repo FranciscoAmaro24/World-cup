@@ -51,8 +51,10 @@ body::before {
     radial-gradient(ellipse 55% 50% at 50% 60%,  rgba(34,197,94,.10)  0%, transparent 65%),
     radial-gradient(ellipse 55% 45% at 95% 95%,  rgba(245,166,35,.15) 0%, transparent 60%),
     radial-gradient(ellipse 45% 40% at 10% 90%,  rgba(168,85,247,.12) 0%, transparent 60%),
-    radial-gradient(circle, rgba(255,255,255,.055) 1px, transparent 1px);
-  background-size: 100% 100%,100% 100%,100% 100%,100% 100%,100% 100%, 26px 26px;
+    /* sparse cross/plus pattern */
+    linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+  background-size: 100% 100%,100% 100%,100% 100%,100% 100%,100% 100%, 80px 80px, 80px 80px;
   animation: bgDrift 16s ease-in-out infinite alternate;
 }
 
