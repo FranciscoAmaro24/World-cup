@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 import os
 import models
 
-SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE-THIS-TO-A-LONG-RANDOM-SECRET-IN-PRODUCTION")
+SECRET_KEY = os.getenv("SECRET_KEY", "")
+if not SECRET_KEY or SECRET_KEY == "CHANGE-THIS-TO-A-LONG-RANDOM-SECRET-IN-PRODUCTION":
+    raise RuntimeError("SECRET_KEY env var is not set. Run: export SECRET_KEY=$(openssl rand -hex 32)")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 7
 

@@ -316,8 +316,8 @@ async def place_bet(
         return RedirectResponse(f"/markets/{market_id}", status_code=303)
 
     form = await request.form()
-    option_id = int(form.get("option_id", 0))
     try:
+        option_id = int(form.get("option_id", 0))
         amount = round(float(form.get("amount", 0)), 2)
     except (ValueError, TypeError):
         return RedirectResponse(f"/markets/{market_id}?err=invalid", status_code=303)
