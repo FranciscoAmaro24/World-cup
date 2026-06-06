@@ -22,7 +22,7 @@ EXPOSE 8000
 
 # /data is the Fly volume mount — DB lives there, uploads symlinked at startup
 CMD ["sh", "-c", "\
-  mkdir -p /data/uploads/avatars /data/uploads/leagues /data/uploads/markets && \
+  mkdir -p /data/uploads/avatars /data/uploads/leagues /data/uploads/markets /data/uploads/videos && \
   ln -sfn /data/uploads /app/app/static/uploads && \
   python seed_data.py && \
   uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 1"]

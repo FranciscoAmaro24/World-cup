@@ -8,33 +8,48 @@
     <p class="page-header-sub">Enter results or let the auto-fetcher do it</p>
   </div>
 
-  <!-- Background video -->
+  <!-- Background video library -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
       <span class="font-bold text-sm">Background Video</span>
-      {% if bg_video_exists %}
-      <span class="tag tag-green">Uploaded</span>
+      {% if active_video %}
+      <span class="tag tag-green">Active: {{ active_video }}</span>
       {% else %}
-      <span class="tag tag-gray">Not uploaded</span>
+      <span class="tag tag-gray">None active</span>
       {% endif %}
     </div>
-    <div class="card-body" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
-      {% if bg_video_exists %}
-      <p class="text-sm text-sub" style="flex:1">Video is live — users can play it by double-clicking the logo.</p>
-      <form action="/admin/video/remove" method="post" style="margin:0">
-        <button type="submit" class="btn btn-danger btn-sm"
-                onclick="return confirm('Remove background video?')">Remove video</button>
-      </form>
+    <div class="card-body">
+      {% if bg_videos %}
+      <div style="display:flex;flex-direction:column;gap:.5rem;margin-bottom:1rem">
+        {% for v in bg_videos %}
+        <div class="video-lib-row {% if v == active_video %}video-lib-active{% endif %}"
+             style="display:flex;align-items:center;gap:.75rem;padding:.6rem .75rem;background:var(--bg-3);border-radius:6px">
+          <span class="text-sm" style="flex:1">{{ v }}</span>
+          {% if v == active_video %}
+          <span class="tag tag-green" style="font-size:.6rem">Active</span>
+          {% else %}
+          <form action="/admin/video/select" method="post" style="margin:0">
+            <input type="hidden" name="filename" value="{{ v }}">
+            <button type="submit" class="btn btn-secondary btn-sm">Set active</button>
+          </form>
+          {% endif %}
+          <form action="/admin/video/delete" method="post" style="margin:0"
+                onsubmit="return confirm('Delete {{ v }}?')">
+            <input type="hidden" name="filename" value="{{ v }}">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
       {% else %}
-      <p class="text-sm text-sub" style="flex:1">Upload an MP4 to enable the background video easter egg (logo double-click).</p>
+      <p class="text-sm text-sub" style="margin-bottom:1rem">No videos uploaded yet. Upload an MP4 to enable the background video easter egg.</p>
       {% endif %}
+
       <form action="/admin/video/upload" method="post" enctype="multipart/form-data"
             id="videoUploadForm" style="display:flex;align-items:center;gap:.75rem">
         <input type="file" name="video" id="videoFileInput" accept="video/mp4" style="display:none">
         <button type="button" class="btn btn-secondary btn-sm"
-                onclick="document.getElementById('videoFileInput').click()">
-          {% if bg_video_exists %}Replace video{% else %}Upload MP4{% endif %}
-        </button>
+                onclick="document.getElementById('videoFileInput').click()">Upload new MP4</button>
         <span id="videoFileName" class="text-xs text-sub"></span>
       </form>
     </div>

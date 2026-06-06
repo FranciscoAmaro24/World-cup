@@ -6,7 +6,33 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import os
 
-BG_VIDEO_PATH = os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "bg_video.mp4")
+UPLOAD_BASE   = os.path.join(os.path.dirname(__file__), "..", "static", "uploads")
+VIDEOS_DIR    = os.path.join(UPLOAD_BASE, "videos")
+ACTIVE_FILE   = os.path.join(UPLOAD_BASE, "active_video.txt")   # stores filename of active video
+# Keep old path as alias so existing code still works
+BG_VIDEO_PATH = os.path.join(UPLOAD_BASE, "bg_video.mp4")
+
+
+def _list_videos() -> list[str]:
+    """Return sorted list of uploaded video filenames."""
+    os.makedirs(VIDEOS_DIR, exist_ok=True)
+    return sorted(f for f in os.listdir(VIDEOS_DIR) if f.lower().endswith(".mp4"))
+
+
+def _active_video() -> str | None:
+    """Return filename of the currently active video, or None."""
+    try:
+        name = open(ACTIVE_FILE).read().strip()
+        if name and os.path.exists(os.path.join(VIDEOS_DIR, name)):
+            return name
+    except OSError:
+        pass
+    return None
+
+
+def _active_video_url() -> str | None:
+    name = _active_video()
+    return f"/static/uploads/videos/{name}" if name else None
 
 from database import get_db
 import models
@@ -55,7 +81,8 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
             "round_labels": ROUND_LABELS,
             "last_fetch": results_fetcher.last_fetch,
             "last_error": results_fetcher.last_error,
-            "bg_video_exists": os.path.exists(BG_VIDEO_PATH),
+            "bg_videos": _list_videos(),
+            "active_video": _active_video(),
         },
     )
 
@@ -240,25 +267,56 @@ async def upload_bg_video(
     user = _require_admin(request, db)
     if not user:
         return RedirectResponse("/", status_code=303)
-    if not (video.filename or "").lower().endswith(".mp4"):
+    filename = (video.filename or "").strip()
+    if not filename.lower().endswith(".mp4"):
         return RedirectResponse("/admin?err=not_mp4", status_code=303)
-    os.makedirs(os.path.dirname(BG_VIDEO_PATH), exist_ok=True)
-    with open(BG_VIDEO_PATH, "wb") as f:
-        while chunk := await video.read(1024 * 1024):  # 1 MB chunks
+    # Sanitise filename
+    filename = "".join(c for c in filename if c.isalnum() or c in "-_. ").strip() or "video.mp4"
+    os.makedirs(VIDEOS_DIR, exist_ok=True)
+    dest = os.path.join(VIDEOS_DIR, filename)
+    with open(dest, "wb") as f:
+        while chunk := await video.read(1024 * 1024):
             f.write(chunk)
+    # Auto-set as active
+    open(ACTIVE_FILE, "w").write(filename)
     return RedirectResponse("/admin?msg=video_uploaded", status_code=303)
 
 
-@router.post("/video/remove")
-async def remove_bg_video(request: Request, db: Session = Depends(get_db)):
+@router.post("/video/select")
+async def select_bg_video(
+    request: Request,
+    filename: str = Form(...),
+    db: Session = Depends(get_db),
+):
     user = _require_admin(request, db)
     if not user:
         return RedirectResponse("/", status_code=303)
+    if os.path.exists(os.path.join(VIDEOS_DIR, filename)):
+        open(ACTIVE_FILE, "w").write(filename)
+    return RedirectResponse("/admin?msg=video_selected", status_code=303)
+
+
+@router.post("/video/delete")
+async def delete_bg_video(
+    request: Request,
+    filename: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if not user:
+        return RedirectResponse("/", status_code=303)
+    path = os.path.join(VIDEOS_DIR, filename)
     try:
-        os.remove(BG_VIDEO_PATH)
+        os.remove(path)
     except OSError:
         pass
-    return RedirectResponse("/admin?msg=video_removed", status_code=303)
+    # If deleted video was active, clear active
+    if _active_video() == filename:
+        try:
+            os.remove(ACTIVE_FILE)
+        except OSError:
+            pass
+    return RedirectResponse("/admin?msg=video_deleted", status_code=303)
 
 
 def _set_stage(db, team_id: int, round_code: str, winner: bool = False):

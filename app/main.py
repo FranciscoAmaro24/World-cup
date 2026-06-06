@@ -83,6 +83,9 @@ templates.env.globals["avatar_html"] = avatar_html
 templates.env.globals["AVATAR_COLORS"] = models.AVATAR_COLORS
 templates.env.globals["AVATAR_ICONS"] = models.AVATAR_ICONS
 
+from routers.admin import _active_video_url
+templates.env.globals["bg_video_url"] = _active_video_url
+
 app.include_router(auth_router.router)
 app.include_router(leagues.router)
 app.include_router(predictions.router)
