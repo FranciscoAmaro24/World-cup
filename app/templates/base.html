@@ -52,6 +52,11 @@
       <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
     </div>
 
+    <!-- Hamburger (mobile only) -->
+    <button class="nav-hamburger" id="hamburgerBtn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+
     <div class="nav-right">
       {% if user %}
         <a href="/profile/{{ user.username }}" class="avatar-chip" style="text-decoration:none">
@@ -70,6 +75,23 @@
       {% endif %}
     </div>
   </nav>
+
+  <!-- Mobile nav drawer -->
+  <div class="mobile-nav" id="mobileNav">
+    <button class="mobile-nav-close" id="mobileNavClose">✕</button>
+    <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Home</a>
+    <a href="/fixtures" class="{% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
+    <a href="/knockout" class="{% if '/knockout' in request.url.path %}active{% endif %}">Bracket</a>
+    <a href="/standings" class="{% if '/standings' in request.url.path %}active{% endif %}">Standings</a>
+    <a href="/leagues" class="{% if '/leagues' in request.url.path %}active{% endif %}">Leagues</a>
+    <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
+    {% if user %}
+    <a href="/profile/{{ user.username }}" style="font-size:1rem;color:var(--gold)">Profile</a>
+    {% else %}
+    <a href="/login" style="font-size:1rem">Log In</a>
+    <a href="/register" style="font-size:1rem;color:var(--gold)">Sign Up</a>
+    {% endif %}
+  </div>
 
   <main>{% block content %}{% endblock %}</main>
 
@@ -94,6 +116,15 @@
            font-size:.8rem;z-index:10;backdrop-filter:blur(4px)">✕ Close video</button>
   </div>
 
+  <script>
+  // Mobile nav
+  const hamburger   = document.getElementById('hamburgerBtn');
+  const mobileNav   = document.getElementById('mobileNav');
+  const mobileClose = document.getElementById('mobileNavClose');
+  hamburger?.addEventListener('click', () => mobileNav.classList.add('open'));
+  mobileClose?.addEventListener('click', () => mobileNav.classList.remove('open'));
+  mobileNav?.querySelectorAll('a').forEach(a => a.addEventListener('click', () => mobileNav.classList.remove('open')));
+  </script>
   <script src="/static/js/app.js"></script>
   <script>
   let playing = false, bgOn = false;

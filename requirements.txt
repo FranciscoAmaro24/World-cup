@@ -8,3 +8,5 @@ python-multipart==0.0.12
 aiofiles==24.1.0
 httpx==0.28.0
 Pillow==11.2.1
+pytest
+httpx

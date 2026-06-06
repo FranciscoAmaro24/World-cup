@@ -675,21 +675,112 @@ footer { margin-top: 4rem; padding: 2rem; border-top: 1px solid var(--border); t
 .text-red-soft { color: #f87171; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
+/* ─── HAMBURGER BUTTON (mobile only) ───────────────────────── */
+.nav-hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: .4rem;
+  margin-left: auto;
+  background: none;
+  border: none;
+}
+.nav-hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--text-1);
+  border-radius: 2px;
+  transition: all .2s;
+}
+
+/* Mobile drawer */
+.mobile-nav {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0,0,0,.85);
+  backdrop-filter: blur(10px);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+.mobile-nav.open { display: flex; }
+.mobile-nav a {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-1);
+  transition: color .15s;
+}
+.mobile-nav a:hover, .mobile-nav a.active { color: #fff; }
+.mobile-nav-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: none;
+  border: none;
+  color: var(--text-2);
+  font-size: 1.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* ─── RESPONSIVE ─────────────────────────────────────────── */
 @media (max-width: 768px) {
   .navbar { padding: 0 1rem; }
   .nav-links { display: none; }
-  .container { padding: 0 1rem; }
-  .league-grid { grid-template-columns: 1fr; }
-  .score-predictor { gap: 1rem; }
-  .score-input { width: 65px; height: 65px; font-size: 2rem; }
-  .hero-title { font-size: 1.75rem; }
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .nav-hamburger { display: flex; }
+  .nav-right .btn-nav { display: none; } /* hide login/logout from nav on mobile */
+
+  .container { padding: 0 .9rem; }
+  .page-content { padding: 1.25rem 0; }
+  .page-header { padding: 1rem 0 .9rem; }
+  .page-header h1 { font-size: 1.25rem; }
+
+  /* Grids → single column */
+  .league-grid, .market-grid, .match-grid,
+  .grid-2, .grid-3, .standings-grid { grid-template-columns: 1fr; }
   .form-row { grid-template-columns: 1fr; }
-  .countdown-val { width: 55px; font-size: 2rem; }
-  .standings-grid { grid-template-columns: 1fr; }
-  .profile-header { flex-direction: column; align-items: flex-start; }
-  .fixture-team-name { font-size: .8rem; }
-  .fixture-badge-col { width: 56px; }
+
+  /* Hero */
+  .hero-title { font-size: 1.6rem; }
+  .hero-sub { font-size: .85rem; }
+  .countdown-val { width: 52px; font-size: 1.8rem; }
+  .countdown { gap: .75rem; }
+
+  /* Fixtures */
+  .fixture-team-name { font-size: .78rem; }
+  .fixture-badge-col { width: 48px; }
+  .fixture-time-box { font-size: .85rem; padding: .2rem .5rem; min-width: 60px; }
+
+  /* Score predictor */
+  .score-predictor { gap: .75rem; }
+  .score-input { width: 60px; height: 60px; font-size: 1.8rem; }
+
+  /* Profile */
+  .profile-header { flex-direction: column; align-items: flex-start; gap: .75rem; }
+
+  /* Cards */
+  .card-header { flex-wrap: wrap; gap: .4rem; }
+
+  /* Bracket — stays horizontally scrollable, just shrink cards slightly */
+  :root { --ko-card-w: 155px; --ko-col-gap: 32px; }
+
+  /* Tables — shrink padding */
+  .data-table th, .data-table td { padding: .5rem .6rem; font-size: .78rem; }
+  .leaderboard-table th, .leaderboard-table td { padding: .5rem .6rem; font-size: .8rem; }
+
+  /* Markets bet option list */
+  .bet-option-rate { display: none; }
+
+  /* Ko labels */
+  .ko-hdr { font-size: .55rem; }
+  .ko-headers { padding-bottom: .5rem; }
 }
 
 /* ─── MATCH CARDS (predict page + league detail) ─────────── */
