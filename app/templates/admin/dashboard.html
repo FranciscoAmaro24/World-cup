@@ -8,6 +8,38 @@
     <p class="page-header-sub">Enter results or let the auto-fetcher do it</p>
   </div>
 
+  <!-- Background video -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header">
+      <span class="font-bold text-sm">Background Video</span>
+      {% if bg_video_exists %}
+      <span class="tag tag-green">Uploaded</span>
+      {% else %}
+      <span class="tag tag-gray">Not uploaded</span>
+      {% endif %}
+    </div>
+    <div class="card-body" style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+      {% if bg_video_exists %}
+      <p class="text-sm text-sub" style="flex:1">Video is live — users can play it by double-clicking the logo.</p>
+      <form action="/admin/video/remove" method="post" style="margin:0">
+        <button type="submit" class="btn btn-danger btn-sm"
+                onclick="return confirm('Remove background video?')">Remove video</button>
+      </form>
+      {% else %}
+      <p class="text-sm text-sub" style="flex:1">Upload an MP4 to enable the background video easter egg (logo double-click).</p>
+      {% endif %}
+      <form action="/admin/video/upload" method="post" enctype="multipart/form-data"
+            id="videoUploadForm" style="display:flex;align-items:center;gap:.75rem">
+        <input type="file" name="video" id="videoFileInput" accept="video/mp4" style="display:none">
+        <button type="button" class="btn btn-secondary btn-sm"
+                onclick="document.getElementById('videoFileInput').click()">
+          {% if bg_video_exists %}Replace video{% else %}Upload MP4{% endif %}
+        </button>
+        <span id="videoFileName" class="text-xs text-sub"></span>
+      </form>
+    </div>
+  </div>
+
   <!-- Auto-fetch status -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
@@ -260,5 +292,14 @@ if (window.location.hash === '#knockout') {
   document.querySelector('[data-tab="knockout"]').classList.add('active');
   document.querySelector('[data-tab-content="knockout"]').style.display = '';
 }
+
+// Video upload: show filename then auto-submit
+document.getElementById('videoFileInput')?.addEventListener('change', function() {
+  if (!this.files.length) return;
+  const name = this.files[0].name;
+  const size = (this.files[0].size / 1024 / 1024).toFixed(0);
+  document.getElementById('videoFileName').textContent = name + ' (' + size + ' MB) — uploading…';
+  document.getElementById('videoUploadForm').submit();
+});
 </script>
 {% endblock %}

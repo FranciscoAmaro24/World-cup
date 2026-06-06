@@ -1,10 +1,12 @@
 import asyncio
 from datetime import datetime
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
 from fastapi.responses import RedirectResponse
 
 from sqlalchemy.orm import Session
 import os
+
+BG_VIDEO_PATH = os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "bg_video.mp4")
 
 from database import get_db
 import models
@@ -53,6 +55,7 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
             "round_labels": ROUND_LABELS,
             "last_fetch": results_fetcher.last_fetch,
             "last_error": results_fetcher.last_error,
+            "bg_video_exists": os.path.exists(BG_VIDEO_PATH),
         },
     )
 
@@ -226,6 +229,36 @@ async def manual_fetch(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/", status_code=303)
     asyncio.create_task(results_fetcher.fetch_now(db))
     return RedirectResponse("/admin", status_code=303)
+
+
+@router.post("/video/upload")
+async def upload_bg_video(
+    request: Request,
+    video: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    user = _require_admin(request, db)
+    if not user:
+        return RedirectResponse("/", status_code=303)
+    if not (video.filename or "").lower().endswith(".mp4"):
+        return RedirectResponse("/admin?err=not_mp4", status_code=303)
+    os.makedirs(os.path.dirname(BG_VIDEO_PATH), exist_ok=True)
+    with open(BG_VIDEO_PATH, "wb") as f:
+        while chunk := await video.read(1024 * 1024):  # 1 MB chunks
+            f.write(chunk)
+    return RedirectResponse("/admin?msg=video_uploaded", status_code=303)
+
+
+@router.post("/video/remove")
+async def remove_bg_video(request: Request, db: Session = Depends(get_db)):
+    user = _require_admin(request, db)
+    if not user:
+        return RedirectResponse("/", status_code=303)
+    try:
+        os.remove(BG_VIDEO_PATH)
+    except OSError:
+        pass
+    return RedirectResponse("/admin?msg=video_removed", status_code=303)
 
 
 def _set_stage(db, team_id: int, round_code: str, winner: bool = False):

@@ -43,22 +43,20 @@
       </div>
     </a>
 
-    <!-- Hidden YouTube audio player (background music) -->
-    <iframe id="ytAudio"
-      src="about:blank"
-      allow="autoplay; encrypted-media"
-      style="display:none" tabindex="-1" aria-hidden="true"></iframe>
-
-    <!-- Full-screen player modal (double-click) -->
-    <div id="ytModal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.92);align-items:center;justify-content:center;flex-direction:column">
-      <div style="position:relative;width:min(900px,95vw);aspect-ratio:16/9">
-        <iframe id="ytFrame" width="100%" height="100%"
-          src="about:blank"
-          allow="autoplay; encrypted-media"
-          allowfullscreen
-          style="border:none;border-radius:12px;display:block"></iframe>
-      </div>
-      <button onclick="closeModal()" style="margin-top:1.25rem;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;padding:.5rem 1.5rem;border-radius:6px;cursor:pointer;font-size:.85rem">✕ Close</button>
+    <!-- Full-page background video (double-click) -->
+    <div id="ytBg" style="display:none;position:fixed;inset:0;z-index:50;pointer-events:none">
+      <video id="bgVideo" loop playsinline
+        src="/static/uploads/bg_video.mp4"
+        style="position:absolute;top:50%;left:50%;
+               width:100vw;height:56.25vw;
+               min-height:100vh;min-width:177.78vh;
+               transform:translate(-50%,-50%);
+               object-fit:cover;pointer-events:none"></video>
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.45)"></div>
+      <button onclick="closeBg()" style="pointer-events:auto;position:absolute;top:1rem;right:1rem;
+             background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.25);
+             color:#fff;border-radius:6px;padding:.35rem .75rem;cursor:pointer;
+             font-size:.8rem;z-index:10;backdrop-filter:blur(4px)">✕ Close video</button>
     </div>
 
     <div class="nav-links">
@@ -97,52 +95,62 @@
 
   <script src="/static/js/app.js"></script>
   <script>
-  const YT_URL = 'https://www.youtube.com/embed/vrY1THC_NQE';
-  let playing = false;
+  let playing = false, bgOn = false;
 
-  const logoBtn   = document.getElementById('logoBtn');
-  const playIcon  = document.getElementById('playIcon');
-  const ytAudio   = document.getElementById('ytAudio');
-  const ytModal   = document.getElementById('ytModal');
-  const ytFrame   = document.getElementById('ytFrame');
+  const logoBtn  = document.getElementById('logoBtn');
+  const playIcon = document.getElementById('playIcon');
+  const ytBg     = document.getElementById('ytBg');
+  const bgVideo  = document.getElementById('bgVideo');
 
   function startAudio() {
-    ytAudio.src = YT_URL + '?autoplay=1&loop=1&playlist=vrY1THC_NQE';
-    playing = true;
+    bgVideo.muted = false;
+    bgVideo.play().catch(() => { bgVideo.muted = true; bgVideo.play(); });
+    ytBg.style.display = 'block';
+    bgOn = true; playing = true;
     playIcon.textContent = '⏸';
     playIcon.style.opacity = '0';
   }
-  function stopAudio() {
-    ytAudio.src = 'about:blank';
-    playing = false;
+
+  function stopAll() {
+    bgVideo.pause();
+    bgVideo.currentTime = 0;
+    ytBg.style.display = 'none';
+    bgOn = false; playing = false;
     playIcon.textContent = '▶';
     playIcon.style.opacity = '';
   }
 
-  // Single click = toggle play/pause
+  function openBg() {
+    bgVideo.muted = false;
+    bgVideo.play().catch(() => { bgVideo.muted = true; bgVideo.play(); });
+    ytBg.style.display = 'block';
+    bgOn = true; playing = true;
+    playIcon.textContent = '⏸';
+  }
+
+  // Single click = play/pause audio + background
   logoBtn?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (playing) { stopAudio(); } else { startAudio(); }
+    if (bgOn && !playing) {
+      bgVideo.play(); playing = true; playIcon.textContent = '⏸';
+    } else if (bgOn && playing) {
+      bgVideo.pause(); playing = false; playIcon.textContent = '▶';
+    } else {
+      startAudio();
+    }
   });
 
-  // Show/hide overlay on hover
   logoBtn?.addEventListener('mouseenter', () => { playIcon.style.opacity = '1'; });
-  logoBtn?.addEventListener('mouseleave', () => { if (playing) playIcon.style.opacity = '0'; });
+  logoBtn?.addEventListener('mouseleave', () => { if (playing || bgOn) playIcon.style.opacity = '0'; });
 
-  // Double click = open full-screen modal player
+  // Double click = toggle full background video (only if file exists)
   logoBtn?.addEventListener('dblclick', function(e) {
     e.preventDefault();
-    stopAudio();
-    ytFrame.src = YT_URL + '?autoplay=1';
-    ytModal.style.display = 'flex';
+    if (bgOn) { stopAll(); }
+    else if (bgVideo.src && !bgVideo.src.endsWith('about:blank')) { openBg(); }
   });
 
-  function closeModal() {
-    ytFrame.src = 'about:blank';
-    ytModal.style.display = 'none';
-  }
-  ytModal?.addEventListener('click', function(e) { if (e.target === this) closeModal(); });
-  document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && bgOn) stopAll(); });
   </script>
   {% block scripts %}{% endblock %}
 </body>
