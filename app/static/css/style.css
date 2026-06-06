@@ -87,26 +87,9 @@ a { color: inherit; text-decoration: none; }
 img { display: block; }
 
 /* ── When background video is active ──────────────────────── */
+/* Only hide the gradient blobs — cards stay as they are */
 body.video-playing::before,
 body.video-playing::after { opacity: 0; }
-
-body.video-playing .card,
-body.video-playing .league-card,
-body.video-playing .market-card,
-body.video-playing .fixture-list,
-body.video-playing .fixture-row,
-body.video-playing .hero,
-body.video-playing footer {
-  background: rgba(0,0,0,.55) !important;
-  backdrop-filter: blur(6px) !important;
-  -webkit-backdrop-filter: blur(6px) !important;
-  border-color: rgba(255,255,255,.07) !important;
-}
-body.video-playing .card-header,
-body.video-playing .card-body { background: transparent !important; }
-body.video-playing .navbar   { background: rgba(0,0,0,.65) !important; }
-body.video-playing .topbar   { background: rgba(0,0,0,.7)  !important; }
-body.video-playing .fixture-day-header { background: rgba(0,0,0,.5) !important; }
 
 /* ─── FLAGS ──────────────────────────────────────────────── */
 .flag { object-fit: cover; border-radius: 2px; flex-shrink: 0; }
