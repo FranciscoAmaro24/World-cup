@@ -69,7 +69,9 @@ def _migrate_db():
     cur = conn.cursor()
     migrations = [
         ("users", "profile_bg", "VARCHAR(100)"),
+        ("users", "profile_banner_url", "VARCHAR(200)"),
         ("league_members", "nickname", "VARCHAR(50)"),
+        ("leagues", "logo_url", "VARCHAR(200)"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]

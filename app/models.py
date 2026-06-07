@@ -24,7 +24,8 @@ class User(Base):
     avatar_color = Column(String(10), default="#1a47c0")
     avatar_icon = Column(String(6), default="⚽")
     avatar_img_url = Column(String(200), nullable=True)
-    profile_bg = Column(String(100), nullable=True)   # CSS gradient/color for profile hero
+    profile_bg = Column(String(100), nullable=True)     # CSS gradient/color for whole-app background
+    profile_banner_url = Column(String(200), nullable=True)  # banner image on profile page
     favorite_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -57,6 +58,7 @@ class League(Base):
     points_bracket_quarter = Column(Integer, default=1)
 
     # Sweepstake settings
+    logo_url = Column(String(200), nullable=True)          # small square league logo image
     sweepstake_enabled = Column(Boolean, default=False)
     sweepstake_buy_in = Column(Float, default=10.0)
     sweepstake_teams_per_person = Column(Integer, default=1)

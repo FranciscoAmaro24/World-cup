@@ -33,7 +33,11 @@
   <div class="page-header flex items-center justify-between">
     <div>
       <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">
+        {% if league.logo_url %}
+        <img src="{{ league.logo_url }}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0" alt="{{ league.name }}">
+        {% else %}
         <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem">{{ league.badge_emoji }}</div>
+        {% endif %}
         <h1>{{ league.name }}</h1>
       </div>
       {% if league.description %}

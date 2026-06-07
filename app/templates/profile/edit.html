@@ -15,6 +15,24 @@
     <form action="/profile/avatar" method="post" enctype="multipart/form-data" id="avatarForm" style="display:none">
       <input type="file" id="avatarFileInput" name="avatar" accept="image/jpeg,image/png,image/webp,image/gif">
     </form>
+    <!-- Banner upload -->
+    <form action="/profile/banner" method="post" enctype="multipart/form-data" id="bannerForm" style="display:none">
+      <input type="file" id="bannerFileInput" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
+    </form>
+    {% if user.profile_banner_url %}
+    <div style="margin:-1.5rem -1.5rem 1rem;height:100px;overflow:hidden;position:relative;cursor:pointer"
+         onclick="document.getElementById('bannerFileInput').click()">
+      <img src="{{ user.profile_banner_url }}" style="width:100%;height:100%;object-fit:cover" alt="">
+      <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;
+           font-size:.7rem;font-weight:700;color:#fff;opacity:0;transition:opacity .15s" id="bannerOverlay">✏ Change Banner</div>
+    </div>
+    {% else %}
+    <div style="margin:-1.5rem -1.5rem .75rem;height:50px;background:var(--bg-3);display:flex;align-items:center;
+         justify-content:center;cursor:pointer;border-bottom:1px solid var(--border)"
+         onclick="document.getElementById('bannerFileInput').click()">
+      <span style="font-size:.72rem;color:var(--text-3)">+ Add profile banner image</span>
+    </div>
+    {% endif %}
 
     {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
     {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
@@ -72,7 +90,7 @@
       </div>
 
       <hr class="form-divider">
-      <p class="form-label">Profile Background</p>
+      <p class="form-label">App Background <span style="font-size:.65rem;color:var(--text-3);font-weight:400">(applies to all pages)</span></p>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1rem" id="bgPicker">
         {% set bgs = [
           ("none",         "Default",    "#111"),
@@ -103,10 +121,15 @@
 {% endblock %}
 {% block scripts %}
 <script>
-// Auto-submit avatar form when file chosen
 document.getElementById('avatarFileInput').addEventListener('change', function() {
   if (this.files.length) document.getElementById('avatarForm').submit();
 });
+document.getElementById('bannerFileInput').addEventListener('change', function() {
+  if (this.files.length) document.getElementById('bannerForm').submit();
+});
+const bannerWrap = document.querySelector('[id=bannerOverlay]')?.parentElement;
+bannerWrap?.addEventListener('mouseenter', () => document.getElementById('bannerOverlay').style.opacity = '1');
+bannerWrap?.addEventListener('mouseleave', () => document.getElementById('bannerOverlay').style.opacity = '0');
 // Hover overlay on avatar
 const wrap = document.getElementById('avatarPreviewWrap');
 const overlay = wrap?.querySelector('.avatar-upload-overlay');

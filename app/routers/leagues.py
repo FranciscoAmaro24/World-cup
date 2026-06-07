@@ -321,6 +321,44 @@ async def upload_banner(
     return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
 
 
+LOGO_UPLOAD_DIR = os.path.join(_uploads_base, "leagues", "logos")
+
+
+@router.post("/{league_id}/logo")
+async def upload_logo(
+    request: Request,
+    league_id: int,
+    logo: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league or league.admin_id != user.id:
+        return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
+    ext = os.path.splitext(logo.filename or "")[1].lower()
+    if ext not in ALLOWED_EXTS:
+        return RedirectResponse(f"/leagues/{league_id}/settings?err=type", status_code=303)
+    data = await logo.read()
+    if len(data) > MAX_SIZE:
+        return RedirectResponse(f"/leagues/{league_id}/settings?err=size", status_code=303)
+    data, ext = process_image(data, "avatar")   # square crop, 400×400
+    os.makedirs(LOGO_UPLOAD_DIR, exist_ok=True)
+    filename = f"{league_id}_{uuid.uuid4().hex[:8]}{ext}"
+    with open(os.path.join(LOGO_UPLOAD_DIR, filename), "wb") as f:
+        f.write(data)
+    if league.logo_url:
+        try:
+            old = os.path.join(LOGO_UPLOAD_DIR, os.path.basename(league.logo_url))
+            os.remove(old)
+        except OSError:
+            pass
+    league.logo_url = f"/static/uploads/leagues/logos/{filename}"
+    db.commit()
+    return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
+
+
 @router.post("/{league_id}/nickname")
 async def set_nickname(
     request: Request,

@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="icon" href="/static/img/logo.jpg" type="image/jpeg">
   {% block styles %}{% endblock %}
+  {% if user and user.profile_bg and user.profile_bg != 'none' %}
+  <style>body{background:{{ user.profile_bg }};background-attachment:fixed}</style>
+  {% endif %}
 </head>
 <body>
 
@@ -51,6 +54,7 @@
       <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path %}active{% endif %}">Leagues</a>
       <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
       <a href="/teams" class="nav-link {% if '/teams' in request.url.path %}active{% endif %}">Teams</a>
+      <a href="/leaderboard" class="nav-link {% if '/leaderboard' in request.url.path %}active{% endif %}">Leaderboard</a>
     </div>
 
     <!-- Hamburger (mobile only) -->
@@ -87,6 +91,7 @@
     <a href="/leagues" class="{% if '/leagues' in request.url.path %}active{% endif %}">Leagues</a>
     <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
     <a href="/teams" class="{% if '/teams' in request.url.path %}active{% endif %}">Teams</a>
+    <a href="/leaderboard" class="{% if '/leaderboard' in request.url.path %}active{% endif %}">Leaderboard</a>
     {% if user %}
     <a href="/profile/{{ user.username }}" style="font-size:1rem;color:var(--gold)">Profile</a>
     {% else %}

@@ -42,6 +42,37 @@ def compute_group(db: Session, letter: str) -> list[dict]:
     return sorted(stats.values(), key=lambda x: (-x["Pts"], -x["GD"], -x["GF"]))
 
 
+@router.get("/leaderboard")
+async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    users = db.query(models.User).all()
+    rows = []
+    for u in users:
+        preds = db.query(models.Prediction).filter(
+            models.Prediction.user_id == u.id,
+            models.Prediction.points_awarded.isnot(None),
+        ).all()
+        match_pts = sum(p.points_awarded for p in preds)
+        bracket_pts = sum(
+            tp.points_awarded
+            for tp in db.query(models.TournamentPick).filter(models.TournamentPick.user_id == u.id).all()
+        )
+        rows.append({
+            "user": u,
+            "match_pts": match_pts,
+            "bracket_pts": bracket_pts,
+            "total": match_pts + bracket_pts,
+            "predictions": len(preds),
+        })
+    rows.sort(key=lambda x: -x["total"])
+    for i, row in enumerate(rows):
+        row["rank"] = i + 1
+    return templates.TemplateResponse(
+        "leaderboard.html",
+        {"request": request, "user": user, "rows": rows},
+    )
+
+
 @router.get("/standings")
 async def standings(request: Request, db: Session = Depends(get_db)):
     user = auth.get_current_user(request, db)

@@ -12,24 +12,50 @@
     {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
     {% if success %}<div class="alert alert-success">{{ success }}</div>{% endif %}
 
-    <!-- League banner -->
-    {% if league.banner_url %}
-    <div style="margin-bottom:1rem;border-radius:8px;overflow:hidden;border:1px solid var(--border)">
-      <img src="{{ league.banner_url }}" alt="League banner" style="width:100%;height:120px;object-fit:cover;display:block">
-    </div>
-    {% endif %}
-    <div style="display:flex;gap:.5rem;margin-bottom:1.25rem;flex-wrap:wrap">
-      <form action="/leagues/{{ league.id }}/banner" method="post" enctype="multipart/form-data" id="bannerForm" style="display:none">
-        <input type="file" id="bannerInput" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
-      </form>
-      <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerInput').click()">
-        {% if league.banner_url %}Change banner{% else %}Upload banner{% endif %}
-      </button>
-      {% if league.banner_url %}
-      <form action="/leagues/{{ league.id }}/banner/remove" method="post" style="display:inline">
-        <button type="submit" class="btn btn-outline btn-sm">Remove banner</button>
-      </form>
-      {% endif %}
+    <!-- Logo + Banner uploads -->
+    <div style="display:flex;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:flex-start">
+
+      <!-- Logo (square) -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:.5rem">
+        <form action="/leagues/{{ league.id }}/logo" method="post" enctype="multipart/form-data" id="logoForm" style="display:none">
+          <input type="file" id="logoInput" name="logo" accept="image/jpeg,image/png,image/webp,image/gif">
+        </form>
+        <div onclick="document.getElementById('logoInput').click()" style="width:72px;height:72px;border-radius:12px;
+             border:2px dashed var(--border);cursor:pointer;overflow:hidden;display:flex;align-items:center;justify-content:center;
+             background:var(--bg-2);position:relative" title="Upload league logo">
+          {% if league.logo_url %}
+          <img src="{{ league.logo_url }}" style="width:100%;height:100%;object-fit:cover">
+          {% else %}
+          <div class="avatar avatar-md" style="background:{{ league.accent_color }}">{{ league.badge_emoji }}</div>
+          {% endif %}
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;
+               opacity:0;transition:opacity .15s;font-size:.6rem;color:#fff;font-weight:700" class="logo-hover">✏ Logo</div>
+        </div>
+        <span style="font-size:.6rem;color:var(--text-3)">Logo</span>
+      </div>
+
+      <!-- Banner -->
+      <div style="flex:1;min-width:200px">
+        {% if league.banner_url %}
+        <div style="border-radius:8px;overflow:hidden;border:1px solid var(--border);margin-bottom:.5rem">
+          <img src="{{ league.banner_url }}" alt="League banner" style="width:100%;height:80px;object-fit:cover;display:block">
+        </div>
+        {% endif %}
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+          <form action="/leagues/{{ league.id }}/banner" method="post" enctype="multipart/form-data" id="bannerForm" style="display:none">
+            <input type="file" id="bannerInput" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
+          </form>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerInput').click()">
+            {% if league.banner_url %}Change banner{% else %}Upload banner{% endif %}
+          </button>
+          {% if league.banner_url %}
+          <form action="/leagues/{{ league.id }}/banner/remove" method="post" style="display:inline">
+            <button type="submit" class="btn btn-outline btn-sm">Remove banner</button>
+          </form>
+          {% endif %}
+        </div>
+        <p style="font-size:.62rem;color:var(--text-3);margin-top:.3rem">Wide banner shown at top of league page</p>
+      </div>
     </div>
 
     <form action="/leagues/{{ league.id }}/settings" method="post">
@@ -37,6 +63,36 @@
       <div class="form-group">
         <label class="form-label">League Name</label>
         <input class="form-input" type="text" name="name" value="{{ league.name }}" required maxlength="100">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input class="form-input" type="text" name="description" value="{{ league.description or '' }}" maxlength="200" placeholder="Optional">
+      </div>
+
+      <div style="display:flex;gap:1rem;flex-wrap:wrap">
+        <div class="form-group" style="flex:1;min-width:160px">
+          <label class="form-label">Accent Colour</label>
+          <div class="color-picker" id="leagueColorPicker">
+            {% for color in AVATAR_COLORS %}
+            <div class="color-swatch {% if (league.accent_color or '#1a47c0') == color %}selected{% endif %}"
+                 style="background:{{ color }}" data-color="{{ color }}"
+                 onclick="selectLeagueColor('{{ color }}')"></div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="accent_color" id="leagueColorInput" value="{{ league.accent_color or '#1a47c0' }}">
+        </div>
+
+        <div class="form-group" style="flex:1;min-width:160px">
+          <label class="form-label">Badge Emoji</label>
+          <div class="icon-picker" id="leagueIconPicker">
+            {% for icon in AVATAR_ICONS %}
+            <div class="icon-opt {% if (league.badge_emoji or '🏆') == icon %}selected{% endif %}"
+                 data-icon="{{ icon }}" onclick="selectLeagueIcon('{{ icon }}')">{{ icon }}</div>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="badge_emoji" id="leagueIconInput" value="{{ league.badge_emoji or '🏆' }}">
+        </div>
       </div>
 
       <hr class="form-divider">
@@ -114,11 +170,36 @@
 {% endblock %}
 {% block scripts %}
 <script>
-  document.getElementById('bannerInput')?.addEventListener('change', function() {
-    if (this.files.length) document.getElementById('bannerForm').submit();
+  ['bannerInput','logoInput'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', function() {
+      if (this.files.length) document.getElementById(id === 'bannerInput' ? 'bannerForm' : 'logoForm').submit();
+    });
+  });
+  document.querySelector('.logo-hover') && document.querySelector('[onclick*="logoInput"]').addEventListener('mouseenter', function() {
+    this.querySelector('.logo-hover').style.opacity = '1';
+  });
+  document.querySelector('[onclick*="logoInput"]')?.addEventListener('mouseleave', function() {
+    this.querySelector('.logo-hover').style.opacity = '0';
   });
   const toggle = document.getElementById('sweepstakeToggle');
   const fields = document.getElementById('sweepstakeFields');
   toggle.addEventListener('change', () => { fields.style.display = toggle.checked ? '' : 'none'; });
+  function selectLeagueColor(c) {
+    document.getElementById('leagueColorInput').value = c;
+    document.querySelectorAll('#leagueColorPicker .color-swatch').forEach(s =>
+      s.classList.toggle('selected', s.dataset.color === c));
+  }
+  function selectLeagueIcon(i) {
+    document.getElementById('leagueIconInput').value = i;
+    document.querySelectorAll('#leagueIconPicker .icon-opt').forEach(o =>
+      o.classList.toggle('selected', o.dataset.icon === i));
+  }
+  document.querySelectorAll('[data-copy]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      navigator.clipboard?.writeText(btn.dataset.copy);
+      const orig = btn.textContent; btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = orig, 1500);
+    });
+  });
 </script>
 {% endblock %}

@@ -149,6 +149,39 @@ async def upload_avatar(
     return RedirectResponse("/profile/edit", status_code=303)
 
 
+BANNER_DIR = os.path.join(_uploads_base, "avatars", "banners")
+
+
+@router.post("/profile/banner")
+async def upload_banner(
+    request: Request,
+    banner: UploadFile = File(...),
+    db: Session = Depends(get_db),
+):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    ext = os.path.splitext(banner.filename or "")[1].lower()
+    if ext not in ALLOWED_EXTS:
+        return RedirectResponse("/profile/edit?err=type", status_code=303)
+    data = await banner.read()
+    if len(data) > MAX_SIZE:
+        return RedirectResponse("/profile/edit?err=size", status_code=303)
+    data, ext = process_image(data, "banner")
+    os.makedirs(BANNER_DIR, exist_ok=True)
+    filename = f"{user.id}_banner_{uuid.uuid4().hex[:8]}{ext}"
+    with open(os.path.join(BANNER_DIR, filename), "wb") as f:
+        f.write(data)
+    if user.profile_banner_url:
+        try:
+            os.remove(os.path.join(BANNER_DIR, os.path.basename(user.profile_banner_url)))
+        except OSError:
+            pass
+    user.profile_banner_url = f"/static/uploads/avatars/banners/{filename}"
+    db.commit()
+    return RedirectResponse("/profile/edit", status_code=303)
+
+
 @router.post("/profile/avatar/remove")
 async def remove_avatar(request: Request, db: Session = Depends(get_db)):
     user = auth.get_current_user(request, db)

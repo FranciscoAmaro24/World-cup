@@ -2,7 +2,12 @@
 {% block title %}{{ target.display_name or target.username }} — WC2026{% endblock %}
 {% block content %}
 
-<div class="profile-hero" {% if target.profile_bg and target.profile_bg != 'none' %}style="background:{{ target.profile_bg }}"{% endif %}>
+{% if target.profile_banner_url %}
+<div style="width:100%;height:200px;overflow:hidden;position:relative">
+  <img src="{{ target.profile_banner_url }}" style="width:100%;height:100%;object-fit:cover;display:block" alt="">
+</div>
+{% endif %}
+<div class="profile-hero">
   <div class="container">
     <div class="profile-header">
       {{ avatar_html(target, "xl") | safe }}

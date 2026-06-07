@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Global Leaderboard — FIFA World Cup 2026{% endblock %}
+{% block content %}
+<div class="container page-content">
+
+  <div class="page-header">
+    <div>
+      <h1>🏆 Global Leaderboard</h1>
+      <p class="page-header-sub">Overall standings across all leagues</p>
+    </div>
+  </div>
+
+  <div class="card" style="overflow:hidden">
+    <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+      <thead>
+        <tr style="background:var(--bg-2)">
+          <th style="padding:.55rem .75rem;text-align:center;width:40px;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">#</th>
+          <th style="padding:.55rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Player</th>
+          <th style="padding:.55rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Match prediction points">Match</th>
+          <th style="padding:.55rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Bracket pick points">Bracket</th>
+          <th style="padding:.55rem .75rem;text-align:center;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border)">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr style="border-bottom:1px solid var(--border);{% if user and row.user.id == user.id %}background:rgba(245,166,35,.06){% endif %}">
+          <td style="padding:.6rem .75rem;text-align:center">
+            <span class="rank-badge {% if row.rank==1 %}rank-1{% elif row.rank==2 %}rank-2{% elif row.rank==3 %}rank-3{% else %}rank-other{% endif %}">{{ row.rank }}</span>
+          </td>
+          <td style="padding:.6rem .75rem">
+            <a href="/profile/{{ row.user.username }}" style="text-decoration:none;display:flex;align-items:center;gap:.6rem">
+              {{ avatar_html(row.user, "sm") | safe }}
+              <div>
+                <div style="font-weight:600;color:var(--text-1)">{{ row.user.display_name or row.user.username }}</div>
+                <div style="font-size:.7rem;color:var(--text-3)">{{ row.predictions }} predictions</div>
+              </div>
+            </a>
+            {% if user and row.user.id == user.id %}<span class="you-badge" style="margin-left:.4rem">YOU</span>{% endif %}
+          </td>
+          <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">{{ row.match_pts }}</td>
+          <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">{{ row.bracket_pts }}</td>
+          <td style="padding:.6rem .75rem;text-align:center;font-weight:700;color:{% if row.rank == 1 %}var(--gold){% else %}var(--text-1){% endif %}">{{ row.total }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}
