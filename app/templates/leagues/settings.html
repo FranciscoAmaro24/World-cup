@@ -70,6 +70,18 @@
         <input class="form-input" type="text" name="description" value="{{ league.description or '' }}" maxlength="200" placeholder="Optional">
       </div>
 
+      {% if league.category == 'general' %}
+      <div class="form-group">
+        <div class="form-switch">
+          <label class="switch">
+            <input type="checkbox" name="is_public" value="true" {% if league.is_public %}checked{% endif %}>
+            <span class="slider"></span>
+          </label>
+          <span class="text-sm">Make this league public (joinable from Discover page)</span>
+        </div>
+      </div>
+      {% endif %}
+
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
         <div class="form-group" style="flex:1;min-width:160px">
           <label class="form-label">Accent Colour</label>

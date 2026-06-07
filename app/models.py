@@ -58,7 +58,9 @@ class League(Base):
     points_bracket_quarter = Column(Integer, default=1)
 
     # Sweepstake settings
-    logo_url = Column(String(200), nullable=True)          # small square league logo image
+    logo_url = Column(String(200), nullable=True)
+    is_public = Column(Boolean, default=False)             # joinable without invite code
+    category = Column(String(20), default="general")       # general / country / global
     sweepstake_enabled = Column(Boolean, default=False)
     sweepstake_buy_in = Column(Float, default=10.0)
     sweepstake_teams_per_person = Column(Integer, default=1)

@@ -51,7 +51,8 @@
       <a href="/fixtures" class="nav-link {% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
       <a href="/knockout" class="nav-link {% if '/knockout' in request.url.path %}active{% endif %}">Bracket</a>
       <a href="/standings" class="nav-link {% if '/standings' in request.url.path %}active{% endif %}">Standings</a>
-      <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path %}active{% endif %}">Leagues</a>
+      <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path and '/discover' not in request.url.path %}active{% endif %}">Leagues</a>
+      <a href="/leagues/discover" class="nav-link {% if '/discover' in request.url.path %}active{% endif %}">Discover</a>
       <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
       <a href="/teams" class="nav-link {% if '/teams' in request.url.path %}active{% endif %}">Teams</a>
       <a href="/leaderboard" class="nav-link {% if '/leaderboard' in request.url.path %}active{% endif %}">Leaderboard</a>
@@ -88,7 +89,8 @@
     <a href="/fixtures" class="{% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
     <a href="/knockout" class="{% if '/knockout' in request.url.path %}active{% endif %}">Bracket</a>
     <a href="/standings" class="{% if '/standings' in request.url.path %}active{% endif %}">Standings</a>
-    <a href="/leagues" class="{% if '/leagues' in request.url.path %}active{% endif %}">Leagues</a>
+    <a href="/leagues" class="{% if '/leagues' in request.url.path and '/discover' not in request.url.path %}active{% endif %}">Leagues</a>
+    <a href="/leagues/discover" class="{% if '/discover' in request.url.path %}active{% endif %}">Discover</a>
     <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
     <a href="/teams" class="{% if '/teams' in request.url.path %}active{% endif %}">Teams</a>
     <a href="/leaderboard" class="{% if '/leaderboard' in request.url.path %}active{% endif %}">Leaderboard</a>

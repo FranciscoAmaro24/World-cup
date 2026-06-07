@@ -72,6 +72,8 @@ def _migrate_db():
         ("users", "profile_banner_url", "VARCHAR(200)"),
         ("league_members", "nickname", "VARCHAR(50)"),
         ("leagues", "logo_url", "VARCHAR(200)"),
+        ("leagues", "is_public", "BOOLEAN DEFAULT 0"),
+        ("leagues", "category", "VARCHAR(20) DEFAULT 'general'"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
@@ -81,10 +83,58 @@ def _migrate_db():
     conn.close()
 
 
+def _seed_public_leagues():
+    """Create the global league and country fan leagues if they don't exist yet."""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        admin = db.query(models.User).filter(models.User.is_superadmin == True).first()
+        if not admin:
+            return
+
+        # Global league
+        if not db.query(models.League).filter(models.League.category == "global").first():
+            gl = models.League(
+                name="🌍 World Cup 2026 — Global",
+                invite_code="WC2026GL",
+                admin_id=admin.id,
+                description="The main global prediction league — anyone can join.",
+                accent_color="#f5a623",
+                badge_emoji="🌍",
+                is_public=True,
+                category="global",
+            )
+            db.add(gl)
+
+        # Country fan leagues — one per WC team
+        teams = db.query(models.Team).all()
+        existing_codes = {
+            r[0] for r in db.query(models.League.invite_code)
+            .filter(models.League.category == "country").all()
+        }
+        for team in teams:
+            code = f"FAN{team.code}"
+            if code not in existing_codes:
+                db.add(models.League(
+                    name=f"{team.flag_emoji} {team.name} Fans",
+                    invite_code=code,
+                    admin_id=admin.id,
+                    description=f"Public league for fans of {team.name}.",
+                    accent_color="#1a47c0",
+                    badge_emoji=team.flag_emoji,
+                    is_public=True,
+                    category="country",
+                ))
+        db.commit()
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _migrate_db()
+    _seed_public_leagues()
     task = asyncio.create_task(results_fetcher.results_loop())
     yield
     task.cancel()

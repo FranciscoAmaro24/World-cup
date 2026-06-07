@@ -69,6 +69,53 @@ async def leagues_list(request: Request, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/discover")
+async def discover(request: Request, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    joined_ids = {
+        m.league_id for m in db.query(models.LeagueMember)
+        .filter(models.LeagueMember.user_id == user.id).all()
+    }
+    global_leagues = db.query(models.League).filter(
+        models.League.is_public == True, models.League.category == "global"
+    ).all()
+    country_leagues = db.query(models.League).filter(
+        models.League.is_public == True, models.League.category == "country"
+    ).order_by(models.League.name).all()
+    other_public = db.query(models.League).filter(
+        models.League.is_public == True, models.League.category == "general"
+    ).order_by(models.League.name).all()
+    return templates.TemplateResponse("leagues/discover.html", {
+        "request": request, "user": user,
+        "global_leagues": global_leagues,
+        "country_leagues": country_leagues,
+        "other_public": other_public,
+        "joined_ids": joined_ids,
+    })
+
+
+@router.post("/{league_id}/join-open")
+async def join_open_league(request: Request, league_id: int, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(
+        models.League.id == league_id, models.League.is_public == True
+    ).first()
+    if not league:
+        return RedirectResponse("/leagues/discover", status_code=303)
+    existing = db.query(models.LeagueMember).filter(
+        models.LeagueMember.league_id == league_id,
+        models.LeagueMember.user_id == user.id,
+    ).first()
+    if not existing:
+        db.add(models.LeagueMember(league_id=league_id, user_id=user.id))
+        db.commit()
+    return RedirectResponse(f"/leagues/{league_id}", status_code=303)
+
+
 @router.get("/create")
 async def create_page(request: Request, db: Session = Depends(get_db)):
     user = auth.get_current_user(request, db)
@@ -233,6 +280,7 @@ async def update_settings(
     description: str = Form(""),
     accent_color: str = Form("#1a47c0"),
     badge_emoji: str = Form("🏆"),
+    is_public: bool = Form(False),
     points_exact: int = Form(3),
     points_result: int = Form(1),
     points_bracket_winner: int = Form(10),
@@ -254,6 +302,8 @@ async def update_settings(
     league.description = description.strip()[:200] or None
     league.accent_color = accent_color if accent_color.startswith("#") else "#1a47c0"
     league.badge_emoji = badge_emoji[:6]
+    if league.category == "general":       # don't override system league settings
+        league.is_public = is_public
     league.points_exact_score = max(0, points_exact)
     league.points_correct_result = max(0, points_result)
     league.points_bracket_winner = max(0, points_bracket_winner)

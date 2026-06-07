@@ -44,6 +44,11 @@ def compute_group(db: Session, letter: str) -> list[dict]:
 
 @router.get("/leaderboard")
 async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
+    """Redirect to the global public league, or show a standalone board if it doesn't exist."""
+    global_league = db.query(models.League).filter(models.League.category == "global").first()
+    if global_league:
+        return RedirectResponse(f"/leagues/{global_league.id}", status_code=302)
+    # Fallback: standalone leaderboard (before global league is seeded)
     user = auth.get_current_user(request, db)
     users = db.query(models.User).all()
     rows = []
@@ -58,8 +63,7 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
             for tp in db.query(models.TournamentPick).filter(models.TournamentPick.user_id == u.id).all()
         )
         rows.append({
-            "user": u,
-            "match_pts": match_pts,
+            "user": u, "match_pts": match_pts,
             "bracket_pts": bracket_pts,
             "total": match_pts + bracket_pts,
             "predictions": len(preds),
@@ -68,8 +72,7 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
     for i, row in enumerate(rows):
         row["rank"] = i + 1
     return templates.TemplateResponse(
-        "leaderboard.html",
-        {"request": request, "user": user, "rows": rows},
+        "leaderboard.html", {"request": request, "user": user, "rows": rows}
     )
 
 
