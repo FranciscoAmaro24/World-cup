@@ -44,6 +44,7 @@ def _get_leaderboard(league: models.League, db: Session):
         bracket_pts = bracket_pick.points_awarded if bracket_pick else 0
         rows.append({
             "user": m.user,
+            "member": m,
             "points": match_pts + bracket_pts,
             "match_points": match_pts,
             "bracket_points": bracket_pts,
@@ -318,6 +319,26 @@ async def upload_banner(
     league.banner_url = f"/static/uploads/leagues/{filename}"
     db.commit()
     return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
+
+
+@router.post("/{league_id}/nickname")
+async def set_nickname(
+    request: Request,
+    league_id: int,
+    nickname: str = Form(""),
+    db: Session = Depends(get_db),
+):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    member = db.query(models.LeagueMember).filter(
+        models.LeagueMember.league_id == league_id,
+        models.LeagueMember.user_id == user.id,
+    ).first()
+    if member:
+        member.nickname = nickname.strip()[:50] or None
+        db.commit()
+    return RedirectResponse(f"/leagues/{league_id}", status_code=303)
 
 
 @router.post("/{league_id}/banner/remove")

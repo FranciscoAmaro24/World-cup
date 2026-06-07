@@ -58,9 +58,31 @@ def avatar_html(user, size: str = "md") -> Markup:
     )
 
 
+def _migrate_db():
+    """Add columns that didn't exist in older DB versions."""
+    import sqlite3
+    db_url = str(engine.url)
+    if not db_url.startswith("sqlite"):
+        return
+    path = db_url.replace("sqlite:///", "").replace("sqlite://", "")
+    conn = sqlite3.connect(path)
+    cur = conn.cursor()
+    migrations = [
+        ("users", "profile_bg", "VARCHAR(100)"),
+        ("league_members", "nickname", "VARCHAR(50)"),
+    ]
+    for table, col, col_type in migrations:
+        existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
+        if col not in existing:
+            cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}")
+    conn.commit()
+    conn.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _migrate_db()
     task = asyncio.create_task(results_fetcher.results_loop())
     yield
     task.cancel()

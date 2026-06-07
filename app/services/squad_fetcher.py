@@ -42,10 +42,13 @@ WIKI_NAME_TO_CODE = {
 def _clean_wiki(text: str) -> str:
     """Strip [[Link|Display]] → Display, remove templates and leftover brackets."""
     text = re.sub(r'\[\[(?:[^\]|]+\|)?([^\]]+)\]\]', r'\1', text)  # [[Link|Display]] → Display
-    text = re.sub(r'\[\[[^\]|]*\|', '', text)   # orphaned [[Link| (pipe cut it off)
+    text = re.sub(r'\[\[[^\]|]*\|', '', text)   # orphaned [[Link| (pipe cut off)
     text = re.sub(r'\[\[', '', text)             # any remaining [[
     text = re.sub(r'\{\{[^}]*\}\}', '', text)   # {{template}}
     text = re.sub(r"'''?", '', text)
+    # Strip Wikipedia disambiguation suffixes: "Rui Silva (footballer, born 1994)" → "Rui Silva"
+    text = re.sub(r'\s*\(footballer[^)]*\)', '', text)
+    text = re.sub(r'\s*\(born \d{4}\)', '', text)
     return text.strip()
 
 

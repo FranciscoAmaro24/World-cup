@@ -59,7 +59,19 @@ async def edit_profile_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
+_ALLOWED_BGS = {
+    "none", "linear-gradient(135deg,#1a1a2e,#16213e)",
+    "linear-gradient(135deg,#0f2027,#203a43,#2c5364)",
+    "linear-gradient(135deg,#1a0533,#2d1b69)",
+    "linear-gradient(135deg,#0d1f0d,#1a3a1a)",
+    "linear-gradient(135deg,#1a0a00,#3d1f00)",
+    "linear-gradient(135deg,#1a0000,#3d0000)",
+    "linear-gradient(135deg,#0a0a0a,#2a2a2a)",
+}
+
+
 @router.post("/profile/edit")
+
 async def save_profile(
     request: Request,
     display_name: str = Form(""),
@@ -67,6 +79,7 @@ async def save_profile(
     avatar_color: str = Form("#1a47c0"),
     avatar_icon: str = Form("⚽"),
     favorite_team_id: int = Form(0),
+    profile_bg: str = Form("none"),
     db: Session = Depends(get_db),
 ):
     user = auth.get_current_user(request, db)
@@ -77,6 +90,7 @@ async def save_profile(
     user.avatar_color = avatar_color if avatar_color.startswith("#") else "#1a47c0"
     user.avatar_icon = avatar_icon[:6]
     user.favorite_team_id = favorite_team_id if favorite_team_id > 0 else None
+    user.profile_bg = profile_bg if profile_bg in _ALLOWED_BGS else None
     db.commit()
     teams = db.query(models.Team).order_by(models.Team.group_letter, models.Team.name).all()
     return templates.TemplateResponse(

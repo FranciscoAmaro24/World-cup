@@ -71,6 +71,28 @@
         </select>
       </div>
 
+      <hr class="form-divider">
+      <p class="form-label">Profile Background</p>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1rem" id="bgPicker">
+        {% set bgs = [
+          ("none",         "Default",    "#111"),
+          ("linear-gradient(135deg,#1a1a2e,#16213e)", "Night", "linear-gradient(135deg,#1a1a2e,#16213e)"),
+          ("linear-gradient(135deg,#0f2027,#203a43,#2c5364)", "Ocean", "linear-gradient(135deg,#0f2027,#203a43,#2c5364)"),
+          ("linear-gradient(135deg,#1a0533,#2d1b69)", "Purple", "linear-gradient(135deg,#1a0533,#2d1b69)"),
+          ("linear-gradient(135deg,#0d1f0d,#1a3a1a)", "Forest", "linear-gradient(135deg,#0d1f0d,#1a3a1a)"),
+          ("linear-gradient(135deg,#1a0a00,#3d1f00)", "Ember",  "linear-gradient(135deg,#1a0a00,#3d1f00)"),
+          ("linear-gradient(135deg,#1a0000,#3d0000)", "Red",    "linear-gradient(135deg,#1a0000,#3d0000)"),
+          ("linear-gradient(135deg,#0a0a0a,#2a2a2a)", "Slate",  "linear-gradient(135deg,#0a0a0a,#2a2a2a)"),
+        ] %}
+        {% for val, label, css in bgs %}
+        <div onclick="selectBg('{{ val }}')" data-bg="{{ val }}"
+             style="height:48px;border-radius:8px;background:{{ css }};cursor:pointer;border:2px solid {% if (user.profile_bg or 'none') == val %}var(--primary){% else %}transparent{% endif %};position:relative;display:flex;align-items:flex-end;padding:4px 6px">
+          <span style="font-size:.6rem;color:rgba(255,255,255,.7);font-weight:600">{{ label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="profile_bg" id="profileBgInput" value="{{ user.profile_bg or 'none' }}">
+
       <button type="submit" class="btn btn-primary btn-full btn-lg">Save Profile</button>
     </form>
 
@@ -99,6 +121,12 @@ function selectColor(c) {
   });
   // Live preview
   document.querySelectorAll('.avatar').forEach(a => a.style.background = c);
+}
+function selectBg(val) {
+  document.getElementById('profileBgInput').value = val;
+  document.querySelectorAll('#bgPicker [data-bg]').forEach(el => {
+    el.style.borderColor = el.dataset.bg === val ? 'var(--primary)' : 'transparent';
+  });
 }
 function selectIcon(i) {
   document.getElementById('avatarIconInput').value = i;

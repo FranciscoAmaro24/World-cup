@@ -24,6 +24,7 @@ class User(Base):
     avatar_color = Column(String(10), default="#1a47c0")
     avatar_icon = Column(String(6), default="⚽")
     avatar_img_url = Column(String(200), nullable=True)
+    profile_bg = Column(String(100), nullable=True)   # CSS gradient/color for profile hero
     favorite_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -75,6 +76,7 @@ class LeagueMember(Base):
     id = Column(Integer, primary_key=True, index=True)
     league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    nickname = Column(String(50), nullable=True)       # custom name shown on this league's leaderboard
     sweepstake_paid = Column(Boolean, default=False)
     joined_at = Column(DateTime, default=datetime.utcnow)
 

@@ -2,7 +2,7 @@
 {% block title %}{{ target.display_name or target.username }} — WC2026{% endblock %}
 {% block content %}
 
-<div class="profile-hero">
+<div class="profile-hero" {% if target.profile_bg and target.profile_bg != 'none' %}style="background:{{ target.profile_bg }}"{% endif %}>
   <div class="container">
     <div class="profile-header">
       {{ avatar_html(target, "xl") | safe }}
