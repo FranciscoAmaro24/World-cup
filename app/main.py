@@ -43,16 +43,16 @@ _HEX_RE = __import__("re").compile(r"^#[0-9a-fA-F]{3,8}$")
 
 def avatar_html(user, size: str = "md") -> Markup:
     from markupsafe import escape
+    raw_color = getattr(user, "avatar_color", "#1a47c0") or "#1a47c0"
+    color = raw_color if _HEX_RE.match(raw_color) else "#1a47c0"
+    icon = escape(getattr(user, "avatar_icon", "⚽") or "⚽")
+    fallback = f"this.replaceWith(Object.assign(document.createElement('div'),{{className:'avatar avatar-{size}',style:'background:{color}',textContent:'{icon}'}}))"
     img_url = getattr(user, "avatar_img_url", None)
     if img_url:
         safe_url = escape(img_url)
         return Markup(
-            f'<img src="{safe_url}" class="avatar avatar-{size}" style="object-fit:cover" alt="">'
+            f'<img src="{safe_url}" class="avatar avatar-{size}" style="object-fit:cover" alt="" onerror="{fallback}">'
         )
-    raw_color = getattr(user, "avatar_color", "#1a47c0") or "#1a47c0"
-    # Whitelist: must be a valid CSS hex colour
-    color = raw_color if _HEX_RE.match(raw_color) else "#1a47c0"
-    icon = escape(getattr(user, "avatar_icon", "⚽") or "⚽")
     return Markup(
         f'<div class="avatar avatar-{size}" style="background:{color}">{icon}</div>'
     )
