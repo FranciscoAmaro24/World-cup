@@ -105,7 +105,7 @@
        any element with backdrop-filter (which would trap position:fixed) -->
   <div id="ytBg" style="display:none;position:fixed;inset:0;z-index:50;pointer-events:none">
     <video id="bgVideo" loop playsinline
-      src="{{ bg_video_url() or '' }}"
+      {% if bg_video_url() %}src="{{ bg_video_url() }}"{% endif %}
       style="position:absolute;top:50%;left:50%;
              width:100vw;height:56.25vw;
              min-height:100vh;min-width:177.78vh;
@@ -183,7 +183,7 @@
   logoBtn?.addEventListener('dblclick', function(e) {
     e.preventDefault();
     if (bgOn) { stopAll(); }
-    else if (bgVideo.src && !bgVideo.src.endsWith('about:blank')) { openBg(); }
+    else if (bgVideo.src && bgVideo.src.startsWith('http') && !bgVideo.src.endsWith('about:blank') && bgVideo.getAttribute('src')) { openBg(); }
   });
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && bgOn) stopAll(); });

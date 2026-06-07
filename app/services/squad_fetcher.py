@@ -92,7 +92,8 @@ async def fetch_squads(db: Session) -> dict:
     """Fetch all squad data from Wikipedia and upsert into players table."""
     import models
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    headers = {"User-Agent": "WC2026Predictor/1.0 (https://github.com/; fdmamaro24@gmail.com) httpx"}
+    async with httpx.AsyncClient(timeout=30.0, headers=headers) as client:
         resp = await client.get(WIKI_URL)
         resp.raise_for_status()
         data = resp.json()
