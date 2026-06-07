@@ -228,7 +228,7 @@ PT: dict[str, str] = {
 
     # ── Standings ─────────────────────────────────────
     "standings.title":  "Classificação dos Grupos",
-    "standings.sub":    "Tabelas ao vivo — actualizadas com os resultados",
+    "standings.sub":    "Tabelas ao vivo - atualizadas com os resultados",
     "standings.played": "J",
     "standings.won":    "V",
     "standings.drawn":  "E",
@@ -236,7 +236,7 @@ PT: dict[str, str] = {
     "standings.gd":     "DG",
     "standings.pts":    "PTS",
     "standings.team":   "Equipa",
-    "standings.empty":  "Classificação actualizará após o primeiro apito.",
+    "standings.empty":  "Classificação atualizará após o primeiro apito.",
 
     # ── Leagues ───────────────────────────────────────
     "league.my_leagues":     "As Minhas Ligas",
