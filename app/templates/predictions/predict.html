@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Predict: {{ match.home_display() }} vs {{ match.away_display() }}{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div style="margin-bottom:1rem">
-    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← Back to {{ league.name }}</a>
+    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← {{ t('btn.back', _lang) }} {{ league.name }}</a>
   </div>
 
   <div class="card" style="max-width:520px;margin:0 auto">
@@ -12,7 +13,7 @@
     <div class="card-header">
       <div>
         {% if match.group_letter %}
-        <span class="group-badge gb-{{ match.group_letter }}" style="margin-right:.5rem">Group {{ match.group_letter }}</span>
+        <span class="group-badge gb-{{ match.group_letter }}" style="margin-right:.5rem">{{ t('match.group', _lang) }} {{ match.group_letter }}</span>
         {% else %}
         <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1);margin-right:.5rem">{{ match.round.upper() }}</span>
         {% endif %}
@@ -28,8 +29,8 @@
 
       <!-- Points info -->
       <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap">
-        <span class="tag tag-white">Exact score: <strong>{{ league.points_exact_score }} pts</strong></span>
-        <span class="tag tag-white">Correct result: <strong>{{ league.points_correct_result }} pts</strong></span>
+        <span class="tag tag-white">{{ t('predict.exact', _lang) }} <strong>{{ league.points_exact_score }} {{ t('bracket.pts', _lang) }}</strong></span>
+        <span class="tag tag-white">{{ t('predict.result', _lang) }} <strong>{{ league.points_correct_result }} {{ t('bracket.pts', _lang) }}</strong></span>
       </div>
 
       <form action="/leagues/{{ league.id }}/predict/{{ match.id }}" method="post">
@@ -68,12 +69,12 @@
 
         {% if prediction %}
         <div class="alert alert-success" style="justify-content:center;font-size:.82rem;margin-bottom:1rem">
-          Your prediction: {{ prediction.home_score_pred }}–{{ prediction.away_score_pred }}
+          {{ t('predict.yours', _lang) }} {{ prediction.home_score_pred }}–{{ prediction.away_score_pred }}
         </div>
         {% endif %}
 
         <button type="submit" class="btn btn-primary btn-full btn-lg">
-          {% if prediction %}Update Prediction{% else %}Submit Prediction{% endif %}
+          {% if prediction %}{{ t('predict.update', _lang) }}{% else %}{{ t('predict.submit', _lang) }}{% endif %}
         </button>
       </form>
     </div>

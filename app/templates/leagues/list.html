@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block title %}My Leagues — WC2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
   <div class="page-header flex items-center justify-between">
     <div>
-      <h1>My Leagues</h1>
-      <p class="page-header-sub">Manage your prediction leagues</p>
+      <h1>{{ t('league.my_leagues', _lang) }}</h1>
+      <p class="page-header-sub">{{ t('league.manage_sub', _lang) }}</p>
     </div>
     <div style="display:flex;gap:0.75rem">
-      <a href="/leagues/join" class="btn btn-secondary">Join League</a>
-      <a href="/leagues/create" class="btn btn-primary">+ Create League</a>
+      <a href="/leagues/join" class="btn btn-secondary">{{ t('league.join', _lang) }}</a>
+      <a href="/leagues/create" class="btn btn-primary">+ {{ t('league.create', _lang) }}</a>
     </div>
   </div>
 
@@ -37,15 +38,15 @@
       <div class="league-stats mt-3">
         <div class="league-stat">
           <div class="league-stat-val">{{ league.members | length }}</div>
-          <div class="league-stat-lbl">Members</div>
+          <div class="league-stat-lbl">{{ t('league.stat_members', _lang) }}</div>
         </div>
         <div class="league-stat">
           <div class="league-stat-val">{{ league.points_exact_score }}</div>
-          <div class="league-stat-lbl">Exact pts</div>
+          <div class="league-stat-lbl">{{ t('league.exact_pts_lbl', _lang) }}</div>
         </div>
         <div class="league-stat">
           <div class="league-stat-val">{{ league.points_correct_result }}</div>
-          <div class="league-stat-lbl">Result pts</div>
+          <div class="league-stat-lbl">{{ t('league.result_pts_lbl', _lang) }}</div>
         </div>
       </div>
       <div class="league-tags">
@@ -56,18 +57,18 @@
         <span class="tag tag-blue">Admin</span>
         {% endif %}
       </div>
-      <span class="btn btn-outline btn-sm">Open →</span>
+      <span class="btn btn-outline btn-sm">{{ t('league.open', _lang) }}</span>
     </a>
     {% endfor %}
   </div>
   {% else %}
   <div class="empty-state">
     <div class="empty-state-icon">🏟️</div>
-    <h3>You haven't joined any leagues yet</h3>
-    <p>Create your own league or join one with an invite code</p>
+    <h3>{{ t('league.empty', _lang) }}</h3>
+    <p>{{ t('league.empty_hint', _lang) }}</p>
     <div style="display:flex;gap:1rem;justify-content:center">
-      <a href="/leagues/create" class="btn btn-primary">Create League</a>
-      <a href="/leagues/join" class="btn btn-secondary">Join with Code</a>
+      <a href="/leagues/create" class="btn btn-primary">{{ t('league.create', _lang) }}</a>
+      <a href="/leagues/join" class="btn btn-secondary">{{ t('league.join_code', _lang) }}</a>
     </div>
   </div>
   {% endif %}

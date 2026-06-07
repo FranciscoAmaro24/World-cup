@@ -1,15 +1,16 @@
 {% extends "base.html" %}
 {% block title %}Sweepstake — {{ league.name }}{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div style="margin-bottom:1rem">
-    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← Back to {{ league.name }}</a>
+    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← {{ t('sweep.back', _lang) }} {{ league.name }}</a>
   </div>
 
   <div class="page-header flex items-center justify-between">
     <div>
-      <h1>Sweepstake</h1>
+      <h1>{{ t('sweep.title', _lang) }}</h1>
       <p class="page-header-sub">{{ league.name }}</p>
     </div>
   </div>
@@ -17,10 +18,10 @@
   <!-- Pot summary -->
   <div class="sweepstake-pot">
     <div class="pot-value">€{{ "%.2f"|format(pot) }}</div>
-    <div class="pot-label">Total Pot &nbsp;·&nbsp; {{ paid_count }} paid @ €{{ "%.2f"|format(league.sweepstake_buy_in) }} each</div>
+    <div class="pot-label">{{ t('sweep.pot', _lang) }} &nbsp;·&nbsp; {{ paid_count }} {{ t('sweep.paid', _lang) }} @ €{{ "%.2f"|format(league.sweepstake_buy_in) }} {{ t('sweep.each', _lang) }}</div>
     {% if league.sweepstake_drawn %}
     <div style="margin-top:.75rem">
-      <span class="tag tag-green">Teams drawn</span>
+      <span class="tag tag-green">{{ t('sweep.drawn', _lang) }}</span>
     </div>
     {% endif %}
   </div>
@@ -28,13 +29,13 @@
   {% if user_teams %}
   <div class="card mb-4" style="margin-bottom:1.5rem">
     <div class="card-header">
-      <span class="text-sm font-bold">Your Teams</span>
+      <span class="text-sm font-bold">{{ t('sweep.your_teams', _lang) }}</span>
     </div>
     <div class="card-body" style="display:flex;flex-wrap:wrap;gap:.4rem">
       {% for a in user_teams %}
       <span class="team-chip {% if a.team.eliminated %}eliminated{% endif %}">
         {{ a.team.flag_emoji }} {{ a.team.name }}
-        {% if a.team.eliminated %} (Out){% endif %}
+        {% if a.team.eliminated %} {{ t('sweep.out', _lang) }}{% endif %}
       </span>
       {% endfor %}
     </div>
@@ -45,14 +46,14 @@
   {% if is_admin %}
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
-      <span class="text-sm font-bold">Admin Controls</span>
+      <span class="text-sm font-bold">{{ t('sweep.admin_controls', _lang) }}</span>
     </div>
     <div class="card-body" style="display:flex;gap:.75rem;flex-wrap:wrap">
       {% if not league.sweepstake_drawn %}
       <form action="/leagues/{{ league.id }}/sweepstake/draw" method="post">
         <button type="submit" class="btn btn-primary"
                 onclick="return confirm('Draw teams randomly for all paid members? This cannot be undone without a reset.')">
-          🎲 Draw Teams
+          {{ t('sweep.draw_teams', _lang) }}
         </button>
       </form>
       {% endif %}
@@ -60,7 +61,7 @@
       <form action="/leagues/{{ league.id }}/sweepstake/reset" method="post">
         <button type="submit" class="btn btn-danger"
                 onclick="return confirm('Reset the draw? All team assignments will be cleared.')">
-          ↺ Reset Draw
+          {{ t('sweep.reset_draw', _lang) }}
         </button>
       </form>
       {% endif %}
@@ -69,15 +70,15 @@
   {% endif %}
 
   <!-- Members table -->
-  <div class="section-header"><h2 class="section-title">Members</h2></div>
+  <div class="section-header"><h2 class="section-title">{{ t('league.stat_members', _lang) }}</h2></div>
   <div class="card">
     <table class="data-table">
       <thead>
         <tr>
-          <th>Player</th>
-          <th>Paid</th>
-          <th>Assigned Teams</th>
-          {% if is_admin and not league.sweepstake_drawn %}<th>Action</th>{% endif %}
+          <th>{{ t('league.player', _lang) }}</th>
+          <th>{{ t('sweep.paid_status', _lang) }}</th>
+          <th>{{ t('sweep.assigned_teams', _lang) }}</th>
+          {% if is_admin and not league.sweepstake_drawn %}<th>{{ t('sweep.action', _lang) }}</th>{% endif %}
         </tr>
       </thead>
       <tbody>
@@ -89,9 +90,9 @@
           </td>
           <td>
             {% if m.sweepstake_paid %}
-            <span class="tag tag-green">Paid</span>
+            <span class="tag tag-green">{{ t('sweep.paid_status', _lang) }}</span>
             {% else %}
-            <span class="tag tag-gray">Unpaid</span>
+            <span class="tag tag-gray">{{ t('sweep.unpaid', _lang) }}</span>
             {% endif %}
           </td>
           <td>
@@ -105,14 +106,14 @@
               {% endfor %}
             </div>
             {% else %}
-            <span class="text-muted text-xs">{% if league.sweepstake_drawn %}—{% else %}Pending draw{% endif %}</span>
+            <span class="text-muted text-xs">{% if league.sweepstake_drawn %}—{% else %}{{ t('sweep.pending_draw', _lang) }}{% endif %}</span>
             {% endif %}
           </td>
           {% if is_admin and not league.sweepstake_drawn %}
           <td>
             <form action="/leagues/{{ league.id }}/sweepstake/pay/{{ m.user_id }}" method="post">
               <button type="submit" class="btn btn-sm {% if m.sweepstake_paid %}btn-danger{% else %}btn-primary{% endif %}">
-                {% if m.sweepstake_paid %}Mark Unpaid{% else %}Mark Paid{% endif %}
+                {% if m.sweepstake_paid %}{{ t('sweep.mark_unpaid', _lang) }}{% else %}{{ t('sweep.mark_paid', _lang) }}{% endif %}
               </button>
             </form>
           </td>
@@ -124,7 +125,7 @@
   </div>
 
   <div class="alert alert-info mt-4" style="max-width:600px">
-    <strong>How it works:</strong> Each paid member gets {{ league.sweepstake_teams_per_person }} team(s) assigned randomly.
+    <strong>{{ t('sweep.how_it_works', _lang) }}</strong> Each paid member gets {{ league.sweepstake_teams_per_person }} team(s) assigned randomly.
     When the World Cup winner is crowned, the member holding that team wins the entire pot!
     {% if league.sweepstake_teams_per_person > 1 %}
     If multiple teams win different rounds, check your team's stage in the tournament.

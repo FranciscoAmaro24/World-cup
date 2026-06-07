@@ -10,14 +10,14 @@
       <p class="page-header-sub">{{ t('discover.sub', _lang) }}</p>
     </div>
     <div style="display:flex;gap:.5rem">
-      <a href="/leagues" class="btn btn-secondary btn-sm">My Leagues</a>
-      <a href="/leagues/create" class="btn btn-primary btn-sm">+ Create</a>
+      <a href="/leagues" class="btn btn-secondary btn-sm">{{ t('league.my_leagues', _lang) }}</a>
+      <a href="/leagues/create" class="btn btn-primary btn-sm">{{ t('discover.create', _lang) }}</a>
     </div>
   </div>
 
   {# ── Global ─────────────────────────────────── #}
   {% if global_leagues %}
-  <div class="section-header"><h2 class="section-title">🌍 {{ t('discover.global', _lang) }}</h2></div>
+  <div class="section-header"><h2 class="section-title">{{ t('discover.global', _lang) }}</h2></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.9rem;margin-bottom:2rem">
     {% for league in global_leagues %}
     {% set joined = league.id in joined_ids %}
@@ -42,9 +42,9 @@
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.75rem">
-          <span style="font-size:.72rem;color:var(--text-3)">{{ league.members|length }} members</span>
+          <span style="font-size:.72rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</span>
           {% if joined %}
-          <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">View →</a>
+          <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">{{ t('btn.view', _lang) }} →</a>
           {% else %}
           <form action="/leagues/{{ league.id }}/join-open" method="post" style="margin:0">
             <button type="submit" class="btn btn-primary btn-sm">{{ t('discover.join_free', _lang) }}</button>
@@ -59,7 +59,7 @@
 
   {# ── Country Fan Leagues ─────────────────────── #}
   {% if country_leagues %}
-  <div class="section-header"><h2 class="section-title">🏟 {{ t('discover.country', _lang) }}</h2></div>
+  <div class="section-header"><h2 class="section-title">{{ t('discover.country', _lang) }}</h2></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem;margin-bottom:2rem">
     {% for league in country_leagues %}
     {% set joined = league.id in joined_ids %}
@@ -69,14 +69,14 @@
         <div style="font-weight:600;font-size:.82rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           {{ league.name | replace(league.badge_emoji + ' ', '') }}
         </div>
-        <div style="font-size:.68rem;color:var(--text-3)">{{ league.members|length }} members</div>
+        <div style="font-size:.68rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</div>
       </div>
       {% if joined %}
-      <a href="/leagues/{{ league.id }}" style="font-size:.68rem;color:var(--primary);font-weight:700">View</a>
+      <a href="/leagues/{{ league.id }}" style="font-size:.68rem;color:var(--primary);font-weight:700">{{ t('btn.view', _lang) }}</a>
       {% else %}
       <form action="/leagues/{{ league.id }}/join-open" method="post" style="margin:0">
         <button type="submit" style="background:var(--primary);color:#fff;border:none;border-radius:5px;
-               padding:.2rem .5rem;font-size:.68rem;cursor:pointer;font-weight:600">Join</button>
+               padding:.2rem .5rem;font-size:.68rem;cursor:pointer;font-weight:600">{{ t('btn.join', _lang) }}</button>
       </form>
       {% endif %}
     </div>
@@ -86,7 +86,7 @@
 
   {# ── Other Public ─────────────────────────────── #}
   {% if other_public %}
-  <div class="section-header"><h2 class="section-title">🏆 Open Leagues</h2></div>
+  <div class="section-header"><h2 class="section-title">{{ t('discover.open_leagues', _lang) }}</h2></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:.75rem;margin-bottom:2rem">
     {% for league in other_public %}
     {% set joined = league.id in joined_ids %}
@@ -94,13 +94,13 @@
       <div class="avatar avatar-sm" style="background:{{ league.accent_color }}">{{ league.badge_emoji }}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:.85rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ league.name }}</div>
-        <div style="font-size:.7rem;color:var(--text-3)">{{ league.members|length }} members</div>
+        <div style="font-size:.7rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</div>
       </div>
       {% if joined %}
-      <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">View</a>
+      <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">{{ t('btn.view', _lang) }}</a>
       {% else %}
       <form action="/leagues/{{ league.id }}/join-open" method="post" style="margin:0">
-        <button type="submit" class="btn btn-primary btn-sm">Join</button>
+        <button type="submit" class="btn btn-primary btn-sm">{{ t('btn.join', _lang) }}</button>
       </form>
       {% endif %}
     </div>
@@ -111,8 +111,8 @@
   {% if not global_leagues and not country_leagues and not other_public %}
   <div class="card"><div class="card-body empty-state">
     <div class="empty-state-icon">🔍</div>
-    <h3>No public leagues yet</h3>
-    <p>Public leagues are created automatically — check back after the first login.</p>
+    <h3>{{ t('discover.empty', _lang) }}</h3>
+    <p>{{ t('discover.empty_hint', _lang) }}</p>
   </div></div>
   {% endif %}
 

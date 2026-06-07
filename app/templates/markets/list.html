@@ -1,24 +1,25 @@
 {% extends "base.html" %}
 {% block title %}Prediction Markets — WC2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div class="page-header flex items-center justify-between">
     <div>
-      <h1>Prediction Markets</h1>
-      <p class="page-header-sub">Bet credits on outcomes · Everyone starts with 10 credits</p>
+      <h1>{{ t('market.title', _lang) }}</h1>
+      <p class="page-header-sub">{{ t('market.sub', _lang) }}</p>
     </div>
     <div style="display:flex;gap:.6rem;align-items:center">
       {% if user %}
-      <div class="credits-chip">{{ "%.1f"|format(user.credits) }} credits</div>
-      <a href="/markets/create" class="btn btn-primary btn-sm">+ Create Market</a>
+      <div class="credits-chip">{{ "%.1f"|format(user.credits) }} {{ t('market.credits', _lang) }}</div>
+      <a href="/markets/create" class="btn btn-primary btn-sm">{{ t('market.create', _lang) }}</a>
       {% else %}
-      <a href="/register" class="btn btn-primary btn-sm">Sign up to bet</a>
+      <a href="/register" class="btn btn-primary btn-sm">{{ t('market.signup_bet', _lang) }}</a>
       {% endif %}
     </div>
   </div>
 
-  <div class="section-header"><h2 class="section-title">Open Markets</h2></div>
+  <div class="section-header"><h2 class="section-title">{{ t('market.open_markets', _lang) }}</h2></div>
   {% if open_markets %}
   <div class="market-grid">
     {% for m in open_markets %}
@@ -44,17 +45,17 @@
         </div>
         {% endfor %}
         {% if m.options|length > 4 %}
-        <div class="mopt-more">+{{ m.options|length - 4 }} more options</div>
+        <div class="mopt-more">+{{ m.options|length - 4 }} {{ t('market.more_options', _lang) }}</div>
         {% endif %}
       </div>
 
       <div class="market-footer">
-        <span class="text-xs text-sub">{{ "%.1f"|format(m.total_volume()) }} credits vol.</span>
-        <span class="text-xs text-sub">Closes <span data-utc="{{ m.closes_at.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ m.closes_at.strftime('%d %b') }}</span></span>
+        <span class="text-xs text-sub">{{ "%.1f"|format(m.total_volume()) }} {{ t('market.volume', _lang) }}</span>
+        <span class="text-xs text-sub">{{ t('market.closes', _lang) }} <span data-utc="{{ m.closes_at.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ m.closes_at.strftime('%d %b') }}</span></span>
       </div>
       {% if user_bet %}
       <div class="market-your-bet">
-        Your bet: <strong>{{ user_bet.option.label }}</strong> · {{ "%.1f"|format(user_bet.amount) }} credits
+        {{ t('market.your_bet', _lang) }}: <strong>{{ user_bet.option.label }}</strong> · {{ "%.1f"|format(user_bet.amount) }} {{ t('market.credits', _lang) }}
       </div>
       {% endif %}
     </a>
@@ -62,14 +63,14 @@
   </div>
   {% else %}
   <div class="card"><div class="card-body empty-state">
-    <h3>No open markets yet</h3>
-    <p>Be the first to create a prediction market</p>
-    {% if user %}<a href="/markets/create" class="btn btn-primary">Create Market</a>{% endif %}
+    <h3>{{ t('market.empty', _lang) }}</h3>
+    <p>{{ t('market.empty_hint', _lang) }}</p>
+    {% if user %}<a href="/markets/create" class="btn btn-primary">{{ t('create.market_btn', _lang) }}</a>{% endif %}
   </div></div>
   {% endif %}
 
   {% if closed_markets %}
-  <div class="section-header" style="margin-top:2.5rem"><h2 class="section-title">Closed &amp; Resolved</h2></div>
+  <div class="section-header" style="margin-top:2.5rem"><h2 class="section-title">{{ t('market.closed_resolved', _lang) }}</h2></div>
   <div class="market-grid">
     {% for m in closed_markets %}
     {% set user_bet = user_bets.get(m.id) %}
@@ -84,9 +85,9 @@
       <div style="display:flex;align-items:flex-start;gap:.5rem;margin-bottom:.5rem">
         <div class="market-title" style="margin:0;flex:1">{{ m.title }}</div>
         {% if m.resolved and winning_opt.obj %}
-        <span class="tag tag-green" style="flex-shrink:0;white-space:nowrap">{{ winning_opt.obj.label }} won</span>
+        <span class="tag tag-green" style="flex-shrink:0;white-space:nowrap">{{ winning_opt.obj.label }} {{ t('market.won', _lang) }}</span>
         {% elif not m.resolved %}
-        <span class="tag tag-gray" style="flex-shrink:0">Closed</span>
+        <span class="tag tag-gray" style="flex-shrink:0">{{ t('market.closed_tag', _lang) }}</span>
         {% endif %}
       </div>
       <div class="market-options-bars">

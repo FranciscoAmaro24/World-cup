@@ -1,10 +1,11 @@
 {% extends "base.html" %}
 {% block title %}League Settings — {{ league.name }}{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
   <div class="page-header">
-    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm" style="margin-bottom:.75rem">← Back to {{ league.name }}</a>
-    <h1>League Settings</h1>
+    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm" style="margin-bottom:.75rem">← {{ t('btn.back', _lang) }} {{ league.name }}</a>
+    <h1>{{ t('settings.title', _lang) }}</h1>
     <p class="page-header-sub">{{ league.name }}</p>
   </div>
 
@@ -29,9 +30,9 @@
           <div class="avatar avatar-md" style="background:{{ league.accent_color }}">{{ league.badge_emoji }}</div>
           {% endif %}
           <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;
-               opacity:0;transition:opacity .15s;font-size:.6rem;color:#fff;font-weight:700" class="logo-hover">✏ Logo</div>
+               opacity:0;transition:opacity .15s;font-size:.6rem;color:#fff;font-weight:700" class="logo-hover">{{ t('league.change_logo', _lang) }}</div>
         </div>
-        <span style="font-size:.6rem;color:var(--text-3)">Logo</span>
+        <span style="font-size:.6rem;color:var(--text-3)">{{ t('settings.logo', _lang) }}</span>
       </div>
 
       <!-- Banner -->
@@ -46,28 +47,28 @@
             <input type="file" id="bannerInput" name="banner" accept="image/jpeg,image/png,image/webp,image/gif">
           </form>
           <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('bannerInput').click()">
-            {% if league.banner_url %}Change banner{% else %}Upload banner{% endif %}
+            {% if league.banner_url %}{{ t('league.change_banner', _lang) }}{% else %}{{ t('settings.upload_banner', _lang) }}{% endif %}
           </button>
           {% if league.banner_url %}
           <form action="/leagues/{{ league.id }}/banner/remove" method="post" style="display:inline">
-            <button type="submit" class="btn btn-outline btn-sm">Remove banner</button>
+            <button type="submit" class="btn btn-outline btn-sm">{{ t('league.remove_banner', _lang) }}</button>
           </form>
           {% endif %}
         </div>
-        <p style="font-size:.62rem;color:var(--text-3);margin-top:.3rem">Wide banner shown at top of league page</p>
+        <p style="font-size:.62rem;color:var(--text-3);margin-top:.3rem">{{ t('settings.banner_hint', _lang) }}</p>
       </div>
     </div>
 
     <form action="/leagues/{{ league.id }}/settings" method="post">
 
       <div class="form-group">
-        <label class="form-label">League Name</label>
+        <label class="form-label">{{ t('league.name', _lang) }}</label>
         <input class="form-input" type="text" name="name" value="{{ league.name }}" required maxlength="100">
       </div>
 
       <div class="form-group">
-        <label class="form-label">Description</label>
-        <input class="form-input" type="text" name="description" value="{{ league.description or '' }}" maxlength="200" placeholder="Optional">
+        <label class="form-label">{{ t('league.description', _lang) }}</label>
+        <input class="form-input" type="text" name="description" value="{{ league.description or '' }}" maxlength="200" placeholder="{{ t('settings.optional', _lang) }}">
       </div>
 
       {% if league.category == 'general' %}
@@ -77,14 +78,14 @@
             <input type="checkbox" name="is_public" value="true" {% if league.is_public %}checked{% endif %}>
             <span class="slider"></span>
           </label>
-          <span class="text-sm">Make this league public (joinable from Discover page)</span>
+          <span class="text-sm">{{ t('settings.make_public', _lang) }}</span>
         </div>
       </div>
       {% endif %}
 
       <div style="display:flex;gap:1rem;flex-wrap:wrap">
         <div class="form-group" style="flex:1;min-width:160px">
-          <label class="form-label">Accent Colour</label>
+          <label class="form-label">{{ t('settings.accent_colour', _lang) }}</label>
           <div class="color-picker" id="leagueColorPicker">
             {% for color in AVATAR_COLORS %}
             <div class="color-swatch {% if (league.accent_color or '#1a47c0') == color %}selected{% endif %}"
@@ -96,7 +97,7 @@
         </div>
 
         <div class="form-group" style="flex:1;min-width:160px">
-          <label class="form-label">Badge Emoji</label>
+          <label class="form-label">{{ t('league.badge', _lang) }}</label>
           <div class="icon-picker" id="leagueIconPicker">
             {% for icon in AVATAR_ICONS %}
             <div class="icon-opt {% if (league.badge_emoji or '🏆') == icon %}selected{% endif %}"
@@ -108,74 +109,74 @@
       </div>
 
       <hr class="form-divider">
-      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Match Score Predictions</p>
+      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">{{ t('settings.match_preds', _lang) }}</p>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Exact Score Points</label>
+          <label class="form-label">{{ t('settings.exact_pts', _lang) }}</label>
           <input class="form-input" type="number" name="points_exact" value="{{ league.points_exact_score }}" min="0" max="20">
-          <p class="form-hint">e.g. predicted 2-1 and it's 2-1</p>
+          <p class="form-hint">{{ t('settings.exact_hint', _lang) }}</p>
         </div>
         <div class="form-group">
-          <label class="form-label">Correct Result Points</label>
+          <label class="form-label">{{ t('settings.result_pts', _lang) }}</label>
           <input class="form-input" type="number" name="points_result" value="{{ league.points_correct_result }}" min="0" max="20">
-          <p class="form-hint">Correct winner/draw, wrong score</p>
+          <p class="form-hint">{{ t('settings.result_hint', _lang) }}</p>
         </div>
       </div>
 
       <hr class="form-divider">
-      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Bracket Picks (Pre-tournament)</p>
+      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">{{ t('settings.bracket_picks', _lang) }}</p>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:.75rem">
         <div class="form-group">
-          <label class="form-label">Winner</label>
+          <label class="form-label">{{ t('settings.winner', _lang) }}</label>
           <input class="form-input" type="number" name="points_bracket_winner" value="{{ league.points_bracket_winner }}" min="0" max="50">
         </div>
         <div class="form-group">
-          <label class="form-label">Finalist</label>
+          <label class="form-label">{{ t('league.finalist', _lang) }}</label>
           <input class="form-input" type="number" name="points_bracket_finalist" value="{{ league.points_bracket_finalist }}" min="0" max="50">
         </div>
         <div class="form-group">
-          <label class="form-label">Semi</label>
+          <label class="form-label">{{ t('settings.semi', _lang) }}</label>
           <input class="form-input" type="number" name="points_bracket_semi" value="{{ league.points_bracket_semi }}" min="0" max="50">
         </div>
         <div class="form-group">
-          <label class="form-label">Quarter</label>
+          <label class="form-label">{{ t('settings.quarter', _lang) }}</label>
           <input class="form-input" type="number" name="points_bracket_quarter" value="{{ league.points_bracket_quarter or 1 }}" min="0" max="50">
         </div>
       </div>
 
       <hr class="form-divider">
-      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Sweepstake</p>
+      <p class="text-xs text-muted mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">{{ t('sweep.title', _lang) }}</p>
       <div class="form-group">
         <div class="form-switch">
           <label class="switch">
             <input type="checkbox" name="sweepstake" id="sweepstakeToggle" value="true" {% if league.sweepstake_enabled %}checked{% endif %}>
             <span class="slider"></span>
           </label>
-          <span class="text-sm">Enable Sweepstake Mode</span>
+          <span class="text-sm">{{ t('create.enable_sweep', _lang) }}</span>
         </div>
       </div>
       <div id="sweepstakeFields" style="display:{% if league.sweepstake_enabled %}''{% else %}none{% endif %}">
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Buy-in Amount (€)</label>
+            <label class="form-label">{{ t('create.buy_in', _lang) }}</label>
             <input class="form-input" type="number" name="buy_in" value="{{ league.sweepstake_buy_in }}" min="0" step="0.5">
           </div>
           <div class="form-group">
-            <label class="form-label">Teams Per Person</label>
+            <label class="form-label">{{ t('create.teams_per', _lang) }}</label>
             <input class="form-input" type="number" name="teams_per_person" value="{{ league.sweepstake_teams_per_person }}" min="1" max="10">
           </div>
         </div>
       </div>
 
-      <button type="submit" class="btn btn-primary btn-full mt-2">Save Settings</button>
+      <button type="submit" class="btn btn-primary btn-full mt-2">{{ t('settings.save', _lang) }}</button>
     </form>
 
     <hr class="form-divider">
     <div class="invite-code-box">
-      <div class="invite-code-label">Invite Code</div>
+      <div class="invite-code-label">{{ t('league.invite_code', _lang) }}</div>
       <div class="invite-code">{{ league.invite_code }}</div>
-      <p class="text-xs text-muted mt-1">Share this code with your friends to join</p>
-      <button class="btn btn-secondary btn-sm mt-2" data-copy="{{ league.invite_code }}">Copy Code</button>
+      <p class="text-xs text-muted mt-1">{{ t('settings.invite_hint', _lang) }}</p>
+      <button class="btn btn-secondary btn-sm mt-2" data-copy="{{ league.invite_code }}">{{ t('btn.copy', _lang) }}</button>
     </div>
   </div>
 </div>
@@ -209,7 +210,7 @@
   document.querySelectorAll('[data-copy]').forEach(btn => {
     btn.addEventListener('click', () => {
       navigator.clipboard?.writeText(btn.dataset.copy);
-      const orig = btn.textContent; btn.textContent = 'Copied!';
+      const orig = btn.textContent; btn.textContent = '{{ t("btn.copy_done", _lang) }}';
       setTimeout(() => btn.textContent = orig, 1500);
     });
   });
