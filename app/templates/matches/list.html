@@ -1,16 +1,17 @@
 {% extends "base.html" %}
 {% block title %}Fixtures & Results — FIFA World Cup 2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div class="page-header flex items-center justify-between">
     <div>
-      <h1>Fixtures &amp; Results</h1>
-      <p class="page-header-sub">104 matches · June 11 – July 19, 2026</p>
+      <h1>{{ t('fixtures.title', _lang) }}</h1>
+      <p class="page-header-sub">{{ t('fixtures.sub', _lang) }}</p>
     </div>
     <div style="display:flex;gap:.5rem">
-      <a href="/knockout" class="btn btn-secondary btn-sm">Bracket</a>
-      <a href="/standings" class="btn btn-secondary btn-sm">Group Tables</a>
+      <a href="/knockout" class="btn btn-secondary btn-sm">{{ t('fixtures.bracket', _lang) }}</a>
+      <a href="/standings" class="btn btn-secondary btn-sm">{{ t('fixtures.tables', _lang) }}</a>
     </div>
   </div>
 

@@ -1,30 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Join League — WC2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
   <div class="form-card">
     <div style="text-align:center;margin-bottom:1.5rem">
       <div style="font-size:2.5rem">🔑</div>
-      <h1 class="form-title" style="margin-bottom:0">Join a League</h1>
-      <p class="text-sm text-muted mt-1">Enter the invite code your friend shared</p>
+      <h1 class="form-title" style="margin-bottom:0">{{ t('join.title', _lang) }}</h1>
+      <p class="text-sm text-muted mt-1">{{ t('join.sub', _lang) }}</p>
     </div>
     {% if error %}
     <div class="alert alert-error">{{ error }}</div>
     {% endif %}
     <form action="/leagues/join" method="post">
       <div class="form-group">
-        <label class="form-label">Invite Code</label>
+        <label class="form-label">{{ t('join.label', _lang) }}</label>
         <input class="form-input" type="text" name="invite_code" required
                placeholder="e.g. AB12CD"
                style="text-transform:uppercase;font-size:1.5rem;letter-spacing:.2em;text-align:center;font-family:monospace"
-               maxlength="6" autocomplete="off">
-        <p class="form-hint" style="text-align:center">6-character code (case-insensitive)</p>
+               maxlength="8" autocomplete="off">
+        <p class="form-hint" style="text-align:center">{{ t('join.hint', _lang) }}</p>
       </div>
-      <button type="submit" class="btn btn-primary btn-full">Join League</button>
+      <button type="submit" class="btn btn-primary btn-full">{{ t('join.btn', _lang) }}</button>
     </form>
     <hr class="form-divider">
     <p class="text-sm text-muted" style="text-align:center">
-      Want to start your own? <a href="/leagues/create" class="text-green" style="font-weight:600">Create a League</a>
+      {{ t('join.create_hint', _lang) }} <a href="/leagues/create" class="text-green" style="font-weight:600">{{ t('join.create_link', _lang) }}</a>
     </p>
   </div>
 </div>

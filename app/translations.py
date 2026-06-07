@@ -39,13 +39,59 @@ EN: dict[str, str] = {
     "btn.settings":     "Settings",
 
     # ── Index / hero ──────────────────────────────────
-    "index.hero_sub":   "Predict every match. Beat your friends. Win the sweepstake.",
-    "index.upcoming":   "Upcoming Matches",
-    "index.my_leagues": "My Leagues",
-    "index.join_league":"Join a league to compete with friends",
-    "index.no_leagues": "You're not in any leagues yet.",
-    "index.create_one": "Create one",
-    "index.or_join":    "or join with an invite code.",
+    "index.hero_sub":    "Predict every match. Beat your friends. Win the sweepstake.",
+    "index.upcoming":    "Upcoming Matches",
+    "index.my_leagues":  "My Leagues",
+    "index.view_all":    "View All",
+    "index.join_league": "Join a league to compete with friends",
+    "index.no_leagues":  "You're not in any leagues yet.",
+    "index.create_one":  "Create one",
+    "index.or_join":     "or join with an invite code.",
+    "index.get_started": "Get Started Free",
+    "index.join_code":   "Join with Code",
+    "index.create_league":"+ Create League",
+    "index.days":        "Days",
+    "index.hours":       "Hours",
+    "index.mins":        "Mins",
+    "index.secs":        "Secs",
+    "index.matches":     "Matches",
+    "index.teams":       "Teams",
+    "index.groups":      "Groups",
+    "index.rounds":      "Rounds",
+
+    # ── Leagues join ──────────────────────────────────
+    "join.title":        "Join a League",
+    "join.sub":          "Enter the invite code your friend shared",
+    "join.label":        "Invite Code",
+    "join.hint":         "6-character code (case-insensitive)",
+    "join.btn":          "Join League",
+    "join.create_hint":  "Want to start your own?",
+    "join.create_link":  "Create a League",
+
+    # ── Leaderboard ───────────────────────────────────
+    "lb.title":          "Global Leaderboard",
+    "lb.sub":            "Overall standings across all leagues",
+    "lb.player":         "Player",
+    "lb.predictions":    "predictions",
+    "lb.match":          "Match",
+    "lb.bracket":        "Bracket",
+    "lb.total":          "Total",
+
+    # ── Matches list ──────────────────────────────────
+    "fixtures.title":    "Fixtures & Results",
+    "fixtures.sub":      "104 matches · June 11 - July 19, 2026",
+    "fixtures.bracket":  "Bracket",
+    "fixtures.tables":   "Group Tables",
+    "fixtures.predict":  "Predict",
+    "fixtures.locked":   "Locked",
+
+    # ── Teams detail ──────────────────────────────────
+    "squad.no":          "#",
+    "squad.name":        "Name",
+    "squad.dob":         "Date of Birth",
+    "squad.caps":        "Caps",
+    "squad.goals":       "Goals",
+    "squad.club":        "Club",
 
     # ── Matches ───────────────────────────────────────
     "match.fixtures":   "Fixtures",
@@ -59,7 +105,7 @@ EN: dict[str, str] = {
 
     # ── Standings ─────────────────────────────────────
     "standings.title":  "Group Standings",
-    "standings.sub":    "Live tables — updated as results come in",
+    "standings.sub":    "Live tables, updated as results come in",
     "standings.played": "P",
     "standings.won":    "W",
     "standings.drawn":  "D",
@@ -103,7 +149,7 @@ EN: dict[str, str] = {
 
     # ── Discover ──────────────────────────────────────
     "discover.title":    "Discover Leagues",
-    "discover.sub":      "Join public leagues — no invite code needed",
+    "discover.sub":      "Join public leagues, no invite code needed",
     "discover.global":   "Global",
     "discover.country":  "Country Fan Leagues",
     "discover.open":     "Open Leagues",
@@ -169,7 +215,7 @@ EN: dict[str, str] = {
     "teams.eliminated":     "Eliminated",
 
     # ── Footer ────────────────────────────────────────
-    "footer.text":  "WC2026 Predictor — Built for friends & fun · Francisco Amaro ©",
+    "footer.text":  "WC2026 Predictor · Built for friends & fun · Francisco Amaro ©",
 }
 
 PT: dict[str, str] = {
@@ -208,13 +254,59 @@ PT: dict[str, str] = {
     "btn.settings":     "Definições",
 
     # ── Index / hero ──────────────────────────────────
-    "index.hero_sub":   "Prevê todos os jogos. Bate os teus amigos. Ganha o sorteio.",
-    "index.upcoming":   "Próximos Jogos",
-    "index.my_leagues": "As Minhas Ligas",
-    "index.join_league":"Junta-te a uma liga para competir com amigos",
-    "index.no_leagues": "Ainda não estás em nenhuma liga.",
-    "index.create_one": "Cria uma",
-    "index.or_join":    "ou entra com um código de convite.",
+    "index.hero_sub":    "Prevê todos os jogos. Bate os teus amigos. Ganha o sorteio.",
+    "index.upcoming":    "Próximos Jogos",
+    "index.my_leagues":  "As Minhas Ligas",
+    "index.view_all":    "Ver Todas",
+    "index.join_league": "Junta-te a uma liga para competir com amigos",
+    "index.no_leagues":  "Ainda não estás em nenhuma liga.",
+    "index.create_one":  "Cria uma",
+    "index.or_join":     "ou entra com um código de convite.",
+    "index.get_started": "Começar Grátis",
+    "index.join_code":   "Entrar com Código",
+    "index.create_league":"+ Criar Liga",
+    "index.days":        "Dias",
+    "index.hours":       "Horas",
+    "index.mins":        "Min",
+    "index.secs":        "Seg",
+    "index.matches":     "Jogos",
+    "index.teams":       "Seleções",
+    "index.groups":      "Grupos",
+    "index.rounds":      "Rondas",
+
+    # ── Leagues join ──────────────────────────────────
+    "join.title":        "Entrar numa Liga",
+    "join.sub":          "Insere o código de convite do teu amigo",
+    "join.label":        "Código de Convite",
+    "join.hint":         "Código de 6 caracteres (indiferente a maiúsculas)",
+    "join.btn":          "Entrar na Liga",
+    "join.create_hint":  "Queres criar a tua?",
+    "join.create_link":  "Criar uma Liga",
+
+    # ── Leaderboard ───────────────────────────────────
+    "lb.title":          "Classificação Global",
+    "lb.sub":            "Classificação geral de todas as ligas",
+    "lb.player":         "Jogador",
+    "lb.predictions":    "previsões",
+    "lb.match":          "Jogos",
+    "lb.bracket":        "Eliminatórias",
+    "lb.total":          "Total",
+
+    # ── Matches list ──────────────────────────────────
+    "fixtures.title":    "Calendário & Resultados",
+    "fixtures.sub":      "104 jogos · 11 Jun - 19 Jul 2026",
+    "fixtures.bracket":  "Eliminatórias",
+    "fixtures.tables":   "Tabelas de Grupo",
+    "fixtures.predict":  "Prever",
+    "fixtures.locked":   "Bloqueado",
+
+    # ── Teams detail ──────────────────────────────────
+    "squad.no":          "#",
+    "squad.name":        "Nome",
+    "squad.dob":         "Data de Nascimento",
+    "squad.caps":        "Internacionalizações",
+    "squad.goals":       "Golos",
+    "squad.club":        "Clube",
 
     # ── Matches ───────────────────────────────────────
     "match.fixtures":   "Calendário",
@@ -272,7 +364,7 @@ PT: dict[str, str] = {
 
     # ── Discover ──────────────────────────────────────
     "discover.title":    "Explorar Ligas",
-    "discover.sub":      "Junta-te a ligas públicas — sem código de convite",
+    "discover.sub":      "Junta-te a ligas públicas, sem código de convite",
     "discover.global":   "Global",
     "discover.country":  "Ligas de Adeptos por País",
     "discover.open":     "Ligas Abertas",
@@ -338,7 +430,7 @@ PT: dict[str, str] = {
     "teams.eliminated":     "Eliminado",
 
     # ── Footer ────────────────────────────────────────
-    "footer.text":  "Predictor WC2026 — Feito para amigos & diversão · Francisco Amaro ©",
+    "footer.text":  "Predictor WC2026 · Feito para amigos & diversão · Francisco Amaro ©",
 }
 
 TRANSLATIONS: dict[str, dict] = {"en": EN, "pt": PT}

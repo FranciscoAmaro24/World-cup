@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Global Leaderboard — FIFA World Cup 2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div class="page-header">
     <div>
-      <h1>🏆 Global Leaderboard</h1>
-      <p class="page-header-sub">Overall standings across all leagues</p>
+      <h1>🏆 {{ t('lb.title', _lang) }}</h1>
+      <p class="page-header-sub">{{ t('lb.sub', _lang) }}</p>
     </div>
   </div>
 
@@ -15,10 +16,10 @@
       <thead>
         <tr style="background:var(--bg-2)">
           <th style="padding:.55rem .75rem;text-align:center;width:40px;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">#</th>
-          <th style="padding:.55rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Player</th>
-          <th style="padding:.55rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Match prediction points">Match</th>
-          <th style="padding:.55rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)" title="Bracket pick points">Bracket</th>
-          <th style="padding:.55rem .75rem;text-align:center;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border)">Total</th>
+          <th style="padding:.55rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">{{ t('lb.player', _lang) }}</th>
+          <th style="padding:.55rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">{{ t('lb.match', _lang) }}</th>
+          <th style="padding:.55rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">{{ t('lb.bracket', _lang) }}</th>
+          <th style="padding:.55rem .75rem;text-align:center;font-size:.6rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid var(--border)">{{ t('lb.total', _lang) }}</th>
         </tr>
       </thead>
       <tbody>
@@ -32,7 +33,7 @@
               {{ avatar_html(row.user, "sm") | safe }}
               <div>
                 <div style="font-weight:600;color:var(--text-1)">{{ row.user.display_name or row.user.username }}</div>
-                <div style="font-size:.7rem;color:var(--text-3)">{{ row.predictions }} predictions</div>
+                <div style="font-size:.7rem;color:var(--text-3)">{{ row.predictions }} {{ t('lb.predictions', _lang) }}</div>
               </div>
             </a>
             {% if user and row.user.id == user.id %}<span class="you-badge" style="margin-left:.4rem">YOU</span>{% endif %}
