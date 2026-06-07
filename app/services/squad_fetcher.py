@@ -40,50 +40,80 @@ WIKI_NAME_TO_CODE = {
 
 
 def _clean_wiki(text: str) -> str:
-    """Strip [[Link|Display]] → Display, remove templates, extra brackets."""
-    text = re.sub(r'\[\[(?:[^\]|]+\|)?([^\]]+)\]\]', r'\1', text)
-    text = re.sub(r'\{\{[^}]+\}\}', '', text)
+    """Strip [[Link|Display]] → Display, remove templates and leftover brackets."""
+    text = re.sub(r'\[\[(?:[^\]|]+\|)?([^\]]+)\]\]', r'\1', text)  # [[Link|Display]] → Display
+    text = re.sub(r'\[\[[^\]|]*\|', '', text)   # orphaned [[Link| (pipe cut it off)
+    text = re.sub(r'\[\[', '', text)             # any remaining [[
+    text = re.sub(r'\{\{[^}]*\}\}', '', text)   # {{template}}
     text = re.sub(r"'''?", '', text)
     return text.strip()
 
 
 def _parse_dob(template: str) -> str | None:
-    """Extract yyyy-mm-dd from birth_date_and_age or birth date templates."""
-    m = re.search(r'\|(\d{4})\|(\d{1,2})\|(\d{1,2})', template)
-    if m:
-        return f"{m.group(1)}-{int(m.group(2)):02d}-{int(m.group(3)):02d}"
+    """Extract yyyy-mm-dd from birth date templates.
+    {{birth date and age2|ref_year|ref_m|ref_d|birth_year|birth_m|birth_d}} — take last plausible year.
+    """
+    for year, month, day in reversed(re.findall(r'\|(\d{4})\|(\d{1,2})\|(\d{1,2})', template)):
+        if 1960 <= int(year) <= 2010:
+            return f"{year}-{int(month):02d}-{int(day):02d}"
     return None
+
+
+def _split_params(inner: str) -> dict[str, str]:
+    """Parse 'key=val|key=val' respecting nested {{ }} so | inside them is ignored."""
+    params: dict[str, str] = {}
+    depth, buf = 0, []
+    for ch in inner:
+        if ch == '{':
+            depth += 1
+        elif ch == '}':
+            depth -= 1
+        if ch == '|' and depth == 0:
+            part = ''.join(buf).strip()
+            if '=' in part:
+                k, _, v = part.partition('=')
+                params[k.strip().lower()] = v.strip()
+            buf = []
+        else:
+            buf.append(ch)
+    part = ''.join(buf).strip()
+    if '=' in part:
+        k, _, v = part.partition('=')
+        params[k.strip().lower()] = v.strip()
+    return params
+
+
+def _find_player_templates(text: str) -> list[str]:
+    """Return inner text of every {{nat fs g player …}} using bracket counting."""
+    results = []
+    for m in re.finditer(r'\{\{nat fs g player', text, re.IGNORECASE):
+        depth, i = 0, m.start()
+        while i < len(text) - 1:
+            if text[i:i+2] == '{{':
+                depth += 1; i += 2
+            elif text[i:i+2] == '}}':
+                depth -= 1; i += 2
+                if depth == 0:
+                    results.append(text[m.start()+2:i-2])
+                    break
+            else:
+                i += 1
+    return results
 
 
 def _parse_players(section_text: str) -> list[dict]:
     players = []
-    pattern = re.compile(
-        r'\{\{nat fs g player'
-        r'(?:\|no=(\d+))?'
-        r'\|pos=(\w+)'
-        r'\|name=([^\|]+)'
-        r'(?:\|sortname=[^\|]+)?'
-        r'(?:\|age=([^\|]+))?'
-        r'(?:\|caps=(\d+))?'
-        r'(?:\|goals=(\d+))?'
-        r'(?:\|club=([^\|]+))?'
-        r'(?:\|clubnat=([A-Z]+))?',
-        re.IGNORECASE,
-    )
-    for m in pattern.finditer(section_text):
-        number_str, pos, name_raw, age_raw, caps_str, goals_str, club_raw, club_nat = (
-            m.group(1), m.group(2), m.group(3), m.group(4),
-            m.group(5), m.group(6), m.group(7), m.group(8),
-        )
+    for inner in _find_player_templates(section_text):
+        p = _split_params(inner)
         players.append({
-            "squad_number": int(number_str) if number_str else None,
-            "position":     pos.upper()[:3],
-            "name":         _clean_wiki(name_raw or ""),
-            "date_of_birth": _parse_dob(age_raw or ""),
-            "caps":         int(caps_str) if caps_str else 0,
-            "goals":        int(goals_str) if goals_str else 0,
-            "club":         _clean_wiki(club_raw or "") or None,
-            "club_country": club_nat or None,
+            "squad_number":  int(p['no']) if p.get('no', '').isdigit() else None,
+            "position":      (p.get('pos', '') or 'MF').upper()[:3],
+            "name":          _clean_wiki(p.get('name', '')),
+            "date_of_birth": _parse_dob(p.get('age', '') or p.get('dob', '')),
+            "caps":          int(p['caps']) if p.get('caps', '').isdigit() else 0,
+            "goals":         int(p['goals']) if p.get('goals', '').isdigit() else 0,
+            "club":          _clean_wiki(p.get('club', '')) or None,
+            "club_country":  (p.get('clubnat') or '').upper()[:3] or None,
         })
     return players
 
