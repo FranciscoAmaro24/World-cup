@@ -5,7 +5,8 @@
   <div class="form-card">
     <div style="text-align:center;margin-bottom:1.5rem">
       <div style="font-size:2.5rem">⚽</div>
-      <h1 class="form-title" style="margin-bottom:0">Log In</h1>
+{% set _lang = request.cookies.get('lang', 'en') %}
+      <h1 class="form-title" style="margin-bottom:0">{{ t('auth.login', _lang) }}</h1>
       <p class="text-sm text-muted mt-1">Welcome back to WC2026 Predictor</p>
     </div>
     {% if error %}
@@ -13,18 +14,18 @@
     {% endif %}
     <form action="/login" method="post">
       <div class="form-group">
-        <label class="form-label" for="username">Username</label>
+        <label class="form-label" for="username">{{ t('auth.username', _lang) }}</label>
         <input class="form-input" type="text" id="username" name="username" required autocomplete="username" placeholder="Your username">
       </div>
       <div class="form-group">
-        <label class="form-label" for="password">Password</label>
+        <label class="form-label" for="password">{{ t('auth.password', _lang) }}</label>
         <input class="form-input" type="password" id="password" name="password" required autocomplete="current-password" placeholder="••••••••">
       </div>
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">Log In</button>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">{{ t('auth.login', _lang) }}</button>
     </form>
     <hr class="form-divider">
     <p class="text-sm text-muted" style="text-align:center">
-      Don't have an account? <a href="/register" class="text-green" style="font-weight:600">Sign Up</a>
+      {{ t('auth.no_account', _lang) }} <a href="/register" class="text-green" style="font-weight:600">{{ t('auth.register_link', _lang) }}</a>
     </p>
   </div>
 </div>

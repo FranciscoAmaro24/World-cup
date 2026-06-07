@@ -15,21 +15,7 @@
   {% endif %}
 </head>
 <body>
-
-  <!-- Top bar -->
-  <div class="topbar">
-    <a href="/fixtures">Fixtures</a>
-    <span class="topbar-sep">|</span>
-    <a href="/knockout">Bracket</a>
-    <span class="topbar-sep">|</span>
-    <a href="/standings">Standings</a>
-    <span class="topbar-sep">|</span>
-    <a href="/leagues">My Leagues</a>
-    {% if user and user.is_superadmin %}
-    <span class="topbar-sep">|</span>
-    <a href="/admin" style="color:var(--gold)">⚙ Admin</a>
-    {% endif %}
-  </div>
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 
   <!-- Main nav -->
   <nav class="navbar">
@@ -37,7 +23,6 @@
       <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none;position:relative;cursor:pointer"
            id="logoBtn" title="Play / Pause">
         <img src="/static/img/logo.jpg" alt="Logo" style="width:36px;height:36px;object-fit:cover;display:block;border-radius:8px">
-        <!-- play/pause overlay -->
         <div id="playIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);border-radius:8px;font-size:.9rem;transition:opacity .15s">▶</div>
       </div>
       <div class="brand-text">
@@ -47,15 +32,14 @@
     </a>
 
     <div class="nav-links">
-      <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">Home</a>
-      <a href="/fixtures" class="nav-link {% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
-      <a href="/knockout" class="nav-link {% if '/knockout' in request.url.path %}active{% endif %}">Bracket</a>
-      <a href="/standings" class="nav-link {% if '/standings' in request.url.path %}active{% endif %}">Standings</a>
-      <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path and '/discover' not in request.url.path %}active{% endif %}">Leagues</a>
-      <a href="/leagues/discover" class="nav-link {% if '/discover' in request.url.path %}active{% endif %}">Discover</a>
-      <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
-      <a href="/teams" class="nav-link {% if '/teams' in request.url.path %}active{% endif %}">Teams</a>
-      <a href="/leaderboard" class="nav-link {% if '/leaderboard' in request.url.path %}active{% endif %}">Leaderboard</a>
+      <a href="/" class="nav-link {% if request.url.path == '/' %}active{% endif %}">{{ t('nav.home', _lang) }}</a>
+      <a href="/fixtures" class="nav-link {% if '/fixtures' in request.url.path %}active{% endif %}">{{ t('nav.matches', _lang) }}</a>
+      <a href="/knockout" class="nav-link {% if '/knockout' in request.url.path %}active{% endif %}">{{ t('nav.bracket', _lang) }}</a>
+      <a href="/standings" class="nav-link {% if '/standings' in request.url.path %}active{% endif %}">{{ t('nav.standings', _lang) }}</a>
+      <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path and '/discover' not in request.url.path %}active{% endif %}">{{ t('nav.leagues', _lang) }}</a>
+      <a href="/leagues/discover" class="nav-link {% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
+      <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
+      <a href="/teams" class="nav-link {% if '/teams' in request.url.path %}active{% endif %}">{{ t('nav.teams', _lang) }}</a>
     </div>
 
     <!-- Hamburger (mobile only) -->
@@ -64,6 +48,20 @@
     </button>
 
     <div class="nav-right">
+      <!-- Language toggle -->
+      <form action="/set-language" method="post" style="margin:0;display:flex;gap:2px">
+        <button type="submit" name="lang" value="en"
+                style="background:{% if _lang == 'en' %}var(--primary){% else %}transparent{% endif %};
+                       border:1px solid var(--border);border-radius:4px 0 0 4px;
+                       color:{% if _lang == 'en' %}#fff{% else %}var(--text-3){% endif %};
+                       padding:.2rem .45rem;font-size:.65rem;font-weight:700;cursor:pointer">EN</button>
+        <button type="submit" name="lang" value="pt"
+                style="background:{% if _lang == 'pt' %}var(--primary){% else %}transparent{% endif %};
+                       border:1px solid var(--border);border-left:none;border-radius:0 4px 4px 0;
+                       color:{% if _lang == 'pt' %}#fff{% else %}var(--text-3){% endif %};
+                       padding:.2rem .45rem;font-size:.65rem;font-weight:700;cursor:pointer">PT</button>
+      </form>
+
       {% if user %}
         <a href="/profile/{{ user.username }}" class="avatar-chip" style="text-decoration:none">
           {{ avatar_html(user, "sm") | safe }}
@@ -72,12 +70,15 @@
             {% if user.is_superadmin %}<span class="superadmin-dot"></span>{% endif %}
           </span>
         </a>
+        {% if user.is_superadmin %}
+        <a href="/admin" class="btn-nav btn-nav-outline" style="color:var(--gold);border-color:var(--gold)">⚙</a>
+        {% endif %}
         <form action="/logout" method="post" style="margin:0">
-          <button type="submit" class="btn-nav btn-nav-outline">Logout</button>
+          <button type="submit" class="btn-nav btn-nav-outline">{{ t('nav.logout', _lang) }}</button>
         </form>
       {% else %}
-        <a href="/login" class="btn-nav btn-nav-outline">Log In</a>
-        <a href="/register" class="btn-nav btn-nav-primary">Sign Up</a>
+        <a href="/login" class="btn-nav btn-nav-outline">{{ t('nav.login', _lang) }}</a>
+        <a href="/register" class="btn-nav btn-nav-primary">{{ t('nav.signup', _lang) }}</a>
       {% endif %}
     </div>
   </nav>
@@ -85,27 +86,36 @@
   <!-- Mobile nav drawer -->
   <div class="mobile-nav" id="mobileNav">
     <button class="mobile-nav-close" id="mobileNavClose">✕</button>
-    <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Home</a>
-    <a href="/fixtures" class="{% if '/fixtures' in request.url.path %}active{% endif %}">Matches</a>
-    <a href="/knockout" class="{% if '/knockout' in request.url.path %}active{% endif %}">Bracket</a>
-    <a href="/standings" class="{% if '/standings' in request.url.path %}active{% endif %}">Standings</a>
-    <a href="/leagues" class="{% if '/leagues' in request.url.path and '/discover' not in request.url.path %}active{% endif %}">Leagues</a>
-    <a href="/leagues/discover" class="{% if '/discover' in request.url.path %}active{% endif %}">Discover</a>
-    <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">Markets</a>
-    <a href="/teams" class="{% if '/teams' in request.url.path %}active{% endif %}">Teams</a>
-    <a href="/leaderboard" class="{% if '/leaderboard' in request.url.path %}active{% endif %}">Leaderboard</a>
+    <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">{{ t('nav.home', _lang) }}</a>
+    <a href="/fixtures" class="{% if '/fixtures' in request.url.path %}active{% endif %}">{{ t('nav.matches', _lang) }}</a>
+    <a href="/knockout" class="{% if '/knockout' in request.url.path %}active{% endif %}">{{ t('nav.bracket', _lang) }}</a>
+    <a href="/standings" class="{% if '/standings' in request.url.path %}active{% endif %}">{{ t('nav.standings', _lang) }}</a>
+    <a href="/leagues" class="{% if '/leagues' in request.url.path and '/discover' not in request.url.path %}active{% endif %}">{{ t('nav.leagues', _lang) }}</a>
+    <a href="/leagues/discover" class="{% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
+    <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
+    <a href="/teams" class="{% if '/teams' in request.url.path %}active{% endif %}">{{ t('nav.teams', _lang) }}</a>
+    <!-- Language switch in mobile -->
+    <form action="/set-language" method="post" style="margin:.5rem 0;display:flex;gap:4px;padding:0 1rem">
+      <button type="submit" name="lang" value="en"
+              style="flex:1;background:{% if _lang == 'en' %}var(--primary){% else %}var(--bg-3){% endif %};
+                     border:1px solid var(--border);border-radius:6px;color:#fff;padding:.4rem;font-size:.75rem;font-weight:700;cursor:pointer">EN</button>
+      <button type="submit" name="lang" value="pt"
+              style="flex:1;background:{% if _lang == 'pt' %}var(--primary){% else %}var(--bg-3){% endif %};
+                     border:1px solid var(--border);border-radius:6px;color:#fff;padding:.4rem;font-size:.75rem;font-weight:700;cursor:pointer">PT</button>
+    </form>
     {% if user %}
-    <a href="/profile/{{ user.username }}" style="font-size:1rem;color:var(--gold)">Profile</a>
+    <a href="/profile/{{ user.username }}" style="font-size:1rem;color:var(--gold)">{{ t('nav.profile', _lang) }}</a>
+    {% if user.is_superadmin %}<a href="/admin" style="font-size:1rem;color:var(--gold)">⚙ {{ t('nav.admin', _lang) }}</a>{% endif %}
     {% else %}
-    <a href="/login" style="font-size:1rem">Log In</a>
-    <a href="/register" style="font-size:1rem;color:var(--gold)">Sign Up</a>
+    <a href="/login" style="font-size:1rem">{{ t('nav.login', _lang) }}</a>
+    <a href="/register" style="font-size:1rem;color:var(--gold)">{{ t('nav.signup', _lang) }}</a>
     {% endif %}
   </div>
 
   <main>{% block content %}{% endblock %}</main>
 
   <footer>
-    <p>WC2026 Predictor — Built for friends &amp; fun · Francisco Amaro ©</p>
+    <p>{{ t('footer.text', _lang) }}</p>
   </footer>
 
   <!-- Full-page background video — must be a direct child of body, NOT inside

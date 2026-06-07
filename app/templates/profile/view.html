@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}{{ target.display_name or target.username }} — WC2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 
 {% if target.profile_banner_url %}
 <div style="width:100%;height:200px;overflow:hidden;position:relative">
@@ -26,23 +27,23 @@
         <div class="profile-stats">
           <div class="profile-stat">
             <div class="profile-stat-val">{{ stats.total_pts }}</div>
-            <div class="profile-stat-lbl">Total Pts</div>
+            <div class="profile-stat-lbl">{{ t('profile.total_pts', _lang) }}</div>
           </div>
           <div class="profile-stat">
             <div class="profile-stat-val">{{ stats.predictions }}</div>
-            <div class="profile-stat-lbl">Predictions</div>
+            <div class="profile-stat-lbl">{{ t('profile.predictions', _lang) }}</div>
           </div>
           <div class="profile-stat">
             <div class="profile-stat-val">{{ stats.accuracy }}%</div>
-            <div class="profile-stat-lbl">Accuracy</div>
+            <div class="profile-stat-lbl">{{ t('profile.accuracy', _lang) }}</div>
           </div>
           <div class="profile-stat">
             <div class="profile-stat-val">{{ stats.exact }}</div>
-            <div class="profile-stat-lbl">Exact Scores</div>
+            <div class="profile-stat-lbl">{{ t('profile.exact_scores', _lang) }}</div>
           </div>
           <div class="profile-stat">
             <div class="profile-stat-val">{{ stats.leagues }}</div>
-            <div class="profile-stat-lbl">Leagues</div>
+            <div class="profile-stat-lbl">{{ t('profile.leagues', _lang) }}</div>
           </div>
         </div>
       </div>

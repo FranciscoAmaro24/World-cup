@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Teams — FIFA World Cup 2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div class="page-header">
     <div>
-      <h1>All 48 Teams</h1>
-      <p class="page-header-sub">Click a team to view their squad</p>
+      <h1>{{ t('teams.title', _lang) }}</h1>
+      <p class="page-header-sub">{{ t('teams.sub', _lang) }}</p>
     </div>
   </div>
 

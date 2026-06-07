@@ -1,7 +1,7 @@
 import sys, os, asyncio
 sys.path.insert(0, os.path.dirname(__file__))
 
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, Form
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
@@ -95,7 +95,7 @@ def _seed_public_leagues():
         # Global league
         if not db.query(models.League).filter(models.League.category == "global").first():
             gl = models.League(
-                name="🌍 World Cup 2026 — Global",
+                name="🌍 World Cup 2026 Global",
                 invite_code="WC2026GL",
                 admin_id=admin.id,
                 description="The main global prediction league — anyone can join.",
@@ -156,6 +156,7 @@ app.mount("/static/uploads", StaticFiles(directory=_uploads_dir), name="uploads"
 app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 from shared import templates  # shared singleton used by all routers
+from translations import t as _t
 
 # Register template globals on the shared instance
 templates.env.globals["flag_url"] = flag_url
@@ -163,6 +164,7 @@ templates.env.globals["flag_img"] = flag_img
 templates.env.globals["avatar_html"] = avatar_html
 templates.env.globals["AVATAR_COLORS"] = models.AVATAR_COLORS
 templates.env.globals["AVATAR_ICONS"] = models.AVATAR_ICONS
+templates.env.globals["t"] = _t
 
 from routers.admin import _active_video_url
 templates.env.globals["bg_video_url"] = _active_video_url
@@ -206,3 +208,20 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "first_match": first_match,
         },
     )
+
+
+@app.post("/set-language")
+async def set_language(
+    request: Request,
+    lang: str = Form("en"),
+    db: Session = Depends(get_db),
+):
+    lang = lang if lang in ("en", "pt") else "en"
+    referer = request.headers.get("referer", "/")
+    response = RedirectResponse(referer, status_code=303)
+    response.set_cookie("lang", lang, max_age=365 * 24 * 3600, samesite="lax")
+    user = auth.get_current_user(request, db)
+    if user and hasattr(user, "language"):
+        user.language = lang
+        db.commit()
+    return response

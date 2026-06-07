@@ -1,12 +1,13 @@
 {% extends "base.html" %}
 {% block title %}Discover Leagues — FIFA World Cup 2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
   <div class="page-header flex items-center justify-between">
     <div>
-      <h1>Discover Leagues</h1>
-      <p class="page-header-sub">Join public leagues — no invite code needed</p>
+      <h1>{{ t('discover.title', _lang) }}</h1>
+      <p class="page-header-sub">{{ t('discover.sub', _lang) }}</p>
     </div>
     <div style="display:flex;gap:.5rem">
       <a href="/leagues" class="btn btn-secondary btn-sm">My Leagues</a>
@@ -16,7 +17,7 @@
 
   {# ── Global ─────────────────────────────────── #}
   {% if global_leagues %}
-  <div class="section-header"><h2 class="section-title">🌍 Global</h2></div>
+  <div class="section-header"><h2 class="section-title">🌍 {{ t('discover.global', _lang) }}</h2></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.9rem;margin-bottom:2rem">
     {% for league in global_leagues %}
     {% set joined = league.id in joined_ids %}
@@ -46,7 +47,7 @@
           <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">View →</a>
           {% else %}
           <form action="/leagues/{{ league.id }}/join-open" method="post" style="margin:0">
-            <button type="submit" class="btn btn-primary btn-sm">Join Free</button>
+            <button type="submit" class="btn btn-primary btn-sm">{{ t('discover.join_free', _lang) }}</button>
           </form>
           {% endif %}
         </div>
@@ -58,7 +59,7 @@
 
   {# ── Country Fan Leagues ─────────────────────── #}
   {% if country_leagues %}
-  <div class="section-header"><h2 class="section-title">🏟 Country Fan Leagues</h2></div>
+  <div class="section-header"><h2 class="section-title">🏟 {{ t('discover.country', _lang) }}</h2></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem;margin-bottom:2rem">
     {% for league in country_leagues %}
     {% set joined = league.id in joined_ids %}

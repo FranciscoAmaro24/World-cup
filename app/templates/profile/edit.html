@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Edit Profile — WC2026{% endblock %}
 {% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
   <div class="form-card" style="max-width:520px">
     <div style="text-align:center;margin-bottom:1.5rem">
@@ -8,7 +9,7 @@
         {{ avatar_html(user, "xl") | safe }}
         <div style="position:absolute;inset:0;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .15s;font-size:.65rem;font-weight:700;color:#fff;letter-spacing:.05em;text-transform:uppercase" class="avatar-upload-overlay">Upload</div>
       </div>
-      <h1 class="form-title" style="margin-top:.75rem;margin-bottom:0">Edit Profile</h1>
+      <h1 class="form-title" style="margin-top:.75rem;margin-bottom:0">{{ t('profile.edit', _lang) }}</h1>
     </div>
 
     <!-- Photo upload (separate form) -->
@@ -40,24 +41,24 @@
     {% if user.avatar_img_url %}
     <div style="text-align:center;margin-bottom:.75rem">
       <form action="/profile/avatar/remove" method="post" style="display:inline">
-        <button type="submit" class="btn btn-outline btn-sm" style="font-size:.7rem">Remove photo</button>
+        <button type="submit" class="btn btn-outline btn-sm" style="font-size:.7rem">{{ t('profile.remove_photo', _lang) }}</button>
       </form>
     </div>
     {% endif %}
 
     <form action="/profile/edit" method="post" id="profileForm">
       <div class="form-group">
-        <label class="form-label">Display Name</label>
+        <label class="form-label">{{ t('profile.display_name', _lang) }}</label>
         <input class="form-input" type="text" name="display_name" value="{{ user.display_name or '' }}" maxlength="50" placeholder="{{ user.username }}">
-        <p class="form-hint">Shown on leaderboards (leave blank to use username)</p>
+        <p class="form-hint">{{ t('profile.display_hint', _lang) }}</p>
       </div>
       <div class="form-group">
-        <label class="form-label">Bio</label>
-        <input class="form-input" type="text" name="bio" value="{{ user.bio or '' }}" maxlength="120" placeholder="One line about you...">
+        <label class="form-label">{{ t('profile.bio', _lang) }}</label>
+        <input class="form-input" type="text" name="bio" value="{{ user.bio or '' }}" maxlength="120" placeholder="{{ t('profile.bio_hint', _lang) }}">
       </div>
 
       <hr class="form-divider">
-      <p class="form-label">Avatar Color</p>
+      <p class="form-label">{{ t('profile.avatar_color', _lang) }}</p>
       <div class="color-picker mb-3" id="colorPicker">
         {% for color in AVATAR_COLORS %}
         <div class="color-swatch {% if (user.avatar_color or '#1a47c0') == color %}selected{% endif %}"
@@ -67,7 +68,7 @@
       </div>
       <input type="hidden" name="avatar_color" id="avatarColorInput" value="{{ user.avatar_color or '#1a47c0' }}">
 
-      <p class="form-label mt-3">Avatar Icon</p>
+      <p class="form-label mt-3">{{ t('profile.avatar_icon', _lang) }}</p>
       <div class="icon-picker mb-3" id="iconPicker">
         {% for icon in AVATAR_ICONS %}
         <div class="icon-opt {% if (user.avatar_icon or '⚽') == icon %}selected{% endif %}"
@@ -78,7 +79,7 @@
 
       <hr class="form-divider">
       <div class="form-group">
-        <label class="form-label">Favourite Team</label>
+        <label class="form-label">{{ t('profile.fav_team', _lang) }}</label>
         <select class="form-input" name="favorite_team_id">
           <option value="0">— None —</option>
           {% for team in teams %}
@@ -90,7 +91,7 @@
       </div>
 
       <hr class="form-divider">
-      <p class="form-label">App Background <span style="font-size:.65rem;color:var(--text-3);font-weight:400">(applies to all pages)</span></p>
+      <p class="form-label">{{ t('profile.app_bg', _lang) }} <span style="font-size:.65rem;color:var(--text-3);font-weight:400">{{ t('profile.app_bg_hint', _lang) }}</span></p>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin-bottom:1rem" id="bgPicker">
         {% set bgs = [
           ("none",         "Default",    "#111"),
@@ -111,11 +112,11 @@
       </div>
       <input type="hidden" name="profile_bg" id="profileBgInput" value="{{ user.profile_bg or 'none' }}">
 
-      <button type="submit" class="btn btn-primary btn-full btn-lg">Save Profile</button>
+      <button type="submit" class="btn btn-primary btn-full btn-lg">{{ t('profile.save', _lang) }}</button>
     </form>
 
     <hr class="form-divider">
-    <a href="/profile/{{ user.username }}" class="btn btn-outline btn-full">View Public Profile</a>
+    <a href="/profile/{{ user.username }}" class="btn btn-outline btn-full">{{ t('profile.view_public', _lang) }}</a>
   </div>
 </div>
 {% endblock %}

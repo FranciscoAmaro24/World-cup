@@ -5,7 +5,8 @@
   <div class="form-card">
     <div style="text-align:center;margin-bottom:1.5rem">
       <div style="font-size:2.5rem">🏆</div>
-      <h1 class="form-title" style="margin-bottom:0">Create Account</h1>
+{% set _lang = request.cookies.get('lang', 'en') %}
+      <h1 class="form-title" style="margin-bottom:0">{{ t('auth.register', _lang) }}</h1>
       <p class="text-sm text-muted mt-1">Join the WC2026 Predictor community</p>
     </div>
     {% if error %}
@@ -13,23 +14,23 @@
     {% endif %}
     <form action="/register" method="post">
       <div class="form-group">
-        <label class="form-label" for="username">Username</label>
+        <label class="form-label" for="username">{{ t('auth.username', _lang) }}</label>
         <input class="form-input" type="text" id="username" name="username" required autocomplete="username" placeholder="Choose a username" minlength="3" maxlength="30">
         <p class="form-hint">3–30 characters, visible to other players</p>
       </div>
       <div class="form-group">
-        <label class="form-label" for="email">Email</label>
+        <label class="form-label" for="email">{{ t('auth.email', _lang) }}</label>
         <input class="form-input" type="email" id="email" name="email" required autocomplete="email" placeholder="you@example.com">
       </div>
       <div class="form-group">
-        <label class="form-label" for="password">Password</label>
+        <label class="form-label" for="password">{{ t('auth.password', _lang) }}</label>
         <input class="form-input" type="password" id="password" name="password" required autocomplete="new-password" placeholder="Min. 6 characters" minlength="6">
       </div>
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">Create Account</button>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">{{ t('auth.register', _lang) }}</button>
     </form>
     <hr class="form-divider">
     <p class="text-sm text-muted" style="text-align:center">
-      Already have an account? <a href="/login" class="text-green" style="font-weight:600">Log In</a>
+      {{ t('auth.have_account', _lang) }} <a href="/login" class="text-green" style="font-weight:600">{{ t('auth.login_link', _lang) }}</a>
     </p>
   </div>
 </div>
