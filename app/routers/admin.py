@@ -70,6 +70,7 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
         .order_by(models.Match.match_date).all()
     )
     all_teams = db.query(models.Team).order_by(models.Team.group_letter, models.Team.name).all()
+    all_users = db.query(models.User).order_by(models.User.created_at).all()
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
@@ -78,6 +79,7 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
             "group_matches": group_matches,
             "knockout_matches": knockout_matches,
             "all_teams": all_teams,
+            "users": all_users,
             "round_labels": ROUND_LABELS,
             "last_fetch": results_fetcher.last_fetch,
             "last_error": results_fetcher.last_error,

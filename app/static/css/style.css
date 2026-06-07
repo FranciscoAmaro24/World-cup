@@ -673,6 +673,8 @@ footer { margin-top: 4rem; padding: 2rem; border-top: 1px solid var(--border); t
 
 /* Text colour helpers */
 .text-red-soft { color: #f87171; }
+.text-danger { color: #f87171; }
+.text-success { color: #4ade80; }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
 /* ─── HAMBURGER BUTTON (mobile only) ───────────────────────── */

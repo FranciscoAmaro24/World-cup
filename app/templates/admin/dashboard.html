@@ -315,6 +315,64 @@
   </div>
 
 </div>
+
+<!-- Users -->
+<div class="card" style="margin-top:2rem;margin-bottom:1.5rem;overflow:hidden">
+  <div class="card-header">
+    <span class="font-bold text-sm">👥 Users ({{ users | length }})</span>
+  </div>
+  <div style="overflow-x:auto">
+  <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+    <thead>
+      <tr style="background:var(--bg-2)">
+        <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">#</th>
+        <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">User</th>
+        <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Email</th>
+        <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Credits</th>
+        <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Leagues</th>
+        <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Joined</th>
+        <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Role</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr style="border-bottom:1px solid var(--border)">
+        <td style="padding:.55rem .75rem;color:var(--text-3)">{{ u.id }}</td>
+        <td style="padding:.55rem .75rem">
+          <div style="display:flex;align-items:center;gap:.6rem">
+            {{ avatar_html(u, "sm") | safe }}
+            <div>
+              <div style="font-weight:600;color:var(--text-1)">{{ u.display_name or u.username }}</div>
+              <div style="font-size:.7rem;color:var(--text-3)">@{{ u.username }}</div>
+            </div>
+          </div>
+        </td>
+        <td style="padding:.55rem .75rem;color:var(--text-2)">{{ u.email }}</td>
+        <td style="padding:.55rem .5rem;text-align:center;font-weight:600"
+            class="{% if u.credits < 2 %}text-danger{% elif u.credits > 20 %}text-success{% endif %}">
+          {{ "%.1f"|format(u.credits) }}
+        </td>
+        <td style="padding:.55rem .5rem;text-align:center;color:var(--text-2)">
+          {{ u.memberships | length }}
+        </td>
+        <td style="padding:.55rem .75rem;color:var(--text-3);font-size:.75rem">
+          {{ u.created_at.strftime('%d %b %Y') if u.created_at else '—' }}
+        </td>
+        <td style="padding:.55rem .5rem;text-align:center">
+          {% if u.is_superadmin %}
+          <span class="tag tag-gold" style="font-size:.6rem">Admin</span>
+          {% else %}
+          <span class="tag tag-gray" style="font-size:.6rem">User</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+
+</div>
 {% endblock %}
 {% block scripts %}
 <script>
