@@ -72,7 +72,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan, title="World Cup 2026 Predictor", docs_url=None, redoc_url=None)
 
-app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
+_static_dir = os.path.join(os.path.dirname(__file__), "static")
+_uploads_dir = os.getenv("UPLOADS_DIR", os.path.join(_static_dir, "uploads"))
+for _sub in ("avatars", "videos", "leagues", "markets"):
+    os.makedirs(os.path.join(_uploads_dir, _sub), exist_ok=True)
+
+# Uploads served first so persistent-volume files take precedence over ephemeral /static/uploads/
+app.mount("/static/uploads", StaticFiles(directory=_uploads_dir), name="uploads")
+app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 from shared import templates  # shared singleton used by all routers
 

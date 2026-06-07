@@ -21,7 +21,8 @@ from image_utils import process_image
 router = APIRouter(prefix="/markets")
 
 MIN_BET = 0.1
-MARKET_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "markets")
+_uploads_base = os.getenv("UPLOADS_DIR", os.path.join(os.path.dirname(__file__), "..", "static", "uploads"))
+MARKET_UPLOAD_DIR = os.path.join(_uploads_base, "markets")
 ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 MAX_SIZE = 10 * 1024 * 1024
 

@@ -23,6 +23,7 @@ primary_region = 'ams'
 
 [env]
   DATABASE_URL = "sqlite:////data/worldcup.db"
+  UPLOADS_DIR = "/data/uploads"
 
 [[mounts]]
   source = "wc_data"

@@ -15,7 +15,8 @@ import auth
 from shared import templates
 from image_utils import process_image
 
-LEAGUE_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "..", "static", "uploads", "leagues")
+_uploads_base = os.getenv("UPLOADS_DIR", os.path.join(os.path.dirname(__file__), "..", "static", "uploads"))
+LEAGUE_UPLOAD_DIR = os.path.join(_uploads_base, "leagues")
 ALLOWED_EXTS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 MAX_SIZE = 10 * 1024 * 1024
 

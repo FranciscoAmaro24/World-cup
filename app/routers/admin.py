@@ -6,10 +6,9 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 import os
 
-UPLOAD_BASE   = os.path.join(os.path.dirname(__file__), "..", "static", "uploads")
+UPLOAD_BASE   = os.getenv("UPLOADS_DIR", os.path.join(os.path.dirname(__file__), "..", "static", "uploads"))
 VIDEOS_DIR    = os.path.join(UPLOAD_BASE, "videos")
-ACTIVE_FILE   = os.path.join(UPLOAD_BASE, "active_video.txt")   # stores filename of active video
-# Keep old path as alias so existing code still works
+ACTIVE_FILE   = os.path.join(UPLOAD_BASE, "active_video.txt")
 BG_VIDEO_PATH = os.path.join(UPLOAD_BASE, "bg_video.mp4")
 
 
