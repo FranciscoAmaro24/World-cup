@@ -13,7 +13,7 @@
         <p class="page-header-sub">
           Group {{ team.group_letter }}
           {% if team.eliminated %}
-          · <span style="color:#f87171">Eliminated ({{ team.stage_reached | upper }})</span>
+          · <span style="color:#dc2626">Eliminated ({{ team.stage_reached | upper }})</span>
           {% elif team.stage_reached != 'group' %}
           · <span style="color:var(--pg-green)">Reached {{ team.stage_reached | upper }}</span>
           {% endif %}
@@ -38,41 +38,41 @@
   <!-- Squad table -->
   <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
     {% for pos, players in by_pos.items() %}
-    <div style="padding:.5rem 1.25rem .25rem;background:var(--bg-2);border-bottom:1px solid var(--border)">
-      <span style="font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)">
+    <div style="padding:.5rem 1.25rem .25rem;background:var(--pg-foot);border-bottom:1px solid var(--border)">
+      <span style="font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted)">
         {{ pos_label[pos] }} ({{ players | length }})
       </span>
     </div>
     <div style="overflow-x:auto">
-    <table style="width:100%;border-collapse:collapse;font-size:.84rem">
+    <table style="width:100%;border-collapse:collapse;font-size:.84rem;min-width:420px">
       <colgroup>
-        <col style="width:38px">
-        <col style="min-width:160px">
-        <col style="width:90px">
-        <col style="width:90px">
+        <col style="width:32px">
+        <col style="min-width:120px">
+        <col style="width:80px">
         <col style="width:70px">
-        <col style="width:70px">
-        <col style="min-width:140px">
+        <col style="width:50px">
+        <col style="width:50px">
+        <col style="min-width:110px">
       </colgroup>
       <tbody>
         {% for p in players %}
         <tr style="border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none{% endif %}"
-            onmouseover="this.style.background='var(--bg-2)'" onmouseout="this.style.background=''">
-          <td style="padding:.55rem .75rem;text-align:center;color:var(--text-3);font-size:.75rem;font-weight:700">
+            onmouseover="this.style.background='var(--pg-foot)'" onmouseout="this.style.background=''">
+          <td style="padding:.55rem .75rem;text-align:center;color:var(--pg-muted);font-size:.75rem;font-weight:700">
             {% if p.squad_number %}{{ p.squad_number }}{% else %}—{% endif %}
           </td>
-          <td style="padding:.55rem .75rem;font-weight:600;color:var(--text-1)">{{ p.name }}</td>
-          <td style="padding:.55rem .5rem;color:var(--text-2);font-size:.78rem">
+          <td style="padding:.55rem .75rem;font-weight:600;color:var(--pg-ink)">{{ p.name }}</td>
+          <td style="padding:.55rem .5rem;color:var(--pg-muted);font-size:.78rem">
             {% if p.date_of_birth %}{{ p.date_of_birth }}{% else %}—{% endif %}
           </td>
-          <td style="padding:.55rem .5rem;color:var(--text-2);font-size:.78rem;text-align:center">
+          <td style="padding:.55rem .5rem;color:var(--pg-muted);font-size:.78rem;text-align:center">
             {% if p.caps %}{{ p.caps }} caps{% else %}—{% endif %}
           </td>
           <td style="padding:.55rem .5rem;text-align:center;font-size:.78rem;
-               color:{% if p.goals > 0 %}var(--pg-green){% else %}var(--text-3){% endif %};font-weight:{% if p.goals > 0 %}700{% else %}400{% endif %}">
+               color:{% if p.goals > 0 %}var(--pg-green){% else %}var(--pg-muted){% endif %};font-weight:{% if p.goals > 0 %}700{% else %}400{% endif %}">
             {% if p.goals %}{{ p.goals }}⚽{% else %}—{% endif %}
           </td>
-          <td style="padding:.55rem .5rem;color:var(--text-2);font-size:.78rem">
+          <td style="padding:.55rem .5rem;color:var(--pg-muted);font-size:.78rem">
             {% if p.club %}
               {% if p.club_country %}
               <img src="{{ flag_url(p.club_country) }}" style="width:14px;height:auto;vertical-align:middle;margin-right:3px" alt="">
@@ -91,51 +91,62 @@
 
   <!-- Group matches for this team -->
   {% if matches %}
-  <div class="card" style="margin-bottom:1.5rem">
-    <div class="card-header">
-      <span class="font-bold text-sm">Fixtures & Results</span>
-    </div>
-    <div class="card-body" style="padding:0">
+  {% set gc = {
+    'A':'#16a34a','B':'#7c3aed','C':'#ea580c','D':'#0891b2',
+    'E':'#db2777','F':'#ca8a04','G':'#dc2626','H':'#059669',
+    'I':'#6366f1','J':'#c2410c','K':'#0f766e','L':'#9333ea'
+  } %}
+  <div style="margin-bottom:1.5rem">
+    <div class="pg-day-header">Fixtures &amp; Results</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
       {% for m in matches %}
-      <div style="display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;
-           border-bottom:1px solid var(--border);{% if loop.last %}border-bottom:none{% endif %};
-           flex-wrap:wrap">
-        <div style="font-size:.7rem;color:var(--text-3);min-width:80px">
-          {{ m.match_date.strftime('%d %b %H:%M') }}
-        </div>
-        <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:180px;justify-content:flex-end">
-          {% if m.home_team %}
-          <img src="{{ flag_url(m.home_team.code) }}" class="flag flag-xs" alt="">
-          <span style="font-weight:{% if m.home_team_id == team.id %}700{% else %}400{% endif %};
-                color:{% if m.home_team_id == team.id %}var(--text-1){% else %}var(--text-2){% endif %}">
-            {{ m.home_team.name }}
-          </span>
-          {% else %}
-          <span style="color:var(--text-3)">{{ m.home_team_tbd or 'TBD' }}</span>
-          {% endif %}
-        </div>
-        <div style="font-weight:700;font-size:.95rem;min-width:60px;text-align:center;
-             color:{% if m.status == 'finished' %}var(--pg-green){% else %}var(--text-3){% endif %}">
+      {% set grp_c = gc.get(m.group_letter, '#6c7268') %}
+      <div class="pg-fixture-card" style="border-left-color:{{ grp_c }};grid-template-columns:80px 1fr">
+
+        <div class="pg-fixture-when">
           {% if m.status == 'finished' %}
-          {{ m.home_score }} – {{ m.away_score }}
+            <div class="t" style="color:var(--pg-muted);font-size:16px">FT</div>
           {% else %}
-          vs
+            <div class="t" style="font-size:16px">
+              <span data-utc-time="{{ m.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ m.match_date.strftime('%H:%M') }}</span>
+            </div>
+          {% endif %}
+          <div class="d">{{ m.match_date.strftime('%d %b') }}</div>
+          {% if m.group_letter %}
+          <span class="g" style="background:{{ grp_c }}">GRP {{ m.group_letter }}</span>
+          {% else %}
+          <span class="g" style="background:var(--pg-ink)">{{ m.round.upper()[:4] }}</span>
           {% endif %}
         </div>
-        <div style="display:flex;align-items:center;gap:.5rem;flex:1;min-width:180px">
-          {% if m.away_team %}
-          <span style="font-weight:{% if m.away_team_id == team.id %}700{% else %}400{% endif %};
-                color:{% if m.away_team_id == team.id %}var(--text-1){% else %}var(--text-2){% endif %}">
-            {{ m.away_team.name }}
-          </span>
-          <img src="{{ flag_url(m.away_team.code) }}" class="flag flag-xs" alt="">
+
+        <div class="pg-fixture-mid" style="gap:8px;padding:8px 10px">
+          <div class="pg-team" style="justify-content:flex-end">
+            <span class="pg-team-name" style="font-size:13px;font-weight:{% if m.home_team_id == team.id %}800{% else %}500{% endif %}">
+              {{ m.home_team.name if m.home_team else m.home_team_tbd or 'TBD' }}
+            </span>
+            {% if m.home_team %}
+            <img src="{{ flag_url(m.home_team.code) }}" class="pg-flag pg-flag-mid" alt="">
+            {% endif %}
+          </div>
+
+          {% if m.status == 'finished' and m.home_score is not none %}
+            <div class="pg-led" style="font-size:18px;padding:3px 10px;min-width:58px">
+              <span>{{ m.home_score }} : {{ m.away_score }}</span>
+            </div>
           {% else %}
-          <span style="color:var(--text-3)">{{ m.away_team_tbd or 'TBD' }}</span>
+            <div class="pg-led empty" style="font-size:16px;padding:3px 8px;min-width:48px">vs</div>
           {% endif %}
+
+          <div class="pg-team">
+            {% if m.away_team %}
+            <img src="{{ flag_url(m.away_team.code) }}" class="pg-flag pg-flag-mid" alt="">
+            {% endif %}
+            <span class="pg-team-name" style="font-size:13px;font-weight:{% if m.away_team_id == team.id %}800{% else %}500{% endif %}">
+              {{ m.away_team.name if m.away_team else m.away_team_tbd or 'TBD' }}
+            </span>
+          </div>
         </div>
-        <div style="font-size:.7rem;color:var(--text-3);text-align:right;min-width:60px">
-          {{ m.round | upper }}
-        </div>
+
       </div>
       {% endfor %}
     </div>

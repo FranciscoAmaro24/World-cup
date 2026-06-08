@@ -1022,7 +1022,13 @@ footer {
   .nav-hamburger { display: flex; }
   .nav-right .btn-nav-primary,
   .nav-right .btn-nav-outline { display: none; }
-  .nav-right form { display: none; }
+  /* override inline style="display:flex" on language form */
+  .nav-right form { display: none !important; }
+  /* avatar: hide username text, show icon only */
+  .avatar-chip span { display: none !important; }
+  .avatar-chip { padding: .3rem; border-radius: 0; }
+  /* superadmin link */
+  .nav-right a.btn-nav-outline { display: none; }
 
   .pg-fixture-card { grid-template-columns: 100px 1fr 110px; }
   .pg-fixture-list { padding: 12px 16px; }
@@ -1095,7 +1101,15 @@ footer {
 }
 
 /* Ensure no element can break the viewport on any page */
-* { max-width: 100%; }
-img, table { max-width: 100%; }
-table { min-width: 0; }
-pre, code { overflow-x: auto; }
+img { max-width: 100%; }
+table { max-width: 100%; min-width: 0; }
+pre, code { overflow-x: auto; max-width: 100%; }
+
+/* Wrap any .card containing a table in scroll on mobile */
+@media (max-width: 640px) {
+  .data-table { font-size: .75rem; }
+  .data-table th, .data-table td { padding: .45rem .5rem; }
+  /* hide the WHEN / date column in bets table (last th/td) */
+  .data-table th:last-child,
+  .data-table td:last-child { display: none; }
+}
