@@ -99,5 +99,14 @@
     </div>
   </div>
   {% endif %}
+
+  {% if admin_only_leagues %}
+  <div class="section-header" style="margin-top:2rem">
+    <h2 class="section-title">Managed leagues (admin view)</h2>
+  </div>
+  <div class="league-grid">
+    {% for league in admin_only_leagues %}{{ league_card(league) }}{% endfor %}
+  </div>
+  {% endif %}
 </div>
 {% endblock %}

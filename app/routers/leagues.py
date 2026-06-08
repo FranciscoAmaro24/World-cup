@@ -64,9 +64,18 @@ async def leagues_list(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/login", status_code=303)
     memberships = db.query(models.LeagueMember).filter(models.LeagueMember.user_id == user.id).all()
     fav_ids = {m.league_id for m in memberships if m.is_favourite}
-    all_leagues = [m.league for m in memberships]
-    fav_leagues = [l for l in all_leagues if l.id in fav_ids]
-    other_leagues = [l for l in all_leagues if l.id not in fav_ids]
+    member_leagues = [m.league for m in memberships]
+    member_ids = {l.id for l in member_leagues}
+
+    # Superadmins also see leagues they own but aren't a member of
+    admin_only_leagues = []
+    if user.is_superadmin:
+        owned = db.query(models.League).filter(models.League.admin_id == user.id).all()
+        admin_only_leagues = [l for l in owned if l.id not in member_ids]
+
+    all_leagues = member_leagues + admin_only_leagues
+    fav_leagues = [l for l in member_leagues if l.id in fav_ids]
+    other_leagues = [l for l in member_leagues if l.id not in fav_ids]
     return templates.TemplateResponse(
         "leagues/list.html", {
             "request": request, "user": user,
@@ -74,6 +83,7 @@ async def leagues_list(request: Request, db: Session = Depends(get_db)):
             "fav_leagues": fav_leagues,
             "other_leagues": other_leagues,
             "fav_ids": fav_ids,
+            "admin_only_leagues": admin_only_leagues,
         }
     )
 
@@ -239,7 +249,7 @@ async def league_detail(request: Request, league_id: int, db: Session = Depends(
         models.LeagueMember.league_id == league_id,
         models.LeagueMember.user_id == user.id,
     ).first()
-    if not membership:
+    if not membership and not user.is_superadmin:
         return RedirectResponse("/leagues", status_code=303)
 
     leaderboard = _get_leaderboard(league, db)

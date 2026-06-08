@@ -105,8 +105,23 @@ def _migrate_db():
 
     # Fill null credits (ALTER TABLE DEFAULT isn't applied to existing rows in SQLite)
     cur.execute("UPDATE users SET credits = 10.0 WHERE credits IS NULL")
-    conn.commit()
 
+    # Remove auto-memberships: superadmin should not be a member of global/country leagues
+    cur.execute("""
+        DELETE FROM league_members
+        WHERE user_id = (SELECT id FROM users WHERE is_superadmin = 1 ORDER BY id LIMIT 1)
+        AND league_id IN (SELECT id FROM leagues WHERE category IN ('global', 'country'))
+    """)
+
+    # Delete test/bot users by username
+    for bot in ("kikokiko",):
+        cur.execute("DELETE FROM league_members WHERE user_id = (SELECT id FROM users WHERE username = ?)", (bot,))
+        cur.execute("DELETE FROM predictions   WHERE user_id = (SELECT id FROM users WHERE username = ?)", (bot,))
+        cur.execute("DELETE FROM tournament_picks WHERE user_id = (SELECT id FROM users WHERE username = ?)", (bot,))
+        cur.execute("DELETE FROM sweepstake_assignments WHERE user_id = (SELECT id FROM users WHERE username = ?)", (bot,))
+        cur.execute("DELETE FROM users WHERE username = ?", (bot,))
+
+    conn.commit()
     conn.close()
 
 
@@ -152,16 +167,6 @@ def _seed_public_leagues():
                     is_public=True,
                     category="country",
                 ))
-        db.commit()
-
-        # Ensure admin is a member of every league
-        all_leagues = db.query(models.League).all()
-        for league in all_leagues:
-            exists = db.query(models.LeagueMember).filter_by(
-                league_id=league.id, user_id=admin.id
-            ).first()
-            if not exists:
-                db.add(models.LeagueMember(league_id=league.id, user_id=admin.id, sweepstake_paid=True))
         db.commit()
     finally:
         db.close()
