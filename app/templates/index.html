@@ -139,8 +139,8 @@
         </div>
 
         <div class="pg-fixture-act">
-          {% if user and user.leagues %}
-          <a href="/leagues/{{ user.leagues[0].id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
+          {% if user and user.memberships %}
+          <a href="/leagues/{{ user.memberships[0].league_id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
           {% elif user %}
           <a href="/leagues" class="pg-btn-predict">Join a League</a>
           {% else %}

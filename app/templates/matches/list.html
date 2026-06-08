@@ -100,8 +100,8 @@
     <!-- Right: action -->
     <div class="pg-fixture-act">
       {% if match.status != 'finished' and user %}
-        {% if user.leagues %}
-          <a href="/leagues/{{ user.leagues[0].id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
+        {% if user.memberships %}
+          <a href="/leagues/{{ user.memberships[0].league_id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
         {% else %}
           <a href="/leagues" class="pg-btn-predict">Predict ▸</a>
         {% endif %}
