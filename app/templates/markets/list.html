@@ -2,22 +2,21 @@
 {% block title %}Prediction Markets — WC2026{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
-<div class="container page-content">
 
-  <div class="page-header flex items-center justify-between">
-    <div>
-      <h1>{{ t('market.title', _lang) }}</h1>
-      <p class="page-header-sub">{{ t('market.sub', _lang) }}</p>
-    </div>
-    <div style="display:flex;gap:.6rem;align-items:center">
-      {% if user %}
-      <div class="credits-chip">{{ "%.1f"|format(user.credits) }} {{ t('market.credits', _lang) }}</div>
-      <a href="/markets/create" class="btn btn-primary btn-sm">{{ t('market.create', _lang) }}</a>
-      {% else %}
-      <a href="/register" class="btn btn-primary btn-sm">{{ t('market.signup_bet', _lang) }}</a>
-      {% endif %}
-    </div>
+<div class="pg-band" style="flex-wrap:wrap;row-gap:8px">
+  <span class="pg-live"><span class="dot"></span>Credits</span>
+  <h1>{{ t('market.title', _lang) }}</h1>
+  <div class="pg-band-pts" style="display:flex;align-items:center;gap:.75rem;z-index:1;position:relative">
+    {% if user %}
+    <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:20px;white-space:nowrap">{{ "%.1f"|format(user.credits) }} {{ t('market.credits', _lang) }}</span>
+    <a href="/markets/create" class="btn btn-sm" style="background:var(--pg-lime);color:var(--pg-ink);white-space:nowrap">{{ t('market.create', _lang) }}</a>
+    {% else %}
+    <a href="/register" class="btn btn-sm" style="background:var(--pg-lime);color:var(--pg-ink)">{{ t('market.signup_bet', _lang) }}</a>
+    {% endif %}
   </div>
+</div>
+
+<div class="container page-content">
 
   <div class="section-header"><h2 class="section-title">{{ t('market.open_markets', _lang) }}</h2></div>
   {% if open_markets %}

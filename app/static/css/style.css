@@ -45,7 +45,8 @@
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { font-size: 16px; scroll-behavior: smooth; }
+html { font-size: 16px; scroll-behavior: smooth; overflow-x: hidden; }
+body { overflow-x: hidden; }
 
 body {
   background-color: var(--pg-paper);
@@ -281,7 +282,8 @@ body.video-playing .pg-band {
   position: relative; z-index: 1;
   font-family: "Archivo Black", sans-serif;
   font-size: 30px; letter-spacing: -.01em;
-  text-transform: uppercase; line-height: 1; white-space: nowrap;
+  text-transform: uppercase; line-height: 1.05;
+  flex: 1; min-width: 0; word-break: break-word;
 }
 .pg-band-pts {
   position: relative; z-index: 1;
@@ -905,6 +907,28 @@ input:checked + .slider::before { transform: translateX(20px); background: #fff;
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.25rem}
 
+/* ─── LAST CHANCE — fixture starting within 24 h ─────── */
+.pg-fixture-card.last-chance {
+  border-left-color: #dc2626 !important;
+  border-right: 2px solid rgba(220,38,38,.3);
+  border-top: 1px solid rgba(220,38,38,.3);
+  border-bottom: 1px solid rgba(220,38,38,.3);
+}
+.pg-last-chance-badge {
+  display: inline-block;
+  font-family: "Archivo", sans-serif; font-weight: 800;
+  font-size: 9px; letter-spacing: .1em; text-transform: uppercase;
+  background: #dc2626; color: #fff;
+  padding: 1px 6px; margin-top: 4px;
+  animation: lc-pulse 1.8s ease-in-out infinite;
+}
+@keyframes lc-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
+
+@media (max-width: 768px) {
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
+}
+
 footer {
   margin-top: 4rem; padding: 2rem;
   border-top: 2px solid var(--pg-ink);
@@ -915,7 +939,7 @@ footer {
 }
 
 /* ─── MARKET CARDS ───────────────────────────────────────── */
-.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(300px,100%), 1fr)); gap: 1rem; }
 .market-card {
   display: block; background: var(--pg-card); border: 1px solid var(--border);
   border-radius: 0; padding: 1.1rem 1.2rem;

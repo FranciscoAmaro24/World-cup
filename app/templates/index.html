@@ -43,7 +43,7 @@
 {% endif %}
 
 <!-- Hero stats bar -->
-<div style="background:var(--pg-card);border-bottom:1px solid var(--border);padding:14px 36px;display:flex;gap:3rem;flex-wrap:wrap">
+<div style="background:var(--pg-card);border-bottom:1px solid var(--border);padding:14px 36px;display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem">
   <div><div class="hero-stat-val">104</div><div class="hero-stat-lbl">{{ t('index.matches', _lang) }}</div></div>
   <div><div class="hero-stat-val">48</div><div class="hero-stat-lbl">{{ t('index.teams', _lang) }}</div></div>
   <div><div class="hero-stat-val">12</div><div class="hero-stat-lbl">{{ t('index.groups', _lang) }}</div></div>
@@ -108,7 +108,7 @@
     <div style="display:flex;flex-direction:column;gap:8px">
       {% for match in upcoming %}
       {% set grp_c = gc.get(match.group_letter, '#6c7268') %}
-      <div class="pg-fixture-card" style="border-left-color:{{ grp_c }}">
+      <div class="pg-fixture-card{% if match.status == "scheduled" and (match.match_date - utcnow()).total_seconds() > 0 and (match.match_date - utcnow()).total_seconds() < 86400 %} last-chance{% endif %}" style="border-left-color:{{ grp_c }}">
 
         <div class="pg-fixture-when">
           <div class="t">
@@ -168,7 +168,7 @@
 <script>
 const target = new Date("{{ first_match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}Z");
 function updateCountdown() {
-  const diff = target - Date.now();
+  const diff = target - Date.utcnow();
   if (diff <= 0) {
     document.getElementById('countdownBlock').innerHTML =
       '<span class="tag tag-green" style="font-size:.9rem;padding:.5rem 1.25rem">🎉 Tournament is LIVE!</span>';

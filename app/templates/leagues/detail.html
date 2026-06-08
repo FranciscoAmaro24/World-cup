@@ -213,7 +213,8 @@
         {% for match in upcoming_matches %}
         {% set pred = user_preds.get(match.id) %}
         {% set grp_c = gc.get(match.group_letter, '#6c7268') %}
-        <div class="pg-fixture-card" style="border-left-color:{{ grp_c }};grid-template-columns:90px 1fr 120px">
+        {% set is_last_chance = match.status == 'scheduled' and (match.match_date - utcnow()).total_seconds() > 0 and (match.match_date - utcnow()).total_seconds() < 86400 %}
+        <div class="pg-fixture-card{% if is_last_chance %} last-chance{% endif %}" style="border-left-color:{{ grp_c }};grid-template-columns:90px 1fr 120px">
 
           <!-- When -->
           <div class="pg-fixture-when">
@@ -226,6 +227,7 @@
             {% else %}
             <span class="g" style="background:var(--pg-ink)">{{ match.round.upper()[:4] }}</span>
             {% endif %}
+            {% if is_last_chance %}<span class="pg-last-chance-badge">Last chance</span>{% endif %}
           </div>
 
           <!-- Mid: teams + LED (pick or dashes) -->
