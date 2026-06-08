@@ -321,7 +321,8 @@ async def update_settings(
     sweep_pts_draw: int = Form(0),
     sweep_pts_goal: int = Form(0),
     sweep_pts_clean_sheet: int = Form(0),
-    sweep_pts_goal_diff: int = Form(0),
+    sweep_big_win_threshold: int = Form(0),
+    sweep_big_win_pts: int = Form(0),
     db: Session = Depends(get_db),
 ):
     user = auth.get_current_user(request, db)
@@ -350,7 +351,8 @@ async def update_settings(
     league.sweep_pts_draw = max(0, sweep_pts_draw)
     league.sweep_pts_goal = max(0, sweep_pts_goal)
     league.sweep_pts_clean_sheet = max(0, sweep_pts_clean_sheet)
-    league.sweep_pts_goal_diff = max(0, sweep_pts_goal_diff)
+    league.sweep_big_win_threshold = max(0, sweep_big_win_threshold)
+    league.sweep_big_win_pts = max(0, sweep_big_win_pts)
     db.commit()
     return templates.TemplateResponse(
         "leagues/settings.html",

@@ -85,7 +85,9 @@ def _migrate_db():
         ("leagues", "sweep_pts_draw", "INTEGER DEFAULT 0"),
         ("leagues", "sweep_pts_goal", "INTEGER DEFAULT 0"),
         ("leagues", "sweep_pts_clean_sheet", "INTEGER DEFAULT 0"),
-        ("leagues", "sweep_pts_goal_diff", "INTEGER DEFAULT 0"),
+        ("leagues", "sweep_big_win_threshold", "INTEGER DEFAULT 0"),
+        ("leagues", "sweep_big_win_pts", "INTEGER DEFAULT 0"),
+        ("sweepstake_groups", "pts_win", "INTEGER"),
         ("sweepstake_assignments", "group_id", "INTEGER"),
     ]
     for table, col, col_type in migrations:

@@ -13,17 +13,28 @@ router = APIRouter()
 
 
 def _calc_sweep_points(league: models.League, db: Session) -> dict:
-    """Returns {user_id: points} based on wins, draws, goals and clean sheets."""
+    """Returns {user_id: points} based on wins, draws, goals, clean sheets and big win bonus."""
     assignments = db.query(models.SweepstakeAssignment).filter_by(league_id=league.id).all()
     if not assignments:
         return {}
 
     team_ids = {a.team_id for a in assignments}
-    pts_win         = (league.sweep_pts_win or 2)
-    pts_draw        = (league.sweep_pts_draw or 0)
-    pts_goal        = getattr(league, "sweep_pts_goal", 0) or 0
-    pts_clean_sheet = getattr(league, "sweep_pts_clean_sheet", 0) or 0
-    pts_goal_diff   = getattr(league, "sweep_pts_goal_diff", 0) or 0
+    default_pts_win     = (league.sweep_pts_win or 2)
+    pts_draw            = (league.sweep_pts_draw or 0)
+    pts_goal            = getattr(league, "sweep_pts_goal", 0) or 0
+    pts_clean_sheet     = getattr(league, "sweep_pts_clean_sheet", 0) or 0
+    big_win_threshold   = getattr(league, "sweep_big_win_threshold", 0) or 0
+    big_win_pts         = getattr(league, "sweep_big_win_pts", 0) or 0
+
+    # Per-group pts_win overrides (keyed by team_id)
+    group_pts_win_map: dict[int, int] = {}
+    for grp in league.sweepstake_groups:
+        if grp.pts_win is not None:
+            for gt in grp.teams:
+                group_pts_win_map[gt.team_id] = grp.pts_win
+
+    def win_pts(team_id: int) -> int:
+        return group_pts_win_map.get(team_id, default_pts_win)
 
     team_pts: dict[int, int] = {tid: 0 for tid in team_ids}
 
@@ -33,14 +44,14 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
         if h is None or a is None:
             continue
 
-        # Win / draw points
+        # Win / draw points (per-group override supported)
         if m.round == "group":
             if h > a:
                 if m.home_team_id in team_pts:
-                    team_pts[m.home_team_id] += pts_win
+                    team_pts[m.home_team_id] += win_pts(m.home_team_id)
             elif a > h:
                 if m.away_team_id in team_pts:
-                    team_pts[m.away_team_id] += pts_win
+                    team_pts[m.away_team_id] += win_pts(m.away_team_id)
             else:
                 if m.home_team_id in team_pts:
                     team_pts[m.home_team_id] += pts_draw
@@ -48,9 +59,9 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
                     team_pts[m.away_team_id] += pts_draw
         else:
             if m.winner_team_id and m.winner_team_id in team_pts:
-                team_pts[m.winner_team_id] += pts_win
+                team_pts[m.winner_team_id] += win_pts(m.winner_team_id)
 
-        # Goal points (goals scored by each side)
+        # Goal points (goals scored in 90 min)
         if pts_goal:
             if m.home_team_id in team_pts:
                 team_pts[m.home_team_id] += h * pts_goal
@@ -64,12 +75,12 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
             if h == 0 and m.away_team_id in team_pts:
                 team_pts[m.away_team_id] += pts_clean_sheet
 
-        # Goal difference points (positive margin only)
-        if pts_goal_diff:
-            if m.home_team_id in team_pts:
-                team_pts[m.home_team_id] += max(0, h - a) * pts_goal_diff
-            if m.away_team_id in team_pts:
-                team_pts[m.away_team_id] += max(0, a - h) * pts_goal_diff
+        # Big win bonus (when GD >= threshold in 90 min)
+        if big_win_pts and big_win_threshold:
+            if (h - a) >= big_win_threshold and m.home_team_id in team_pts:
+                team_pts[m.home_team_id] += big_win_pts
+            if (a - h) >= big_win_threshold and m.away_team_id in team_pts:
+                team_pts[m.away_team_id] += big_win_pts
 
     user_pts: dict[int, int] = {}
     for a in assignments:
@@ -298,5 +309,23 @@ async def remove_team_from_group(request: Request, league_id: int, group_id: int
     gt = db.query(models.SweepstakeGroupTeam).filter_by(group_id=group_id, team_id=team_id).first()
     if gt:
         db.delete(gt)
+        db.commit()
+    return RedirectResponse(f"/leagues/{league_id}/sweepstake/groups", status_code=303)
+
+
+@router.post("/leagues/{league_id}/sweepstake/groups/{group_id}/update")
+async def update_group_settings(
+    request: Request, league_id: int, group_id: int,
+    pts_win: str = Form(""), db: Session = Depends(get_db)
+):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league or league.admin_id != user.id:
+        return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+    grp = db.query(models.SweepstakeGroup).filter_by(id=group_id, league_id=league_id).first()
+    if grp:
+        grp.pts_win = int(pts_win) if pts_win.strip().isdigit() else None
         db.commit()
     return RedirectResponse(f"/leagues/{league_id}/sweepstake/groups", status_code=303)

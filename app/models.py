@@ -70,7 +70,8 @@ class League(Base):
     sweep_pts_draw = Column(Integer, default=0)            # points per draw (group stage)
     sweep_pts_goal = Column(Integer, default=0)            # points per goal scored
     sweep_pts_clean_sheet = Column(Integer, default=0)     # points per clean sheet kept
-    sweep_pts_goal_diff = Column(Integer, default=0)       # points per positive goal difference
+    sweep_big_win_threshold = Column(Integer, default=0)   # min GD to trigger big win bonus (0 = off)
+    sweep_big_win_pts = Column(Integer, default=0)         # bonus points for a big win
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -242,6 +243,7 @@ class SweepstakeGroup(Base):
     league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
     name = Column(String(50), nullable=False)
     order_index = Column(Integer, default=0)
+    pts_win = Column(Integer, nullable=True)               # overrides league sweep_pts_win when set
 
     league = relationship("League", back_populates="sweepstake_groups")
     teams = relationship("SweepstakeGroupTeam", back_populates="group", cascade="all, delete-orphan")

@@ -137,11 +137,11 @@
 
   <!-- Mode 3: Sweepstake -->
   <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
-    <div style="background:var(--gold);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem">
-      <div style="font-family:'Archivo Black',sans-serif;font-size:1.5rem;color:#fff">03</div>
+    <div style="background:var(--pg-lime);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem">
+      <div style="font-family:'Archivo Black',sans-serif;font-size:1.5rem;color:var(--pg-ink)">03</div>
       <div>
-        <div style="font-family:'Archivo Black',sans-serif;font-size:1.1rem;color:#fff;letter-spacing:.04em">SWEEPSTAKE</div>
-        <div style="font-size:.75rem;color:rgba(255,255,255,.85)">Each player draws a team. Their tournament is your points.</div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:1.1rem;color:var(--pg-ink);letter-spacing:.04em">SWEEPSTAKE</div>
+        <div style="font-size:.75rem;color:rgba(21,39,29,.6)">Each player draws a team. Their tournament is your points.</div>
       </div>
     </div>
     <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
@@ -156,6 +156,7 @@
           <li>Admin creates <strong>draw groups</strong> (e.g. Top Seeds, Mid, Underdogs) and assigns teams to each</li>
           <li>Admin clicks <strong>Draw</strong>, each member gets 1 random team per group</li>
           <li>Points accumulate as your teams win, score goals and keep clean sheets</li>
+          <li>Each group can have its own win points (e.g. underdogs worth more per win)</li>
         </ol>
         <div class="alert alert-info" style="margin-top:.75rem;font-size:.82rem">
           If no groups are set up, teams are drawn randomly from all 48 squads.
@@ -198,13 +199,13 @@
           </div>
           <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
             <div>
-              <div style="font-size:.85rem">Goal difference</div>
-              <div style="font-size:.7rem;color:var(--pg-muted)">Per positive GD in 90 min (e.g. win 3-1 = 2 pts)</div>
+              <div style="font-size:.85rem">Big win bonus</div>
+              <div style="font-size:.7rem;color:var(--pg-muted)">If GD reaches the threshold (e.g. win by 3+)</div>
             </div>
             <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-muted)">0 pts*</span>
           </div>
         </div>
-        <p style="font-size:.72rem;color:var(--pg-muted);margin-top:.5rem">* Goal, clean sheet and goal difference points default to 0 (off). Admin enables them in league settings.</p>
+        <p style="font-size:.72rem;color:var(--pg-muted);margin-top:.5rem">* Goal, clean sheet and big win bonus default to 0 (off). Admin sets threshold and points in league settings.</p>
       </div>
     </div>
   </div>

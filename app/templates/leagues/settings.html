@@ -180,10 +180,17 @@
             <input class="form-input" type="number" name="sweep_pts_clean_sheet" value="{{ league.sweep_pts_clean_sheet or 0 }}" min="0" max="10">
             <p class="form-hint">Per match with 0 goals conceded in 90 min. 0 = disabled.</p>
           </div>
+        </div>
+        <div class="form-row">
           <div class="form-group">
-            <label class="form-label">Points per goal difference</label>
-            <input class="form-input" type="number" name="sweep_pts_goal_diff" value="{{ league.sweep_pts_goal_diff or 0 }}" min="0" max="10">
-            <p class="form-hint">Per positive goal difference in 90 min (e.g. win 3-1 = 2 pts). 0 = disabled.</p>
+            <label class="form-label">Big win bonus — min goal difference</label>
+            <input class="form-input" type="number" name="sweep_big_win_threshold" value="{{ league.sweep_big_win_threshold or 0 }}" min="0" max="10">
+            <p class="form-hint">Minimum GD to trigger the bonus (e.g. 3 = win by 3+ goals). 0 = disabled.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Big win bonus — points awarded</label>
+            <input class="form-input" type="number" name="sweep_big_win_pts" value="{{ league.sweep_big_win_pts or 0 }}" min="0" max="10">
+            <p class="form-hint">Bonus points for hitting that goal difference threshold.</p>
           </div>
         </div>
       </div>
