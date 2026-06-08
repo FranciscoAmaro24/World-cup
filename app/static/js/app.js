@@ -1,4 +1,4 @@
-// Convert UTC times to local time
+// Convert UTC times to local time — full date+time
 document.querySelectorAll('[data-utc]').forEach(el => {
   const utc = el.getAttribute('data-utc');
   if (!utc) return;
@@ -8,6 +8,16 @@ document.querySelectorAll('[data-utc]').forEach(el => {
       weekday: 'short', month: 'short', day: 'numeric',
       hour: '2-digit', minute: '2-digit'
     });
+  } catch (e) {}
+});
+
+// Convert UTC times to local time — time only (HH:MM) used in fixture cards
+document.querySelectorAll('[data-utc-time]').forEach(el => {
+  const utc = el.getAttribute('data-utc-time');
+  if (!utc) return;
+  try {
+    const d = new Date(utc + 'Z');
+    el.textContent = d.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' });
   } catch (e) {}
 });
 

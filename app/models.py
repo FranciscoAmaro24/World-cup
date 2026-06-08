@@ -154,6 +154,7 @@ class Prediction(Base):
     league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
     home_score_pred = Column(Integer, nullable=False)
     away_score_pred = Column(Integer, nullable=False)
+    boosted = Column(Boolean, default=False)
     points_awarded = Column(Integer, nullable=True)
     submitted_at = Column(DateTime, default=datetime.utcnow)
 

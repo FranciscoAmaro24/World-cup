@@ -2,14 +2,14 @@
 {% block title %}Global Leaderboard — FIFA World Cup 2026{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
-<div class="container page-content">
 
-  <div class="page-header">
-    <div>
-      <h1>🏆 {{ t('lb.title', _lang) }}</h1>
-      <p class="page-header-sub">{{ t('lb.sub', _lang) }}</p>
-    </div>
-  </div>
+<div class="pg-band">
+  <span class="pg-live"><span class="dot"></span>Global</span>
+  <h1>{{ t('lb.title', _lang) }}</h1>
+  <div class="pg-band-pts"><div class="l">{{ t('lb.sub', _lang) }}</div></div>
+</div>
+
+<div class="container page-content">
 
   <div class="card" style="overflow:hidden">
     <table style="width:100%;border-collapse:collapse;font-size:.85rem">
@@ -24,7 +24,7 @@
       </thead>
       <tbody>
         {% for row in rows %}
-        <tr style="border-bottom:1px solid var(--border);{% if user and row.user.id == user.id %}background:rgba(245,166,35,.06){% endif %}">
+        <tr style="border-bottom:1px solid var(--border);{% if user and row.user.id == user.id %}background:rgba(10,125,60,.06);border-left:3px solid var(--pg-green){% endif %}">
           <td style="padding:.6rem .75rem;text-align:center">
             <span class="rank-badge {% if row.rank==1 %}rank-1{% elif row.rank==2 %}rank-2{% elif row.rank==3 %}rank-3{% else %}rank-other{% endif %}">{{ row.rank }}</span>
           </td>
@@ -40,7 +40,7 @@
           </td>
           <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">{{ row.match_pts }}</td>
           <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">{{ row.bracket_pts }}</td>
-          <td style="padding:.6rem .75rem;text-align:center;font-weight:700;color:{% if row.rank == 1 %}var(--gold){% else %}var(--text-1){% endif %}">{{ row.total }}</td>
+          <td style="padding:.6rem .75rem;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--pg-green)">{{ row.total }}</td>
         </tr>
         {% endfor %}
       </tbody>

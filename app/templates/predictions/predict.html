@@ -2,83 +2,332 @@
 {% block title %}Predict: {{ match.home_display() }} vs {{ match.away_display() }}{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
-<div class="container page-content">
 
-  <div style="margin-bottom:1rem">
-    <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← {{ t('btn.back', _lang) }} {{ league.name }}</a>
+{# Group colour map #}
+{% set gc = {
+  'A':'#16a34a','B':'#7c3aed','C':'#ea580c','D':'#0891b2',
+  'E':'#db2777','F':'#ca8a04','G':'#dc2626','H':'#059669',
+  'I':'#6366f1','J':'#c2410c','K':'#0f766e','L':'#9333ea'
+} %}
+{% set grp_color = gc.get(match.group_letter, '#0a7d3c') %}
+{% set exact_pts = league.points_exact_score %}
+{% set result_pts = league.points_correct_result %}
+{% set init_h = prediction.home_score_pred if prediction else 0 %}
+{% set init_a = prediction.away_score_pred if prediction else 0 %}
+
+<!-- Broadcast header band -->
+<div class="pg-band">
+  <span class="pg-live">
+    <span class="dot"></span>
+    {% if match.group_letter %}GRP {{ match.group_letter }} · {% endif %}
+    <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">
+      {{- match.match_date.strftime('%H:%M') -}}
+    </span>
+  </span>
+  <h1>{{ match.home_display() }} vs {{ match.away_display() }}</h1>
+  <div class="pg-band-pts">
+    <div class="v">{{ league.name }}</div>
+    <div class="l">{{ match.venue or 'Group Stage' }}</div>
   </div>
-
-  <div class="card" style="max-width:520px;margin:0 auto">
-    <!-- Match header -->
-    <div class="card-header">
-      <div>
-        {% if match.group_letter %}
-        <span class="group-badge gb-{{ match.group_letter }}" style="margin-right:.5rem">{{ t('match.group', _lang) }} {{ match.group_letter }}</span>
-        {% else %}
-        <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1);margin-right:.5rem">{{ match.round.upper() }}</span>
-        {% endif %}
-        <span class="text-xs text-sub">{{ league.name }}</span>
-      </div>
-      <span class="text-xs text-sub">
-        <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%d %b %Y %H:%M UTC') }}</span>
-      </span>
-    </div>
-
-    <div class="card-body">
-      <p class="text-xs text-sub" style="text-align:center;margin-bottom:1rem">📍 {{ match.venue }}</p>
-
-      <!-- Points info -->
-      <div style="display:flex;gap:.5rem;justify-content:center;margin-bottom:1rem;flex-wrap:wrap">
-        <span class="tag tag-white">{{ t('predict.exact', _lang) }} <strong>{{ league.points_exact_score }} {{ t('bracket.pts', _lang) }}</strong></span>
-        <span class="tag tag-white">{{ t('predict.result', _lang) }} <strong>{{ league.points_correct_result }} {{ t('bracket.pts', _lang) }}</strong></span>
-      </div>
-
-      <form action="/leagues/{{ league.id }}/predict/{{ match.id }}" method="post">
-        <div class="score-predictor">
-          <!-- Home team -->
-          <div class="score-team">
-            {% if match.home_team %}
-            <img src="{{ flag_url(match.home_team.code) }}" class="flag flag-xl" alt="{{ match.home_team.name }}" style="margin:0 auto">
-            <div class="score-team-name">{{ match.home_team.name }}</div>
-            {% else %}
-            <div class="score-team-name" style="color:var(--text-2)">{{ match.home_team_tbd or 'TBD' }}</div>
-            {% endif %}
-          </div>
-
-          <!-- Score inputs -->
-          <div class="score-input-wrap">
-            <input type="number" class="score-input" name="home_score"
-                   value="{{ prediction.home_score_pred if prediction else 0 }}"
-                   min="0" max="20" required>
-            <span class="score-vs">–</span>
-            <input type="number" class="score-input" name="away_score"
-                   value="{{ prediction.away_score_pred if prediction else 0 }}"
-                   min="0" max="20" required>
-          </div>
-
-          <!-- Away team -->
-          <div class="score-team">
-            {% if match.away_team %}
-            <img src="{{ flag_url(match.away_team.code) }}" class="flag flag-xl" alt="{{ match.away_team.name }}" style="margin:0 auto">
-            <div class="score-team-name">{{ match.away_team.name }}</div>
-            {% else %}
-            <div class="score-team-name" style="color:var(--text-2)">{{ match.away_team_tbd or 'TBD' }}</div>
-            {% endif %}
-          </div>
-        </div>
-
-        {% if prediction %}
-        <div class="alert alert-success" style="justify-content:center;font-size:.82rem;margin-bottom:1rem">
-          {{ t('predict.yours', _lang) }} {{ prediction.home_score_pred }}–{{ prediction.away_score_pred }}
-        </div>
-        {% endif %}
-
-        <button type="submit" class="btn btn-primary btn-full btn-lg">
-          {% if prediction %}{{ t('predict.update', _lang) }}{% else %}{{ t('predict.submit', _lang) }}{% endif %}
-        </button>
-      </form>
-    </div>
-  </div>
-
 </div>
+
+<!-- Desktop: two-column / Mobile: single column -->
+<div class="pkd-body">
+
+  <!-- Left: score hero -->
+  <div class="pkd-left">
+    <!-- Context line -->
+    <div class="pkd-ctx">
+      {% if match.group_letter %}Group {{ match.group_letter }} · {% endif %}
+      {{ match.match_date.strftime('%a %-d %b %Y') }} ·
+      <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">
+        {{- match.match_date.strftime('%H:%M UTC') -}}
+      </span>
+      {% if match.venue %} · {{ match.venue }}{% endif %}
+    </div>
+
+    <!-- Hidden form (steppers write to these) -->
+    <form id="predictForm" action="/leagues/{{ league.id }}/predict/{{ match.id }}" method="post">
+      <input type="hidden" name="home_score" id="fHomeScore" value="{{ init_h }}">
+      <input type="hidden" name="away_score" id="fAwayScore" value="{{ init_a }}">
+      <input type="hidden" name="boosted" id="fBoosted" value="{{ '1' if prediction and prediction.boosted else '' }}">
+
+      <!-- Score hero -->
+      <div class="pkd-score" style="position:relative;overflow:hidden">
+        <!-- Pitch watermark -->
+        <div class="pg-pitch lg">
+          <span class="cc"></span><span class="cs"></span><span class="hl"></span>
+        </div>
+
+        <!-- Home team -->
+        <div class="pkd-team" style="position:relative;z-index:1">
+          {% if match.home_team %}
+          <img src="{{ flag_url(match.home_team.code) }}"
+               style="width:74px;height:50px;object-fit:cover;box-shadow:0 0 0 1px rgba(21,39,29,.2);" alt="">
+          {% endif %}
+          <span class="pkd-team-name">{{ match.home_display() }}</span>
+          <span class="pkd-team-label home">Home</span>
+        </div>
+
+        <!-- Home stepper -->
+        <div class="pg-stepper lg" id="stepperHome">
+          <button type="button" class="step-up" data-side="home">+</button>
+          <div class="pg-digit"><span id="dispHome">{{ init_h }}</span></div>
+          <button type="button" class="step-down" data-side="home">−</button>
+        </div>
+
+        <span class="pkd-colon" style="position:relative;z-index:1">:</span>
+
+        <!-- Away stepper -->
+        <div class="pg-stepper lg" id="stepperAway">
+          <button type="button" class="step-up" data-side="away">+</button>
+          <div class="pg-digit"><span id="dispAway">{{ init_a }}</span></div>
+          <button type="button" class="step-down" data-side="away">−</button>
+        </div>
+
+        <!-- Away team -->
+        <div class="pkd-team" style="position:relative;z-index:1">
+          {% if match.away_team %}
+          <img src="{{ flag_url(match.away_team.code) }}"
+               style="width:74px;height:50px;object-fit:cover;box-shadow:0 0 0 1px rgba(21,39,29,.2);" alt="">
+          {% endif %}
+          <span class="pkd-team-name">{{ match.away_display() }}</span>
+          <span class="pkd-team-label away">Away</span>
+        </div>
+      </div><!-- /pkd-score -->
+
+      <!-- Boost toggle -->
+      <button type="button" class="pg-boost{% if prediction and prediction.boosted %} on{% endif %}" id="boostBtn" onclick="toggleBoost()">
+        <span class="pg-boost-icon">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" style="display:block">
+            <path d="M9.4.6 3 9.3h3.7L5.9 15.4 13 6.4H8.5z"/>
+          </svg>
+        </span>
+        <span class="pg-boost-tx">
+          <span class="pg-boost-title" id="boostTitle">{% if prediction and prediction.boosted %}Boosted ×2{% else %}Boost this pick{% endif %}</span>
+          <span class="pg-boost-sub" id="boostSub">{% if prediction and prediction.boosted %}Double if exact — zero if you miss{% else %}Double-or-nothing on the exact score{% endif %}</span>
+        </span>
+        <span class="pg-boost-sw"><i id="boostKnob"></i></span>
+      </button>
+
+      <!-- Desktop footer: cancel + lock in -->
+      <div class="pkd-foot">
+        <a href="/leagues/{{ league.id }}" class="pg-cancel">{{ t('btn.back', _lang) }}</a>
+        <button type="submit" form="predictForm" class="pg-cta" id="ctaBtn" style="flex:1;max-width:320px">
+          {% if prediction %}Update{% else %}Lock in{% endif %}
+          <span class="pill" id="ctaPill">{{ init_h }}–{{ init_a }}</span>
+          <span id="ctaPts">+{{ exact_pts }} pts</span>
+        </button>
+      </div>
+
+    </form>
+  </div><!-- /pkd-left -->
+
+  <!-- Right: at stake + info -->
+  <div class="pkd-right">
+
+    <!-- At stake -->
+    <div class="pkd-sect">At stake</div>
+    <div class="pkd-stake">
+      <span class="pkd-stake-big" id="stakeVal">+{{ exact_pts }}</span>
+      <span class="pkd-stake-cap">pts if your <strong id="stakeScore">{{ init_h }}–{{ init_a }}</strong> is exact</span>
+    </div>
+
+    <!-- Scoring guide -->
+    <div class="pkd-sect">Scoring</div>
+    <div class="pkd-scoring-rows">
+      <div class="pkd-score-row">
+        <span class="pkd-score-label">Exact score</span>
+        <span class="pkd-score-val" style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--pg-green);font-size:20px">{{ exact_pts }} pts</span>
+      </div>
+      <div class="pkd-score-row">
+        <span class="pkd-score-label">Correct result</span>
+        <span class="pkd-score-val" style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--pg-muted);font-size:18px">{{ result_pts }} pts</span>
+      </div>
+    </div>
+
+    {% if prediction %}
+    <!-- Current prediction -->
+    <div class="pkd-sect" style="margin-top:1.5rem">Your current pick</div>
+    <div class="pkd-rival" style="display:flex;align-items:center;gap:14px;padding:14px">
+      <div class="pg-led" style="font-size:28px;padding:5px 18px">
+        <span>{{ prediction.home_score_pred }} : {{ prediction.away_score_pred }}</span>
+      </div>
+      <div style="font-family:'Spectral',serif;font-style:italic;font-size:13px;color:var(--pg-muted)">
+        Submitted {{ prediction.submitted_at.strftime('%-d %b %Y') if prediction.submitted_at else '' }}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Match info -->
+    <div style="margin-top:1.5rem;padding-top:1rem;border-top:1px solid var(--border)">
+      {% if match.group_letter %}
+      <span class="group-badge gb-{{ match.group_letter }}" style="margin-bottom:.5rem;display:inline-flex">
+        Group {{ match.group_letter }}
+      </span>
+      {% endif %}
+      {% if match.venue %}
+      <div style="font-family:'Spectral',serif;font-style:italic;font-size:13px;color:var(--pg-muted);margin-top:.3rem">
+        📍 {{ match.venue }}
+      </div>
+      {% endif %}
+    </div>
+
+  </div><!-- /pkd-right -->
+
+</div><!-- /pkd-body -->
+
+<style>
+/* ─── Predict page layout ─────────────────────────────── */
+.pkd-body {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  min-height: calc(100vh - 56px - 52px); /* viewport minus nav and band */
+  background: var(--pg-paper);
+}
+.pkd-left {
+  padding: 28px 36px;
+  border-right: 1px solid rgba(21,39,29,.18);
+  display: flex; flex-direction: column;
+}
+.pkd-ctx {
+  font-family: "Rajdhani", sans-serif; font-weight: 700;
+  font-size: 14px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--pg-muted);
+  padding-bottom: 12px;
+  border-bottom: 3px double var(--pg-ink);
+  margin-bottom: 4px;
+}
+.pkd-score {
+  display: flex; align-items: center; justify-content: center;
+  gap: 20px; padding: 28px 0 16px;
+}
+.pkd-team {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; width: 120px;
+}
+.pkd-team-name {
+  font-family: "Archivo Black", sans-serif;
+  font-size: 16px; text-transform: uppercase; line-height: 1;
+  text-align: center;
+}
+.pkd-team-label {
+  font-family: "Archivo", sans-serif; font-weight: 800;
+  font-size: 9px; letter-spacing: .14em; text-transform: uppercase;
+}
+.pkd-team-label.home { color: var(--pg-green); }
+.pkd-team-label.away { color: var(--pg-muted); }
+.pkd-colon {
+  font-family: "Rajdhani", sans-serif; font-weight: 700;
+  font-size: 46px; color: var(--pg-muted); padding-bottom: 18px;
+}
+.pkd-foot {
+  display: flex; align-items: center; justify-content: flex-end;
+  gap: 12px; margin-top: auto; padding-top: 24px;
+}
+
+.pkd-right {
+  padding: 28px 36px;
+  display: flex; flex-direction: column;
+}
+.pkd-sect {
+  font-family: "Archivo", sans-serif;
+  font-weight: 800; font-size: 11px;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--pg-green);
+  display: flex; align-items: center; gap: 9px;
+  margin-bottom: 13px;
+}
+.pkd-sect::before { content: ''; width: 3px; height: 13px; background: var(--pg-green); flex-shrink: 0; }
+.pkd-stake {
+  display: flex; align-items: baseline; gap: 10px; margin-bottom: 24px;
+}
+.pkd-stake-big {
+  font-family: "Rajdhani", sans-serif; font-weight: 700;
+  font-size: 52px; color: var(--pg-green); line-height: 1;
+}
+.pkd-stake-cap {
+  font-family: "Spectral", serif; font-size: 14px; color: var(--pg-muted); line-height: 1.4;
+}
+.pkd-scoring-rows { margin-bottom: 16px; }
+.pkd-score-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+}
+.pkd-score-label { font-family: "Archivo", sans-serif; font-size: 13px; font-weight: 600; }
+.pkd-rival { background: var(--pg-card); border: 1px solid rgba(21,39,29,.22); border-left: 4px solid var(--pg-green); }
+
+/* Mobile: single column */
+@media (max-width: 820px) {
+  .pkd-body { grid-template-columns: 1fr; min-height: auto; }
+  .pkd-left { border-right: none; border-bottom: 1px solid var(--border); padding: 20px 18px; }
+  .pkd-right { padding: 20px 18px; }
+  .pkd-score { gap: 10px; padding: 20px 0 14px; }
+  .pkd-team { width: 80px; }
+  .pkd-team-name { font-size: 12px; }
+  .pkd-colon { font-size: 34px; padding-bottom: 12px; }
+  .pkd-foot { flex-direction: column; gap: 8px; }
+  .pkd-foot .pg-cancel { width: 100%; text-align: center; }
+  .pkd-foot .pg-cta { max-width: none !important; }
+  .pg-pitch.lg .cc { width: 130px; height: 130px; }
+}
+@media (max-width: 440px) {
+  .pkd-team { width: 68px; }
+  .pkd-team-name { font-size: 11px; }
+  .pg-stepper.lg button { width: 32px; height: 26px; }
+  .pg-stepper.lg .pg-digit { width: 60px; height: 72px; font-size: 44px; }
+}
+</style>
+
+{% block scripts %}
+<script>
+(function () {
+  var home = {{ init_h }};
+  var away = {{ init_a }};
+  var boosted = {{ 'true' if prediction and prediction.boosted else 'false' }};
+  var exactPts = {{ exact_pts }};
+
+  function clamp(v) { return Math.max(0, Math.min(20, v)); }
+
+  function update() {
+    document.getElementById('dispHome').textContent = home;
+    document.getElementById('dispAway').textContent = away;
+    document.getElementById('fHomeScore').value = home;
+    document.getElementById('fAwayScore').value = away;
+    var pill = home + '–' + away;
+    document.getElementById('ctaPill').textContent = pill;
+    document.getElementById('stakeScore').textContent = pill;
+    var pts = boosted ? exactPts * 2 : exactPts;
+    document.getElementById('ctaPts').textContent = '+' + pts + ' pts';
+    document.getElementById('stakeVal').textContent = '+' + pts;
+  }
+
+  /* stepper buttons */
+  document.querySelectorAll('.step-up, .step-down').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var side = this.dataset.side;
+      var delta = this.classList.contains('step-up') ? 1 : -1;
+      if (side === 'home') home = clamp(home + delta);
+      else away = clamp(away + delta);
+      update();
+    });
+  });
+
+  window.toggleBoost = function() {
+    boosted = !boosted;
+    var btn = document.getElementById('boostBtn');
+    btn.classList.toggle('on', boosted);
+    document.getElementById('fBoosted').value = boosted ? '1' : '';
+    document.getElementById('boostTitle').textContent = boosted ? 'Boosted ×2' : 'Boost this pick';
+    document.getElementById('boostSub').textContent = boosted
+      ? 'Double if exact — zero if you miss'
+      : 'Double-or-nothing on the exact score';
+    update();
+  };
+
+  update();
+})();
+</script>
+{% endblock %}
+
 {% endblock %}

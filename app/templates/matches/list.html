@@ -1,112 +1,136 @@
 {% extends "base.html" %}
-{% block title %}Fixtures & Results — FIFA World Cup 2026{% endblock %}
+{% block title %}Fixtures & Predictions — FIFA World Cup 2026{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
-<div class="container page-content">
 
-  <div class="page-header flex items-center justify-between">
-    <div>
-      <h1>{{ t('fixtures.title', _lang) }}</h1>
-      <p class="page-header-sub">{{ t('fixtures.sub', _lang) }}</p>
-    </div>
-    <div style="display:flex;gap:.5rem">
-      <a href="/knockout" class="btn btn-secondary btn-sm">{{ t('fixtures.bracket', _lang) }}</a>
-      <a href="/standings" class="btn btn-secondary btn-sm">{{ t('fixtures.tables', _lang) }}</a>
-    </div>
+{# Group colour map — matches wc-data.jsx GROUP_COLORS #}
+{% set gc = {
+  'A':'#16a34a','B':'#7c3aed','C':'#ea580c','D':'#0891b2',
+  'E':'#db2777','F':'#ca8a04','G':'#dc2626','H':'#059669',
+  'I':'#6366f1','J':'#c2410c','K':'#0f766e','L':'#9333ea'
+} %}
+
+<!-- Broadcast header band -->
+<div class="pg-band">
+  <span class="pg-live"><span class="dot"></span>Matchday</span>
+  <h1>{{ t('fixtures.title', _lang) }}</h1>
+  <div class="pg-band-pts">
+    <div class="v">WC 2026</div>
+    <div class="l">Group &amp; Knockout Stage</div>
   </div>
+</div>
 
-  <div class="fixture-list">
-    {% set current_date = namespace(val="") %}
-    {% set current_round = namespace(val="") %}
-    {% for date_key, matches in grouped.items() %}
-    {% set d = matches[0].match_date %}
+<!-- Fixture cards list -->
+<div class="pg-fixture-list">
+  {% set current_round = namespace(val="") %}
+  {% set seen_dates = namespace(val=[]) %}
 
-    <!-- Knockout round separator -->
-    {% set rnd = matches[0].round %}
-    {% if rnd != "group" and rnd != current_round.val %}
-    {% set current_round.val = rnd %}
-    <div class="fixture-day-header" style="background:var(--bg-3);color:var(--gold);font-weight:900;letter-spacing:.1em;text-transform:uppercase;font-size:.7rem">
-      ── {{ round_labels.get(rnd, rnd) }} ──
+  {% for date_key, matches in grouped.items() %}
+  {% set d = matches[0].match_date %}
+
+  {# Knockout round separator #}
+  {% set rnd = matches[0].round %}
+  {% if rnd != "group" and rnd != current_round.val %}
+  {% set current_round.val = rnd %}
+  <div class="pg-round-header">── {{ round_labels.get(rnd, rnd) }} ──</div>
+  {% endif %}
+
+  {# Date divider #}
+  <div class="pg-day-header">{{ d.strftime('%A %d %B %Y') }}</div>
+
+  {% for match in matches %}
+  {% set grp_color = gc.get(match.group_letter, '#6c7268') %}
+  <div class="pg-fixture-card" style="border-left-color:{{ grp_color }}">
+
+    <!-- Left: time / date / group -->
+    <div class="pg-fixture-when">
+      {% if match.status == 'finished' %}
+        <div class="t" style="color:var(--pg-muted)">FT</div>
+      {% elif match.status == 'live' %}
+        <div class="t" style="color:#dc2626">LIVE</div>
+      {% else %}
+        <div class="t">
+          <span data-utc-time="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">
+            {{- match.match_date.strftime('%H:%M') -}}
+          </span>
+        </div>
+      {% endif %}
+      <div class="d">{{ d.strftime('%a %-d %b') }}</div>
+      {% if match.group_letter %}
+      <span class="g" style="background:{{ grp_color }}">GRP {{ match.group_letter }}</span>
+      {% else %}
+      <span class="g" style="background:var(--pg-ink)">{{ round_labels.get(match.round, match.round)[:4] }}</span>
+      {% endif %}
     </div>
-    {% endif %}
 
-    <!-- Date header -->
-    <div class="fixture-day-header">
-      {{ d.strftime('%A %d %B %Y') }}
-    </div>
-
-    {% for match in matches %}
-    <div class="fixture-row">
-
-      <!-- Group badge -->
-      <div class="fixture-badge-col">
-        {% if match.group_letter %}
-        <span class="group-badge gb-{{ match.group_letter }}">Group {{ match.group_letter }}</span>
-        {% else %}
-        <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1)">
-          {{ round_labels.get(match.round, match.round)[:6] }}
-        </span>
+    <!-- Middle: teams + score/time board -->
+    <div class="pg-fixture-mid">
+      <!-- Home team -->
+      <div class="pg-team">
+        {% if match.home_team %}
+        <img src="{{ flag_url(match.home_team.code) }}" class="pg-flag pg-flag-mid" alt="{{ match.home_team.name }}">
         {% endif %}
-      </div>
-
-      <!-- Home team (right-aligned) -->
-      <div class="fixture-home">
-        <span class="fixture-team-name {% if not match.home_team %}tbd{% endif %}">
+        <span class="pg-team-name {% if not match.home_team %}tbd{% endif %}">
           {{ match.home_team.name if match.home_team else match.home_team_tbd or 'TBD' }}
         </span>
-        {% if match.home_team %}
-        <img src="{{ flag_url(match.home_team.code) }}" class="flag flag-sm" alt="{{ match.home_team.name }}">
-        {% endif %}
       </div>
 
-      <!-- Centre: time / score -->
-      <div class="fixture-time-col">
-        {% if match.status == 'finished' %}
-          <div class="fixture-time-box finished">{{ match.home_score }} – {{ match.away_score }}</div>
-          {% if match.is_knockout() and match.winner_team %}
-          <div class="fixture-advance">↑ {{ match.winner_team.name }}</div>
-          {% endif %}
-          {% if match.goals %}
-          <div class="scorer-line" style="max-width:160px;line-height:1.4;margin-top:2px">
-            {%- set home_gs = match.goals | selectattr('team_id', 'equalto', match.home_team_id) | list -%}
-            {%- set away_gs = match.goals | selectattr('team_id', 'equalto', match.away_team_id) | list -%}
+      <!-- Centre board: score or dashes -->
+      {% if match.status == 'finished' and match.home_score is not none %}
+        <div class="pg-led"><span>{{ match.home_score }} : {{ match.away_score }}</span></div>
+      {% elif match.status == 'live' %}
+        <div class="pg-led live"><span>
+          {% if match.home_score is not none %}{{ match.home_score }} : {{ match.away_score }}{% else %}– : –{% endif %}
+        </span></div>
+      {% else %}
+        <div class="pg-led empty">– : –</div>
+      {% endif %}
+
+      <!-- Away team -->
+      <div class="pg-team away">
+        {% if match.away_team %}
+        <img src="{{ flag_url(match.away_team.code) }}" class="pg-flag pg-flag-mid" alt="{{ match.away_team.name }}">
+        {% endif %}
+        <span class="pg-team-name {% if not match.away_team %}tbd{% endif %}">
+          {{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Right: action -->
+    <div class="pg-fixture-act">
+      {% if match.status != 'finished' and user %}
+        {% if user.leagues %}
+          <a href="/leagues/{{ user.leagues[0].id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
+        {% else %}
+          <a href="/leagues" class="pg-btn-predict">Predict ▸</a>
+        {% endif %}
+      {% elif match.status == 'finished' and match.goals %}
+        <div style="text-align:right;max-width:130px">
+          {%- set home_gs = match.goals | selectattr('team_id', 'equalto', match.home_team_id) | list -%}
+          {%- set away_gs = match.goals | selectattr('team_id', 'equalto', match.away_team_id) | list -%}
+          <div class="pg-scorer-line">
             {% if home_gs %}{{ home_gs | map(attribute='player_name') | join(', ') }}{% endif %}
             {% if home_gs and away_gs %} · {% endif %}
             {% if away_gs %}{{ away_gs | map(attribute='player_name') | join(', ') }}{% endif %}
           </div>
-          {% endif %}
-        {% elif match.status == 'live' %}
-          <div class="fixture-time-box live">LIVE</div>
-        {% else %}
-          <div class="fixture-time-box">
-            <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">
-              {{- match.match_date.strftime('%H:%M') -}}
-            </span>
-          </div>
-          <div class="fixture-status-tag" style="margin-top:2px;background:transparent;color:var(--text-3);font-size:.58rem">UTC</div>
-        {% endif %}
-      </div>
-
-      <!-- Away team (left-aligned) -->
-      <div class="fixture-away">
-        {% if match.away_team %}
-        <img src="{{ flag_url(match.away_team.code) }}" class="flag flag-sm" alt="{{ match.away_team.name }}">
-        {% endif %}
-        <span class="fixture-team-name {% if not match.away_team %}tbd{% endif %}">
-          {{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}
-        </span>
-      </div>
-
+        </div>
+      {% endif %}
+      {% if match.is_knockout() and match.winner_team %}
+        <div class="pg-advance">↑ {{ match.winner_team.name }}</div>
+      {% endif %}
     </div>
-    {% endfor %}
-    {% else %}
-    <div class="card-body empty-state">
-      <div class="empty-state-icon">📅</div>
-      <h3>No fixtures loaded</h3>
-      <p>Run <code>python seed_data.py</code> from the project root.</p>
-    </div>
-    {% endfor %}
+
   </div>
+  {% endfor %}
 
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-state-icon">📅</div>
+    <h3>No fixtures loaded</h3>
+    <p>Run <code>python seed_data.py</code> from the project root.</p>
+  </div>
+  {% endfor %}
 </div>
+
 {% endblock %}

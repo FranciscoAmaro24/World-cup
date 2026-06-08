@@ -1,13 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Sign Up — WC2026 Predictor{% endblock %}
 {% block content %}
-<div class="container page-content">
+{% set _lang = request.cookies.get('lang', 'en') %}
+
+<div class="pg-band" style="padding:20px 36px">
+  <span class="pg-live"><span class="dot"></span>WC2026</span>
+  <h1 style="font-size:26px">{{ t('auth.register', _lang) }}</h1>
+</div>
+
+<div class="container page-content" style="max-width:480px">
   <div class="form-card">
     <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:2.5rem">🏆</div>
-{% set _lang = request.cookies.get('lang', 'en') %}
-      <h1 class="form-title" style="margin-bottom:0">{{ t('auth.register', _lang) }}</h1>
-      <p class="text-sm text-muted mt-1">Join the WC2026 Predictor community</p>
+      <div style="font-size:2rem;line-height:1">🏆</div>
+      <p style="font-family:'Spectral',serif;font-style:italic;font-size:.9rem;color:var(--pg-muted);margin-top:.5rem">Join the WC2026 Predictor community</p>
     </div>
     {% if error %}
     <div class="alert alert-error">{{ error }}</div>
@@ -26,11 +31,12 @@
         <label class="form-label" for="password">{{ t('auth.password', _lang) }}</label>
         <input class="form-input" type="password" id="password" name="password" required autocomplete="new-password" placeholder="Min. 6 characters" minlength="6">
       </div>
-      <button type="submit" class="btn btn-primary btn-full" style="margin-top:0.5rem">{{ t('auth.register', _lang) }}</button>
+      <button type="submit" class="btn btn-primary btn-full" style="margin-top:.5rem">{{ t('auth.register', _lang) }}</button>
     </form>
     <hr class="form-divider">
-    <p class="text-sm text-muted" style="text-align:center">
-      {{ t('auth.have_account', _lang) }} <a href="/login" class="text-green" style="font-weight:600">{{ t('auth.login_link', _lang) }}</a>
+    <p style="font-family:'Spectral',serif;font-style:italic;font-size:.88rem;color:var(--pg-muted);text-align:center">
+      {{ t('auth.have_account', _lang) }}
+      <a href="/login" style="color:var(--pg-green);font-weight:800;font-family:'Archivo',sans-serif;font-style:normal">{{ t('auth.login_link', _lang) }}</a>
     </p>
   </div>
 </div>

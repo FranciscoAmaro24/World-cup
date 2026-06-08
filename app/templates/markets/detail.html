@@ -136,7 +136,7 @@
               <td><span class="tag {% if won %}tag-green{% elif market.resolved %}tag-gray{% else %}tag-white{% endif %}">{{ bet.option.label[:20] }}</span></td>
               <td style="font-weight:700">{{ "%.1f"|format(bet.amount) }}</td>
               {% if market.resolved %}
-              <td style="font-weight:700;color:{% if won %}#4ade80{% else %}var(--red){% endif %}">
+              <td style="font-weight:700;color:{% if won %}var(--pg-green){% else %}var(--red){% endif %}">
                 {% if bet.payout is not none %}{{ "%.1f"|format(bet.payout) }}{% else %}—{% endif %}
               </td>
               {% endif %}

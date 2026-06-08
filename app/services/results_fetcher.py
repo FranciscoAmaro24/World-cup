@@ -307,6 +307,7 @@ async def fetch_now(db: Session) -> dict:
     return result
 
 
+
 async def results_loop():
     """Background loop — runs forever, polls every POLL_INTERVAL seconds."""
     from database import SessionLocal

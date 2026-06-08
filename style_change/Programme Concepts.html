@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WC Predictor — Matchday Programme (1 × 3)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #f0eee9; }
+  #root { height: 100vh; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="wc-data.jsx"></script>
+<script type="text/babel" src="style-concepts.jsx"></script>
+<script type="text/babel" src="hybrid-concepts.jsx"></script>
+
+<script type="text/babel" data-presets="react">
+const DW = 1180, DH = 720;
+
+function App() {
+  return (
+    <DesignCanvas>
+      <DCSection id="hybrid" title="Between 1 & 3 — “The Matchday Programme”"
+        subtitle="The blend you asked for: printed cream paper + Archivo Black editorial headlines from Broadsheet, pitch-green/lime + sporty Rajdhani scoreboards from Broadcast. Square corners throughout — no app chrome. E1 leans editorial (closer to 1), E2 leans broadcast (closer to 3). Tell me which point on the line and I'll lock it in.">
+        <DCArtboard id="prog-edit" label="E1 · Programme — editorial lean (≈1.5)" width={DW} height={DH}><HybridEditorial /></DCArtboard>
+        <DCArtboard id="prog-bcast" label="E2 · Programme — broadcast lean (≈2.5)" width={DW} height={DH}><HybridBroadcast /></DCArtboard>
+      </DCSection>
+
+      <DCSection id="anchors" title="The two anchors (reference)"
+        subtitle="Where the hybrid comes from — for comparison.">
+        <DCArtboard id="ref-a" label="1 · Broadsheet" width={DW} height={DH}><ConceptA /></DCArtboard>
+        <DCArtboard id="ref-c" label="3 · Broadcast" width={DW} height={DH}><ConceptC /></DCArtboard>
+      </DCSection>
+    </DesignCanvas>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

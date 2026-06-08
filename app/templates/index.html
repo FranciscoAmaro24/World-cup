@@ -2,43 +2,53 @@
 {% block title %}WC2026 Predictor{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
+{% set gc = {
+  'A':'#16a34a','B':'#7c3aed','C':'#ea580c','D':'#0891b2',
+  'E':'#db2777','F':'#ca8a04','G':'#dc2626','H':'#059669',
+  'I':'#6366f1','J':'#c2410c','K':'#0f766e','L':'#9333ea'
+} %}
 
-<!-- HERO -->
-<section class="hero">
-  <div class="hero-inner">
-    <div class="hero-tag">⚽ June 11 – July 19, 2026 · USA · Canada · Mexico</div>
-    <h1 class="hero-title">FIFA <span>World Cup</span><br>2026™ Predictor</h1>
-    <p class="hero-sub">{{ t('index.hero_sub', _lang) }}</p>
-
-    {% if first_match %}
-    <div class="countdown" id="countdownBlock">
-      <div class="countdown-unit"><div class="countdown-val" id="cd-d">--</div><div class="countdown-lbl">{{ t('index.days', _lang) }}</div></div>
-      <div class="countdown-unit"><div class="countdown-val" id="cd-h">--</div><div class="countdown-lbl">{{ t('index.hours', _lang) }}</div></div>
-      <div class="countdown-unit"><div class="countdown-val" id="cd-m">--</div><div class="countdown-lbl">{{ t('index.mins', _lang) }}</div></div>
-      <div class="countdown-unit"><div class="countdown-val" id="cd-s">--</div><div class="countdown-lbl">{{ t('index.secs', _lang) }}</div></div>
-    </div>
-    {% endif %}
-
-    {% if not user %}
-    <div class="hero-actions">
-      <a href="/register" class="btn btn-primary btn-lg">{{ t('index.get_started', _lang) }}</a>
-      <a href="/login" class="btn btn-outline btn-lg">{{ t('nav.login', _lang) }}</a>
-    </div>
-    {% else %}
-    <div class="hero-actions">
-      <a href="/leagues/create" class="btn btn-primary btn-lg">{{ t('index.create_league', _lang) }}</a>
-      <a href="/leagues/join" class="btn btn-outline btn-lg">{{ t('index.join_code', _lang) }}</a>
-    </div>
-    {% endif %}
-
-    <div class="hero-stats">
-      <div><div class="hero-stat-val">104</div><div class="hero-stat-lbl">{{ t('index.matches', _lang) }}</div></div>
-      <div><div class="hero-stat-val">48</div><div class="hero-stat-lbl">{{ t('index.teams', _lang) }}</div></div>
-      <div><div class="hero-stat-val">12</div><div class="hero-stat-lbl">{{ t('index.groups', _lang) }}</div></div>
-      <div><div class="hero-stat-val">7</div><div class="hero-stat-lbl">{{ t('index.rounds', _lang) }}</div></div>
-    </div>
+<!-- Broadcast hero band -->
+<div class="pg-band" style="padding:28px 36px;flex-wrap:wrap;gap:16px">
+  <span class="pg-live"><span class="dot"></span>June 11 – July 19, 2026</span>
+  <h1 style="font-size:clamp(22px,4vw,42px)">FIFA World Cup™ 2026 Predictor</h1>
+  <div class="pg-band-pts" style="min-width:0">
+    <div class="v">USA · Canada · Mexico</div>
+    <div class="l">{{ t('index.hero_sub', _lang) }}</div>
   </div>
-</section>
+</div>
+
+<!-- Countdown strip -->
+{% if first_match %}
+<div style="background:var(--pg-foot);border-bottom:1px solid var(--border);padding:16px 36px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+  <span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pg-muted)">Kicks off in</span>
+  <div class="countdown" id="countdownBlock" style="margin:0;gap:12px">
+    <div class="countdown-unit"><div class="countdown-val" id="cd-d">--</div><div class="countdown-lbl">{{ t('index.days', _lang) }}</div></div>
+    <div class="countdown-unit"><div class="countdown-val" id="cd-h">--</div><div class="countdown-lbl">{{ t('index.hours', _lang) }}</div></div>
+    <div class="countdown-unit"><div class="countdown-val" id="cd-m">--</div><div class="countdown-lbl">{{ t('index.mins', _lang) }}</div></div>
+    <div class="countdown-unit"><div class="countdown-val" id="cd-s">--</div><div class="countdown-lbl">{{ t('index.secs', _lang) }}</div></div>
+  </div>
+  {% if not user %}
+  <div style="margin-left:auto;display:flex;gap:.75rem">
+    <a href="/register" class="btn btn-primary">{{ t('index.get_started', _lang) }}</a>
+    <a href="/login" class="btn btn-outline">{{ t('nav.login', _lang) }}</a>
+  </div>
+  {% else %}
+  <div style="margin-left:auto;display:flex;gap:.75rem">
+    <a href="/leagues/create" class="btn btn-primary">{{ t('index.create_league', _lang) }}</a>
+    <a href="/leagues/join" class="btn btn-outline">{{ t('index.join_code', _lang) }}</a>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Hero stats bar -->
+<div style="background:var(--pg-card);border-bottom:1px solid var(--border);padding:14px 36px;display:flex;gap:3rem;flex-wrap:wrap">
+  <div><div class="hero-stat-val">104</div><div class="hero-stat-lbl">{{ t('index.matches', _lang) }}</div></div>
+  <div><div class="hero-stat-val">48</div><div class="hero-stat-lbl">{{ t('index.teams', _lang) }}</div></div>
+  <div><div class="hero-stat-val">12</div><div class="hero-stat-lbl">{{ t('index.groups', _lang) }}</div></div>
+  <div><div class="hero-stat-val">7</div><div class="hero-stat-lbl">{{ t('index.rounds', _lang) }}</div></div>
+</div>
 
 <div class="container page-content">
 
@@ -52,8 +62,7 @@
     {% if user_leagues %}
     <div class="league-grid">
       {% for league in user_leagues %}
-      <a href="/leagues/{{ league.id }}" class="league-card" style="text-decoration:none">
-        <div class="league-card-accent" style="background:{{ league.accent_color }}"></div>
+      <a href="/leagues/{{ league.id }}" class="league-card" style="text-decoration:none;border-left:4px solid {{ league.accent_color }}">
         <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem">
           <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem">{{ league.badge_emoji }}</div>
           <div>
@@ -62,7 +71,7 @@
           </div>
         </div>
         {% if league.description %}
-        <p class="text-xs text-sub" style="margin-bottom:.75rem">{{ league.description }}</p>
+        <p style="font-family:'Spectral',serif;font-style:italic;font-size:.78rem;color:var(--pg-muted);margin-bottom:.75rem">{{ league.description }}</p>
         {% endif %}
         <div class="league-stats">
           <div class="league-stat"><div class="league-stat-val">{{ league.members|length }}</div><div class="league-stat-lbl">{{ t('league.members', _lang) }}</div></div>
@@ -70,7 +79,7 @@
         </div>
         <div class="tags">
           {% if league.sweepstake_enabled %}<span class="tag tag-gold">💰 Sweepstake</span>{% endif %}
-          {% if league.admin_id == user.id %}<span class="tag tag-white">Admin</span>{% endif %}
+          {% if league.admin_id == user.id %}<span class="tag tag-green">Admin</span>{% endif %}
         </div>
       </a>
       {% endfor %}
@@ -89,54 +98,54 @@
   </div>
   {% endif %}
 
-  <!-- UPCOMING FIXTURES — fixture-list style -->
+  <!-- UPCOMING FIXTURES -->
   <div>
     <div class="section-header">
       <h2 class="section-title">{{ t('index.upcoming', _lang) }}</h2>
       <a href="/fixtures" class="btn btn-secondary btn-sm">{{ t('match.fixtures', _lang) }} →</a>
     </div>
     {% if upcoming %}
-    <div class="fixture-list">
+    <div style="display:flex;flex-direction:column;gap:8px">
       {% for match in upcoming %}
-      <div class="fixture-row">
+      {% set grp_c = gc.get(match.group_letter, '#6c7268') %}
+      <div class="pg-fixture-card" style="border-left-color:{{ grp_c }}">
 
-        <!-- Group badge -->
-        <div class="fixture-badge-col">
+        <div class="pg-fixture-when">
+          <div class="t">
+            <span data-utc-time="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%H:%M') }}</span>
+          </div>
+          <div class="d">{{ match.match_date.strftime('%a %-d %b') }}</div>
           {% if match.group_letter %}
-          <span class="group-badge gb-{{ match.group_letter }}">Grp {{ match.group_letter }}</span>
+          <span class="g" style="background:{{ grp_c }}">GRP {{ match.group_letter }}</span>
           {% else %}
-          <span class="group-badge" style="background:rgba(100,100,100,.25);color:var(--text-1)">{{ match.round.upper()[:4] }}</span>
+          <span class="g" style="background:var(--pg-ink)">{{ match.round.upper()[:4] }}</span>
           {% endif %}
         </div>
 
-        <!-- Home team -->
-        <div class="fixture-home">
-          <span class="fixture-team-name {% if not match.home_team %}tbd{% endif %}">
-            {{ match.home_team.name if match.home_team else match.home_team_tbd or 'TBD' }}
-          </span>
-          {% if match.home_team %}
-          <img src="{{ flag_url(match.home_team.code) }}" class="flag flag-sm" alt="{{ match.home_team.name }}">
-          {% endif %}
-        </div>
-
-        <!-- Time -->
-        <div class="fixture-time-col">
-          <div class="fixture-time-box">
-            <span data-utc="{{ match.match_date.strftime('%Y-%m-%dT%H:%M:%S') }}">{{ match.match_date.strftime('%H:%M') }}</span>
+        <div class="pg-fixture-mid">
+          <div class="pg-team">
+            {% if match.home_team %}<img src="{{ flag_url(match.home_team.code) }}" class="pg-flag pg-flag-mid" alt="">{% endif %}
+            <span class="pg-team-name {% if not match.home_team %}tbd{% endif %}">
+              {{ match.home_team.name if match.home_team else match.home_team_tbd or 'TBD' }}
+            </span>
           </div>
-          <div style="font-size:.58rem;color:var(--text-3);text-align:center;margin-top:2px">
-            {{ match.match_date.strftime('%d %b') }} UTC
+          <div class="pg-led empty">– : –</div>
+          <div class="pg-team away">
+            {% if match.away_team %}<img src="{{ flag_url(match.away_team.code) }}" class="pg-flag pg-flag-mid" alt="">{% endif %}
+            <span class="pg-team-name {% if not match.away_team %}tbd{% endif %}">
+              {{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}
+            </span>
           </div>
         </div>
 
-        <!-- Away team -->
-        <div class="fixture-away">
-          {% if match.away_team %}
-          <img src="{{ flag_url(match.away_team.code) }}" class="flag flag-sm" alt="{{ match.away_team.name }}">
+        <div class="pg-fixture-act">
+          {% if user and user.leagues %}
+          <a href="/leagues/{{ user.leagues[0].id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
+          {% elif user %}
+          <a href="/leagues" class="pg-btn-predict">Join a League</a>
+          {% else %}
+          <a href="/login" class="pg-btn-predict">Log in</a>
           {% endif %}
-          <span class="fixture-team-name {% if not match.away_team %}tbd{% endif %}">
-            {{ match.away_team.name if match.away_team else match.away_team_tbd or 'TBD' }}
-          </span>
         </div>
 
       </div>
@@ -162,7 +171,7 @@ function updateCountdown() {
   const diff = target - Date.now();
   if (diff <= 0) {
     document.getElementById('countdownBlock').innerHTML =
-      '<div class="tag tag-green" style="font-size:1rem;padding:.5rem 1.5rem">🎉 Tournament is LIVE!</div>';
+      '<span class="tag tag-green" style="font-size:.9rem;padding:.5rem 1.25rem">🎉 Tournament is LIVE!</span>';
     return;
   }
   const d = Math.floor(diff / 86400000);

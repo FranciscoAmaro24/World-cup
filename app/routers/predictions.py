@@ -16,8 +16,14 @@ router = APIRouter()
 def calculate_points(pred: models.Prediction, match: models.Match, league: models.League) -> int:
     if match.home_score is None or match.away_score is None:
         return 0
-    if pred.home_score_pred == match.home_score and pred.away_score_pred == match.away_score:
-        return league.points_exact_score
+    is_exact = (pred.home_score_pred == match.home_score and
+                pred.away_score_pred == match.away_score)
+    if is_exact:
+        base = league.points_exact_score
+        return base * 2 if pred.boosted else base
+    # Boosted + not exact = 0 (double-or-nothing)
+    if pred.boosted:
+        return 0
     pred_result = _result(pred.home_score_pred, pred.away_score_pred)
     actual_result = _result(match.home_score, match.away_score)
     if pred_result == actual_result:
@@ -75,6 +81,7 @@ async def save_prediction(
     match_id: int,
     home_score: int = Form(...),
     away_score: int = Form(...),
+    boosted: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = auth.get_current_user(request, db)
@@ -92,6 +99,7 @@ async def save_prediction(
         return RedirectResponse(f"/leagues/{league_id}", status_code=303)
     if home_score < 0 or away_score < 0 or home_score > 20 or away_score > 20:
         return RedirectResponse(f"/leagues/{league_id}", status_code=303)
+    is_boosted = boosted in ("1", "true", "on")
     existing = db.query(models.Prediction).filter(
         models.Prediction.user_id == user.id,
         models.Prediction.match_id == match_id,
@@ -100,6 +108,7 @@ async def save_prediction(
     if existing:
         existing.home_score_pred = home_score
         existing.away_score_pred = away_score
+        existing.boosted = is_boosted
         existing.submitted_at = datetime.utcnow()
     else:
         pred = models.Prediction(
@@ -108,6 +117,7 @@ async def save_prediction(
             league_id=league_id,
             home_score_pred=home_score,
             away_score_pred=away_score,
+            boosted=is_boosted,
         )
         db.add(pred)
     db.commit()

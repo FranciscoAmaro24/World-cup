@@ -6,13 +6,12 @@
   <title>{% block title %}Best WC Predictor In The World{% endblock %}</title>
   <link rel="preconnect" href="https://flagcdn.com">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;600;700;800&family=Spectral:ital,wght@0,400;0,600;1,400&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="icon" href="/static/img/logo.jpg" type="image/jpeg">
   {% block styles %}{% endblock %}
-  {% if user and user.profile_bg and user.profile_bg != 'none' %}
-  <style>body{background:{{ user.profile_bg }};background-attachment:fixed}</style>
-  {% endif %}
+  {# profile_bg disabled — new Programme theme uses cream body background #}
 </head>
 <body>
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
@@ -20,13 +19,13 @@
   <!-- Main nav -->
   <nav class="navbar">
     <a href="/" class="navbar-brand">
-      <div class="brand-icon" style="overflow:hidden;border-radius:8px;padding:0;background:none;border:none;position:relative;cursor:pointer"
+      <div class="brand-icon" style="overflow:hidden;padding:0;background:none;border:none;position:relative;cursor:pointer"
            id="logoBtn" title="Play / Pause">
-        <img src="/static/img/logo.jpg" alt="Logo" style="width:36px;height:36px;object-fit:cover;display:block;border-radius:8px">
-        <div id="playIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);border-radius:8px;font-size:.9rem;transition:opacity .15s">▶</div>
+        <img src="/static/img/logo.jpg" alt="Logo" style="width:36px;height:36px;object-fit:cover;display:block;">
+        <div id="playIcon" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);font-size:.9rem;transition:opacity .15s">▶</div>
       </div>
       <div class="brand-text">
-        <div class="brand-title" style="font-size:.65rem">Best WC Predictor</div>
+        <div class="brand-title">Best WC Predictor</div>
         <div class="brand-year">In The World™</div>
       </div>
     </a>

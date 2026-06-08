@@ -2,17 +2,19 @@
 {% block title %}My Leagues — WC2026{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
-<div class="container page-content">
-  <div class="page-header flex items-center justify-between">
-    <div>
-      <h1>{{ t('league.my_leagues', _lang) }}</h1>
-      <p class="page-header-sub">{{ t('league.manage_sub', _lang) }}</p>
-    </div>
-    <div style="display:flex;gap:0.75rem">
-      <a href="/leagues/join" class="btn btn-secondary">{{ t('league.join', _lang) }}</a>
-      <a href="/leagues/create" class="btn btn-primary">+ {{ t('league.create', _lang) }}</a>
+
+<div class="pg-band">
+  <span class="pg-live"><span class="dot"></span>Your leagues</span>
+  <h1>{{ t('league.my_leagues', _lang) }}</h1>
+  <div class="pg-band-pts">
+    <div style="display:flex;gap:.75rem;z-index:1;position:relative">
+      <a href="/leagues/join" class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3);color:#fff">{{ t('league.join', _lang) }}</a>
+      <a href="/leagues/create" class="btn btn-sm" style="background:var(--pg-lime);color:var(--pg-ink)">+ {{ t('league.create', _lang) }}</a>
     </div>
   </div>
+</div>
+
+<div class="container page-content">
 
   {% if leagues %}
   <div class="league-grid">
@@ -54,7 +56,7 @@
         <span class="tag tag-gold">Sweepstake (€{{ "%.0f"|format(league.sweepstake_buy_in) }})</span>
         {% endif %}
         {% if league.admin_id == user.id %}
-        <span class="tag tag-blue">Admin</span>
+        <span class="tag tag-green">Admin</span>
         {% endif %}
       </div>
       <span class="btn btn-outline btn-sm">{{ t('league.open', _lang) }}</span>
