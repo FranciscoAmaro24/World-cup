@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}How to Play — WC2026 Predictor{% endblock %}
+{% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
+
+<div class="pg-band" style="padding:28px 36px">
+  <span class="pg-live"><span class="dot"></span>Guide</span>
+  <h1>How to Play</h1>
+  <div class="pg-band-pts">
+    <div class="l">Three ways to earn points</div>
+  </div>
+</div>
+
+<div class="container page-content" style="max-width:860px">
+
+  <!-- Mode 1: Match Predictions -->
+  <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
+    <div style="background:var(--pg-green);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem">
+      <div style="font-family:'Archivo Black',sans-serif;font-size:1.5rem;color:#fff">01</div>
+      <div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:1.1rem;color:#fff;letter-spacing:.04em">MATCH PREDICTIONS</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.75)">Predict the score of every game</div>
+      </div>
+    </div>
+    <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div>
+        <p style="font-family:'Spectral',serif;font-style:italic;font-size:.9rem;color:var(--pg-muted);margin-bottom:1rem">
+          Before each match kicks off, submit your predicted score. The closer you are, the more points you earn.
+        </p>
+        <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:.5rem">
+          <li style="display:flex;align-items:center;gap:.75rem">
+            <span class="tag tag-green" style="min-width:80px;text-align:center">Exact score</span>
+            <span style="font-size:.88rem">e.g. you predict 2–1, it ends 2–1</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:.75rem">
+            <span class="tag tag-gray" style="min-width:80px;text-align:center">Correct result</span>
+            <span style="font-size:.88rem">Right winner or draw, wrong score</span>
+          </li>
+          <li style="display:flex;align-items:center;gap:.75rem">
+            <span class="tag" style="min-width:80px;text-align:center;background:#dc2626;color:#fff">Wrong</span>
+            <span style="font-size:.88rem">Incorrect result = 0 points</span>
+          </li>
+        </ul>
+        <div class="alert alert-info" style="margin-top:1rem;font-size:.82rem">
+          Predictions lock the moment the referee blows the opening whistle — submit early!
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.75rem">Points per league (configurable by admin)</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Exact score</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-green)">3 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Correct result</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-muted)">1 pt</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Wrong result</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:#dc2626">0 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:rgba(10,125,60,.08);border:1px solid var(--pg-green);border-radius:4px;margin-top:.25rem">
+            <span style="font-size:.85rem">Boost (exact score ×2)</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-green)">6 pts</span>
+          </div>
+        </div>
+        <p style="font-size:.72rem;color:var(--pg-muted);margin-top:.5rem">Default values shown. Each league can set custom points.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mode 2: Bracket Picks -->
+  <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
+    <div style="background:#7c3aed;padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem">
+      <div style="font-family:'Archivo Black',sans-serif;font-size:1.5rem;color:#fff">02</div>
+      <div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:1.1rem;color:#fff;letter-spacing:.04em">BRACKET PICKS</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.75)">Predict the knockout stage before it starts</div>
+      </div>
+    </div>
+    <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div>
+        <p style="font-family:'Spectral',serif;font-style:italic;font-size:.9rem;color:var(--pg-muted);margin-bottom:1rem">
+          Before the first knockout match, pick which teams you think will go deep. The further your picks advance, the more you score.
+        </p>
+        <div style="display:flex;flex-direction:column;gap:.4rem">
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.75rem;font-weight:700;width:90px;color:var(--pg-muted)">PICK</span>
+            <span style="font-size:.75rem;font-weight:700;color:var(--pg-muted)">YOU PREDICT…</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.82rem;width:90px">4 teams</span>
+            <span style="font-size:.82rem;color:var(--pg-muted)">reach the semi-finals</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.82rem;width:90px">2 teams</span>
+            <span style="font-size:.82rem;color:var(--pg-muted)">reach the final</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0;border-bottom:1px solid var(--border)">
+            <span style="font-size:.82rem;width:90px">1 team</span>
+            <span style="font-size:.82rem;color:var(--pg-muted)">finishes as runner-up</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:.5rem;padding:.4rem 0">
+            <span style="font-size:.82rem;width:90px">1 team</span>
+            <span style="font-size:.82rem;color:var(--pg-muted)">wins the World Cup</span>
+          </div>
+        </div>
+        <div class="alert alert-info" style="margin-top:.75rem;font-size:.82rem">
+          Bracket picks lock when the first R16 match kicks off. You cannot change them after.
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.75rem">Points per correct pick</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Quarter-finalist (top 8)</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-muted)">1 pt</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Semi-finalist (top 4)</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-muted)">2 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Finalist (runner-up)</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-muted)">5 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:rgba(202,138,4,.08);border:1px solid var(--gold);border-radius:4px">
+            <span style="font-size:.85rem">Tournament winner</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--gold)">10 pts</span>
+          </div>
+        </div>
+        <p style="font-size:.72rem;color:var(--pg-muted);margin-top:.5rem">Default values shown. Each league can set custom points.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mode 3: Sweepstake -->
+  <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
+    <div style="background:var(--gold);padding:1rem 1.5rem;display:flex;align-items:center;gap:.75rem">
+      <div style="font-family:'Archivo Black',sans-serif;font-size:1.5rem;color:#fff">03</div>
+      <div>
+        <div style="font-family:'Archivo Black',sans-serif;font-size:1.1rem;color:#fff;letter-spacing:.04em">SWEEPSTAKE</div>
+        <div style="font-size:.75rem;color:rgba(255,255,255,.85)">Each player draws a team — their tournament is your points</div>
+      </div>
+    </div>
+    <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+      <div>
+        <p style="font-family:'Spectral',serif;font-style:italic;font-size:.9rem;color:var(--pg-muted);margin-bottom:1rem">
+          Every paid member is randomly assigned one or more teams from the draw. The more matches your team wins, the more sweepstake points you earn.
+        </p>
+        <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.5rem">How the draw works</div>
+        <ol style="padding-left:1.2rem;margin:0;display:flex;flex-direction:column;gap:.4rem;font-size:.85rem;color:var(--text-2)">
+          <li>League admin enables sweepstake &amp; sets the buy-in</li>
+          <li>Members pay and are marked as paid by the admin</li>
+          <li>Admin creates <strong>draw groups</strong> (e.g. Top Seeds, Mid, Underdogs) and assigns teams to each</li>
+          <li>Admin clicks <strong>Draw</strong> — each member gets 1 random team per group</li>
+          <li>Points accumulate as your teams win matches throughout the tournament</li>
+        </ol>
+        <div class="alert alert-info" style="margin-top:.75rem;font-size:.82rem">
+          If no groups are set up, teams are drawn randomly from all 48 squads.
+        </div>
+      </div>
+      <div>
+        <div style="font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.75rem">Points system (configurable)</div>
+        <div style="display:flex;flex-direction:column;gap:.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <div>
+              <div style="font-size:.85rem">Win (group stage)</div>
+              <div style="font-size:.7rem;color:var(--pg-muted)">90-min result</div>
+            </div>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-green)">2 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <div>
+              <div style="font-size:.85rem">Advance (knockout)</div>
+              <div style="font-size:.7rem;color:var(--pg-muted)">Includes ET &amp; penalties</div>
+            </div>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-green)">2 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Draw (group stage)</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:var(--pg-muted)">0 pts</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem .75rem;background:var(--pg-foot);border-radius:4px">
+            <span style="font-size:.85rem">Eliminated / loss</span>
+            <span style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1.1rem;color:#dc2626">0 pts</span>
+          </div>
+        </div>
+        <p style="font-size:.72rem;color:var(--pg-muted);margin-top:.5rem">Admin can adjust win/draw points in league settings.</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;padding:1rem 0 2rem">
+    <a href="/leagues" class="btn btn-primary">Go to My Leagues</a>
+    <a href="/fixtures" class="btn btn-secondary" style="margin-left:.75rem">View Fixtures</a>
+  </div>
+
+</div>
+{% endblock %}

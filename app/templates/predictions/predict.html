@@ -12,6 +12,7 @@
 {% set grp_color = gc.get(match.group_letter, '#0a7d3c') %}
 {% set exact_pts = league.points_exact_score %}
 {% set result_pts = league.points_correct_result %}
+{% set boost_mult = league.boost_multiplier or 2 %}
 {% set init_h = prediction.home_score_pred if prediction else 0 %}
 {% set init_a = prediction.away_score_pred if prediction else 0 %}
 
@@ -106,7 +107,7 @@
           </svg>
         </span>
         <span class="pg-boost-tx">
-          <span class="pg-boost-title" id="boostTitle">{% if prediction and prediction.boosted %}Boosted ×2{% else %}Boost this pick{% endif %}</span>
+          <span class="pg-boost-title" id="boostTitle">{% if prediction and prediction.boosted %}Boosted ×{{ boost_mult }}{% else %}Boost this pick{% endif %}</span>
           <span class="pg-boost-sub" id="boostSub">{% if prediction and prediction.boosted %}Double if exact — zero if you miss{% else %}Double-or-nothing on the exact score{% endif %}</span>
         </span>
         <span class="pg-boost-sw"><i id="boostKnob"></i></span>
@@ -304,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var pill = home + '–' + away;
     document.getElementById('ctaPill').textContent = pill;
     document.getElementById('stakeScore').textContent = pill;
-    var pts = boosted ? exactPts * 2 : exactPts;
+    var pts = boosted ? exactPts * {{ boost_mult }} : exactPts;
     document.getElementById('ctaPts').textContent = '+' + pts + ' pts';
     document.getElementById('stakeVal').textContent = '+' + pts;
   }
@@ -324,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var btn = document.getElementById('boostBtn');
     btn.classList.toggle('on', boosted);
     document.getElementById('fBoosted').value = boosted ? '1' : '';
-    document.getElementById('boostTitle').textContent = boosted ? 'Boosted ×2' : 'Boost this pick';
+    document.getElementById('boostTitle').textContent = boosted ? 'Boosted ×{{ boost_mult }}' : 'Boost this pick';
     document.getElementById('boostSub').textContent = boosted
       ? 'Double if exact — zero if you miss'
       : 'Double-or-nothing on the exact score';

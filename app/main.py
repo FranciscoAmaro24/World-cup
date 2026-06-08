@@ -80,6 +80,10 @@ def _migrate_db():
         ("leagues", "category", "VARCHAR(20) DEFAULT 'general'"),
         ("predictions", "boosted", "BOOLEAN DEFAULT 0"),
         ("league_members", "is_favourite", "BOOLEAN DEFAULT 0"),
+        ("leagues", "boost_multiplier", "INTEGER DEFAULT 2"),
+        ("leagues", "sweep_pts_win", "INTEGER DEFAULT 2"),
+        ("leagues", "sweep_pts_draw", "INTEGER DEFAULT 0"),
+        ("sweepstake_assignments", "group_id", "INTEGER"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
@@ -231,6 +235,12 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "first_match": first_match,
         },
     )
+
+
+@app.get("/rules")
+async def rules_page(request: Request, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    return templates.TemplateResponse("rules.html", {"request": request, "user": user})
 
 
 @app.post("/set-language")

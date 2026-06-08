@@ -48,7 +48,7 @@
     <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
       <span class="tag tag-green">Exact: {{ league.points_exact_score }}pts</span>
       <span class="tag tag-gray">Result: {{ league.points_correct_result }}pts</span>
-      <span class="tag tag-green" title="Boosted exact score">Boost: {{ league.points_exact_score * 2 }}pts</span>
+      <span class="tag tag-green" title="Boosted exact score">Boost ×{{ league.boost_multiplier or 2 }}: {{ league.points_exact_score * (league.boost_multiplier or 2) }}pts</span>
       <span class="tag tag-gold">{{ t('league.winner_pick', _lang) }}: {{ league.points_bracket_winner }}pts</span>
       {% if not league.banner_url and is_admin %}
       <button type="button" onclick="document.getElementById('bannerInputNew')?.click()"
@@ -175,12 +175,12 @@
               {% set is_exact = pred.home_score_pred == match.home_score and pred.away_score_pred == match.away_score %}
               <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;
                 color:{% if is_exact %}var(--pg-green){% elif pred.points_awarded %}var(--pg-muted){% else %}var(--pg-muted){% endif %}">
-                {{ pred.home_score_pred }}–{{ pred.away_score_pred }}{% if pred.boosted %} <span style="font-size:.7em;font-weight:900;color:var(--pg-green)">×2</span>{% endif %}
+                {{ pred.home_score_pred }}–{{ pred.away_score_pred }}{% if pred.boosted %} <span style="font-size:.7em;font-weight:900;color:var(--pg-green)">×{{ league.boost_multiplier or 2 }}</span>{% endif %}
               </div>
               <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.06em;
                 color:{% if is_exact %}var(--pg-green){% elif pred.points_awarded %}var(--pg-muted){% else %}#dc2626{% endif %}">
                 {% if is_exact %}
-                  +{{ league.points_exact_score * 2 if pred.boosted else league.points_exact_score }} pts
+                  +{{ league.points_exact_score * (league.boost_multiplier or 2) if pred.boosted else league.points_exact_score }} pts
                 {% elif pred.points_awarded %}
                   +{{ pred.points_awarded }} pts
                 {% else %}
@@ -250,7 +250,7 @@
           <div style="padding:0 14px;text-align:right;display:flex;flex-direction:column;justify-content:center;gap:4px">
             {% if not match.is_locked() %}
               {% if pred %}
-                <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="pg-btn-edit">Edit{% if pred.boosted %} <span style="font-size:.7em;font-weight:900">×2</span>{% endif %}</a>
+                <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="pg-btn-edit">Edit{% if pred.boosted %} <span style="font-size:.7em;font-weight:900">×{{ league.boost_multiplier or 2 }}</span>{% endif %}</a>
               {% else %}
                 <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
               {% endif %}

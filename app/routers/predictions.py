@@ -20,7 +20,8 @@ def calculate_points(pred: models.Prediction, match: models.Match, league: model
                 pred.away_score_pred == match.away_score)
     if is_exact:
         base = league.points_exact_score
-        return base * 2 if pred.boosted else base
+        mult = (getattr(league, "boost_multiplier", None) or 2) if pred.boosted else 1
+        return base * mult
     # Boosted + not exact = 0 (double-or-nothing)
     if pred.boosted:
         return 0

@@ -108,6 +108,11 @@
           <input class="form-input" type="number" name="points_result" value="{{ league.points_correct_result }}" min="0" max="20">
           <p class="form-hint">{{ t('settings.result_hint', _lang) }}</p>
         </div>
+        <div class="form-group">
+          <label class="form-label">Boost multiplier</label>
+          <input class="form-input" type="number" name="boost_multiplier" value="{{ league.boost_multiplier or 2 }}" min="2" max="10">
+          <p class="form-hint">Exact-score boost = exact pts × this. Default 2 (double).</p>
+        </div>
       </div>
 
       <hr class="form-divider">
@@ -151,6 +156,19 @@
           <div class="form-group">
             <label class="form-label">{{ t('create.teams_per', _lang) }}</label>
             <input class="form-input" type="number" name="teams_per_person" value="{{ league.sweepstake_teams_per_person }}" min="1" max="10">
+            <p class="form-hint">Ignored when draw groups are used (1 team per group instead).</p>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Points per win</label>
+            <input class="form-input" type="number" name="sweep_pts_win" value="{{ league.sweep_pts_win or 2 }}" min="0" max="20">
+            <p class="form-hint">Awarded per match win / knockout advancement.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points per draw</label>
+            <input class="form-input" type="number" name="sweep_pts_draw" value="{{ league.sweep_pts_draw or 0 }}" min="0" max="10">
+            <p class="form-hint">Group stage draws only (knockout draws go to ET).</p>
           </div>
         </div>
       </div>

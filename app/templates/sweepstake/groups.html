@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Sweepstake Groups — {{ league.name }}{% endblock %}
+{% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
+<div class="container page-content" style="max-width:860px">
+
+  <div style="margin-bottom:1rem">
+    <a href="/leagues/{{ league.id }}/sweepstake" class="btn btn-secondary btn-sm">← Back to Sweepstake</a>
+  </div>
+
+  <div class="page-header">
+    <h1>Draw Groups</h1>
+    <p class="page-header-sub">{{ league.name }} — organise teams into pots before the draw</p>
+  </div>
+
+  <div class="alert alert-info" style="margin-bottom:1.5rem;font-size:.85rem">
+    Create groups (e.g. <strong>Top Seeds</strong>, <strong>Mid Tier</strong>, <strong>Underdogs</strong>) and drag teams into each one.
+    When you draw, each paid member receives <strong>1 random team per group</strong>.
+    Teams not assigned to any group are excluded from the draw.
+  </div>
+
+  <!-- Create group -->
+  <div class="card" style="margin-bottom:1.5rem">
+    <div class="card-header"><span class="font-bold text-sm">Add a Group</span></div>
+    <div class="card-body">
+      <form action="/leagues/{{ league.id }}/sweepstake/groups/create" method="post"
+            style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <input class="form-input" type="text" name="name" placeholder="e.g. Top Seeds"
+               maxlength="50" required style="flex:1;min-width:160px">
+        <button type="submit" class="btn btn-primary">Add Group</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Groups -->
+  {% if groups %}
+  <div style="display:flex;flex-direction:column;gap:1.25rem">
+    {% for group in groups %}
+    <div class="card" style="overflow:hidden">
+      <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
+        <span class="font-bold">{{ group.name }}</span>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          <span class="tag tag-gray" style="font-size:.65rem">{{ group.teams|length }} team{% if group.teams|length != 1 %}s{% endif %}</span>
+          <form action="/leagues/{{ league.id }}/sweepstake/groups/{{ group.id }}/delete" method="post" style="margin:0"
+                onsubmit="return confirm('Delete group {{ group.name }}?')">
+            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+          </form>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Current teams in this group -->
+        {% if group.teams %}
+        <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem">
+          {% for gt in group.teams %}
+          <div style="display:flex;align-items:center;gap:.3rem;background:var(--pg-foot);border:1px solid var(--border);padding:.25rem .5rem .25rem .3rem;border-radius:4px">
+            <img src="{{ flag_url(gt.team.code) }}" style="width:18px;height:13px;object-fit:cover;border-radius:2px" alt="">
+            <span style="font-size:.78rem">{{ gt.team.name }}</span>
+            <form action="/leagues/{{ league.id }}/sweepstake/groups/{{ group.id }}/teams/{{ gt.team_id }}/remove" method="post" style="margin:0">
+              <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--pg-muted);padding:0 .1rem;font-size:.8rem;line-height:1">×</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:.8rem;color:var(--pg-muted);margin-bottom:.75rem">No teams yet — add some below.</p>
+        {% endif %}
+
+        <!-- Add team -->
+        <form action="/leagues/{{ league.id }}/sweepstake/groups/{{ group.id }}/teams/add" method="post"
+              style="display:flex;gap:.4rem;flex-wrap:wrap">
+          <select class="form-input" name="team_id" style="flex:1;min-width:180px;font-size:.82rem">
+            <option value="0">— Add a team —</option>
+            {% for letter in all_teams | map(attribute='group_letter') | unique | sort %}
+            <optgroup label="Group {{ letter }}">
+              {% for team in all_teams if team.group_letter == letter %}
+              {% if team.id not in assigned_team_ids or team.id in group.teams | map(attribute='team_id') | list %}
+              <option value="{{ team.id }}" {% if team.id in assigned_team_ids and team.id not in group.teams | map(attribute='team_id') | list %}disabled{% endif %}>
+                {{ team.name }}{% if team.id in assigned_team_ids and team.id not in group.teams | map(attribute='team_id') | list %} (in another group){% endif %}
+              </option>
+              {% endif %}
+              {% endfor %}
+            </optgroup>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn btn-secondary btn-sm">Add</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="card"><div class="card-body empty-state">
+    <h3>No groups yet</h3>
+    <p>Create your first group above to organise the draw.</p>
+  </div></div>
+  {% endif %}
+
+  <!-- Unassigned teams -->
+  {% set unassigned = all_teams | rejectattr('id', 'in', assigned_team_ids) | list %}
+  {% if unassigned %}
+  <div class="card" style="margin-top:1.5rem;overflow:hidden">
+    <div class="card-header"><span class="font-bold text-sm" style="color:var(--pg-muted)">Not in any group ({{ unassigned|length }})</span></div>
+    <div class="card-body" style="display:flex;flex-wrap:wrap;gap:.35rem">
+      {% for team in unassigned %}
+      <span style="display:flex;align-items:center;gap:.3rem;background:var(--pg-foot);border:1px solid var(--border);padding:.2rem .5rem .2rem .3rem;border-radius:4px;opacity:.6">
+        <img src="{{ flag_url(team.code) }}" style="width:16px;height:12px;object-fit:cover;border-radius:2px" alt="">
+        <span style="font-size:.72rem">{{ team.name }}</span>
+      </span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

@@ -50,6 +50,7 @@ class League(Base):
     # Match score prediction points
     points_exact_score = Column(Integer, default=3)
     points_correct_result = Column(Integer, default=1)
+    boost_multiplier = Column(Integer, default=2)   # exact-score boost multiplier
 
     # Bracket / tournament picks points
     points_bracket_winner = Column(Integer, default=10)
@@ -65,6 +66,8 @@ class League(Base):
     sweepstake_buy_in = Column(Float, default=10.0)
     sweepstake_teams_per_person = Column(Integer, default=1)
     sweepstake_drawn = Column(Boolean, default=False)
+    sweep_pts_win = Column(Integer, default=2)             # points per match win
+    sweep_pts_draw = Column(Integer, default=0)            # points per draw (group stage)
 
     created_at = Column(DateTime, default=datetime.utcnow)
 
@@ -72,6 +75,7 @@ class League(Base):
     members = relationship("LeagueMember", back_populates="league", cascade="all, delete-orphan")
     predictions = relationship("Prediction", back_populates="league", cascade="all, delete-orphan")
     sweepstake_assignments = relationship("SweepstakeAssignment", back_populates="league", cascade="all, delete-orphan")
+    sweepstake_groups = relationship("SweepstakeGroup", back_populates="league", cascade="all, delete-orphan", order_by="SweepstakeGroup.order_index")
     tournament_picks = relationship("TournamentPick", back_populates="league", cascade="all, delete-orphan")
 
 
@@ -221,10 +225,35 @@ class SweepstakeAssignment(Base):
     league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("sweepstake_groups.id"), nullable=True)
 
     league = relationship("League", back_populates="sweepstake_assignments")
     user = relationship("User", back_populates="sweepstake_assignments")
     team = relationship("Team", back_populates="sweepstake_assignments")
+    group = relationship("SweepstakeGroup")
+
+
+class SweepstakeGroup(Base):
+    __tablename__ = "sweepstake_groups"
+    id = Column(Integer, primary_key=True, index=True)
+    league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
+    name = Column(String(50), nullable=False)
+    order_index = Column(Integer, default=0)
+
+    league = relationship("League", back_populates="sweepstake_groups")
+    teams = relationship("SweepstakeGroupTeam", back_populates="group", cascade="all, delete-orphan")
+
+
+class SweepstakeGroupTeam(Base):
+    __tablename__ = "sweepstake_group_teams"
+    id = Column(Integer, primary_key=True, index=True)
+    group_id = Column(Integer, ForeignKey("sweepstake_groups.id"), nullable=False)
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+
+    group = relationship("SweepstakeGroup", back_populates="teams")
+    team = relationship("Team")
+
+    __table_args__ = (UniqueConstraint("group_id", "team_id"),)
 
 
 # ── SQUAD / PLAYERS ──────────────────────────────────────────

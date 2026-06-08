@@ -39,6 +39,7 @@
       <a href="/leagues/discover" class="nav-link {% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
       <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
       <a href="/teams" class="nav-link {% if '/teams' in request.url.path %}active{% endif %}">{{ t('nav.teams', _lang) }}</a>
+      <a href="/rules" class="nav-link {% if '/rules' in request.url.path %}active{% endif %}">Rules</a>
     </div>
 
     <!-- Hamburger (mobile only) -->
@@ -93,6 +94,7 @@
     <a href="/leagues/discover" class="{% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
     <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
     <a href="/teams" class="{% if '/teams' in request.url.path %}active{% endif %}">{{ t('nav.teams', _lang) }}</a>
+    <a href="/rules" class="{% if '/rules' in request.url.path %}active{% endif %}">Rules</a>
 
     <!-- Divider -->
     <div style="width:40%;height:1px;background:rgba(255,255,255,.12);margin:.25rem 0"></div>
@@ -165,6 +167,8 @@
   const ytBg     = document.getElementById('ytBg');
   const bgVideo  = document.getElementById('bgVideo');
 
+  const BG_KEY   = 'wc_bg_mode'; // 'audio' | 'video' | null
+
   function startAudio() {
     bgVideo.muted = false;
     bgVideo.play().catch(() => { bgVideo.muted = true; bgVideo.play(); });
@@ -172,6 +176,7 @@
     bgOn = true; playing = true;
     playIcon.textContent = '⏸';
     playIcon.style.opacity = '0';
+    sessionStorage.setItem(BG_KEY, 'audio');
   }
 
   function stopAll() {
@@ -182,6 +187,7 @@
     bgOn = false; playing = false;
     playIcon.textContent = '▶';
     playIcon.style.opacity = '';
+    sessionStorage.removeItem(BG_KEY);
   }
 
   function openBg() {
@@ -191,9 +197,30 @@
     document.body.classList.add('video-playing');
     bgOn = true; playing = true;
     playIcon.textContent = '⏸';
+    sessionStorage.setItem(BG_KEY, 'video');
   }
 
-  // Single click = play/pause audio + background
+  // Resume across page navigations
+  const savedMode = sessionStorage.getItem(BG_KEY);
+  if (savedMode && bgVideo.getAttribute('src')) {
+    if (savedMode === 'video') {
+      bgVideo.muted = false;
+      bgVideo.play().catch(() => { bgVideo.muted = true; bgVideo.play(); });
+      ytBg.style.display = 'block';
+      document.body.classList.add('video-playing');
+      bgOn = true; playing = true;
+      playIcon.textContent = '⏸';
+    } else {
+      bgVideo.muted = false;
+      bgVideo.play().catch(() => { bgVideo.muted = true; bgVideo.play(); });
+      ytBg.style.display = 'block';
+      bgOn = true; playing = true;
+      playIcon.textContent = '⏸';
+      playIcon.style.opacity = '0';
+    }
+  }
+
+  // Single click = play/pause
   logoBtn?.addEventListener('click', function(e) {
     e.preventDefault();
     if (bgOn && !playing) {
@@ -208,11 +235,11 @@
   logoBtn?.addEventListener('mouseenter', () => { playIcon.style.opacity = '1'; });
   logoBtn?.addEventListener('mouseleave', () => { if (playing || bgOn) playIcon.style.opacity = '0'; });
 
-  // Double click = toggle full background video (only if file exists)
+  // Double click = toggle full background video
   logoBtn?.addEventListener('dblclick', function(e) {
     e.preventDefault();
     if (bgOn) { stopAll(); }
-    else if (bgVideo.src && bgVideo.src.startsWith('http') && !bgVideo.src.endsWith('about:blank') && bgVideo.getAttribute('src')) { openBg(); }
+    else if (bgVideo.getAttribute('src')) { openBg(); }
   });
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && bgOn) stopAll(); });

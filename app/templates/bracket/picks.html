@@ -4,28 +4,27 @@
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
 
-  <div style="margin-bottom:1rem">
+  <div style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
     <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← {{ t('bracket.back', _lang) }} {{ league.name }}</a>
-  </div>
-
-  <div class="page-header flex items-center justify-between">
-    <div>
-      <h1>{{ t('bracket.title', _lang) }}</h1>
-      <p class="page-header-sub">{{ t('bracket.sub', _lang) }} — {{ league.name }}</p>
-    </div>
     {% if locked %}
-    <span class="tag tag-gray" style="font-size:.8rem;padding:.4rem .8rem">{{ t('bracket.locked', _lang) }}</span>
+    <span class="tag tag-gray" style="font-size:.8rem;padding:.4rem .8rem">Locked</span>
     {% else %}
-    <span class="tag tag-green" style="font-size:.8rem;padding:.4rem .8rem">{{ t('bracket.open', _lang) }}</span>
+    <span class="tag tag-green" style="font-size:.8rem;padding:.4rem .8rem">Open for picks</span>
     {% endif %}
   </div>
 
+  <div class="page-header">
+    <h1>{{ t('bracket.title', _lang) }}</h1>
+    <p class="page-header-sub">{{ league.name }} &mdash; {{ t('bracket.sub', _lang) }}</p>
+  </div>
+
   <!-- Points key -->
-  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.5rem">
-    <span class="tag tag-gold">{{ t('bracket.winner_lbl', _lang) }}: {{ league.points_bracket_winner }} {{ t('bracket.pts', _lang) }}</span>
-    <span class="tag tag-blue">{{ t('bracket.finalist_lbl', _lang) }}: {{ league.points_bracket_finalist }} {{ t('bracket.pts', _lang) }}</span>
-    <span class="tag tag-green">{{ t('bracket.semi_lbl', _lang) }}: {{ league.points_bracket_semi }} {{ t('bracket.pts', _lang) }}</span>
-    <span class="tag tag-white">{{ t('bracket.quarter_lbl', _lang) }}: {{ league.points_bracket_quarter or 1 }} {{ t('bracket.pts', _lang) }}</span>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.75rem">
+    <span class="tag tag-gold">Winner: {{ league.points_bracket_winner }}pts</span>
+    <span class="tag tag-blue">Finalist: {{ league.points_bracket_finalist }}pts</span>
+    <span class="tag tag-green">Semi: {{ league.points_bracket_semi }}pts</span>
+    <span class="tag tag-white">QF: {{ league.points_bracket_quarter or 1 }}pt</span>
+    <a href="/rules" class="tag tag-gray" style="text-decoration:none;margin-left:auto">How scoring works</a>
   </div>
 
   <div class="grid-2">
@@ -33,96 +32,82 @@
     <!-- Pick form / locked view -->
     <div>
       <div class="section-header"><h2 class="section-title">{{ t('bracket.your_picks', _lang) }}</h2></div>
+
       {% if locked %}
+      <!-- ── LOCKED VIEW ── -->
       <div class="card">
         <div class="card-body">
           {% if pick %}
-          <div style="display:flex;flex-direction:column;gap:1.25rem">
+          <div style="display:flex;flex-direction:column;gap:1.5rem">
 
-            {% macro pick_row(label, team, team_id, pool, pts_key) %}
+            <!-- QFs -->
             <div>
-              <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.4rem">{{ label }}</div>
-              {% if team %}
-              <div style="display:flex;align-items:center;gap:.6rem">
-                <img src="{{ flag_url(team.code) }}" class="flag flag-sm" alt="">
-                <span class="font-bold">{{ team.name }}</span>
-                {% if pool and team_id in pool %}
-                <span class="tag tag-green">{{ t('bracket.correct', _lang) }} +{{ pts_key }}{{ t('bracket.pts', _lang) }}</span>
-                {% elif pool %}
-                <span class="tag tag-gray">{{ t('bracket.wrong', _lang) }}</span>
-                {% endif %}
-              </div>
-              {% else %}<span class="text-muted text-xs">{{ t('bracket.no_pick', _lang) }}</span>{% endif %}
-            </div>
-            {% endmacro %}
-
-            <div>
-              <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.4rem">{{ t('bracket.quarterfinalists', _lang) }}</div>
-              <div style="display:flex;flex-direction:column;gap:.35rem">
-                {% for qpick in [pick.quarter_1, pick.quarter_2, pick.quarter_3, pick.quarter_4] %}
-                {% set qid = [pick.quarter_1_id, pick.quarter_2_id, pick.quarter_3_id, pick.quarter_4_id][loop.index0] %}
-                {% if qpick %}
-                <div style="display:flex;align-items:center;gap:.5rem">
-                  <img src="{{ flag_url(qpick.code) }}" class="flag flag-xs" alt="">
-                  <span style="font-size:.85rem">{{ qpick.name }}</span>
-                  {% if actual.quarters and qid in actual.quarters %}
-                  <span class="tag tag-green" style="font-size:.58rem">+{{ league.points_bracket_quarter or 1 }}{{ t('bracket.pts', _lang) }}</span>
-                  {% elif actual.quarters %}
-                  <span class="tag tag-gray" style="font-size:.58rem">{{ t('bracket.wrong', _lang) }}</span>
-                  {% endif %}
+              <div class="bracket-stage-label">Semi-finalists (top 4)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+                {% for qpick, qid in [(pick.quarter_1, pick.quarter_1_id),(pick.quarter_2, pick.quarter_2_id),(pick.quarter_3, pick.quarter_3_id),(pick.quarter_4, pick.quarter_4_id)] %}
+                {% set correct = actual.quarters and qid in actual.quarters %}
+                {% set wrong = actual.quarters and qid not in actual.quarters %}
+                <div class="bracket-pick-card {% if correct %}correct{% elif wrong %}wrong{% endif %}">
+                  {% if qpick %}
+                  <img src="{{ flag_url(qpick.code) }}" class="flag flag-sm" alt="">
+                  <span style="font-size:.82rem;font-weight:600">{{ qpick.name }}</span>
+                  {% if correct %}<span class="tag tag-green" style="font-size:.55rem;margin-left:auto">+{{ league.points_bracket_quarter or 1 }}pt</span>
+                  {% elif wrong %}<span class="tag tag-gray" style="font-size:.55rem;margin-left:auto">wrong</span>{% endif %}
+                  {% else %}<span style="color:var(--pg-muted);font-size:.78rem">No pick</span>{% endif %}
                 </div>
-                {% endif %}
                 {% endfor %}
               </div>
             </div>
 
+            <!-- SFs -->
             <div>
-              <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.4rem">{{ t('bracket.semifinalists', _lang) }}</div>
-              {% for sf_pick in [pick.semi_1, pick.semi_2] %}
-              {% set sf_id = [pick.semi_1_id, pick.semi_2_id][loop.index0] %}
-              {% if sf_pick %}
-              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.35rem">
-                <img src="{{ flag_url(sf_pick.code) }}" class="flag flag-xs" alt="">
-                <span style="font-size:.85rem">{{ sf_pick.name }}</span>
-                {% if actual.semis and sf_id in actual.semis %}
-                <span class="tag tag-green" style="font-size:.58rem">+{{ league.points_bracket_semi }}{{ t('bracket.pts', _lang) }}</span>
-                {% elif actual.semis %}
-                <span class="tag tag-gray" style="font-size:.58rem">{{ t('bracket.wrong', _lang) }}</span>
-                {% endif %}
+              <div class="bracket-stage-label">Finalists (top 2)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+                {% for sfpick, sfid in [(pick.semi_1, pick.semi_1_id),(pick.semi_2, pick.semi_2_id)] %}
+                {% set correct = actual.semis and sfid in actual.semis %}
+                {% set wrong = actual.semis and sfid not in actual.semis %}
+                <div class="bracket-pick-card {% if correct %}correct{% elif wrong %}wrong{% endif %}">
+                  {% if sfpick %}
+                  <img src="{{ flag_url(sfpick.code) }}" class="flag flag-sm" alt="">
+                  <span style="font-size:.85rem;font-weight:600">{{ sfpick.name }}</span>
+                  {% if correct %}<span class="tag tag-green" style="font-size:.58rem;margin-left:auto">+{{ league.points_bracket_semi }}pts</span>
+                  {% elif wrong %}<span class="tag tag-gray" style="font-size:.58rem;margin-left:auto">wrong</span>{% endif %}
+                  {% else %}<span style="color:var(--pg-muted);font-size:.78rem">No pick</span>{% endif %}
+                </div>
+                {% endfor %}
               </div>
-              {% endif %}
-              {% endfor %}
             </div>
 
+            <!-- Finalist -->
             <div>
-              <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.4rem">{{ t('bracket.finalist_runnerup', _lang) }}</div>
-              {% if pick.finalist_1 %}
-              <div style="display:flex;align-items:center;gap:.6rem">
-                <img src="{{ flag_url(pick.finalist_1.code) }}" class="flag flag-sm" alt="">
-                <span class="font-bold">{{ pick.finalist_1.name }}</span>
-                {% if actual.finalists and pick.finalist_1_id in actual.finalists %}
-                <span class="tag tag-green">{{ t('bracket.correct', _lang) }} +{{ league.points_bracket_finalist }}{{ t('bracket.pts', _lang) }}</span>
-                {% elif actual.finalists %}
-                <span class="tag tag-gray">{{ t('bracket.wrong', _lang) }}</span>
-                {% endif %}
+              <div class="bracket-stage-label">Runner-up</div>
+              {% set correct = actual.finalists and pick.finalist_1_id in actual.finalists %}
+              {% set wrong = actual.finalists and pick.finalist_1_id not in actual.finalists %}
+              <div class="bracket-pick-card lg {% if correct %}correct{% elif wrong %}wrong{% endif %}" style="margin-top:.5rem">
+                {% if pick.finalist_1 %}
+                <img src="{{ flag_url(pick.finalist_1.code) }}" class="flag flag-md" alt="">
+                <span style="font-size:.95rem;font-weight:700">{{ pick.finalist_1.name }}</span>
+                {% if correct %}<span class="tag tag-green" style="margin-left:auto">+{{ league.points_bracket_finalist }}pts</span>
+                {% elif wrong %}<span class="tag tag-gray" style="margin-left:auto">wrong</span>{% endif %}
+                {% else %}<span style="color:var(--pg-muted);font-size:.85rem">No pick</span>{% endif %}
               </div>
-              {% else %}<span class="text-muted text-xs">{{ t('bracket.no_pick', _lang) }}</span>{% endif %}
             </div>
 
+            <!-- Winner -->
             <div>
-              <div class="text-xs text-muted" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:.4rem">{{ t('bracket.tournament_winner', _lang) }}</div>
-              {% if pick.winner %}
-              <div style="display:flex;align-items:center;gap:.6rem">
+              <div class="bracket-stage-label" style="color:var(--gold)">World Cup Winner</div>
+              {% set correct = actual.winner and pick.winner_id == actual.winner %}
+              {% set wrong = actual.winner and pick.winner_id != actual.winner %}
+              <div class="bracket-pick-card lg {% if correct %}correct{% elif wrong %}wrong{% endif %}" style="margin-top:.5rem;border-color:{% if not correct and not wrong %}var(--gold){% endif %}">
+                {% if pick.winner %}
                 <img src="{{ flag_url(pick.winner.code) }}" class="flag flag-md" alt="">
-                <span class="font-bold" style="font-size:1.05rem">{{ pick.winner.name }}</span>
-                {% if actual.winner and pick.winner_id == actual.winner %}
-                <span class="tag tag-green">{{ t('bracket.correct', _lang) }} +{{ league.points_bracket_winner }}{{ t('bracket.pts', _lang) }}</span>
-                {% elif actual.winner %}
-                <span class="tag tag-gray">{{ t('bracket.wrong', _lang) }}</span>
-                {% endif %}
+                <span style="font-size:1.05rem;font-weight:800">{{ pick.winner.name }}</span>
+                {% if correct %}<span class="tag tag-green" style="margin-left:auto">+{{ league.points_bracket_winner }}pts</span>
+                {% elif wrong %}<span class="tag tag-gray" style="margin-left:auto">wrong</span>{% endif %}
+                {% else %}<span style="color:var(--pg-muted);font-size:.85rem">No pick</span>{% endif %}
               </div>
-              {% else %}<span class="text-muted text-xs">{{ t('bracket.no_pick', _lang) }}</span>{% endif %}
             </div>
+
           </div>
           {% else %}
           <div class="empty-state"><p>{{ t('bracket.deadline_missed', _lang) }}</p></div>
@@ -131,80 +116,90 @@
       </div>
 
       {% else %}
-      <!-- Edit form -->
-      <div class="card">
-        <div class="card-body">
-          <div class="alert alert-info" style="margin-bottom:1rem;font-size:.82rem">
-            {{ t('bracket.lock_hint', _lang) }}
-          </div>
-          <form action="/leagues/{{ league.id }}/bracket" method="post">
-
-            <p class="form-label" style="margin-bottom:.5rem">{{ t('bracket.quarterfinalists', _lang) }}</p>
-            {% set qpick_ids = [pick.quarter_1_id, pick.quarter_2_id, pick.quarter_3_id, pick.quarter_4_id] if pick else [none,none,none,none] %}
-            {% for n in [1,2,3,4] %}
-            <div class="form-group">
-              <label class="form-label">{{ t('bracket.qf_pick', _lang) }} {{ n }}</label>
-              <select class="form-input" name="quarter_{{ n }}_id">
-                <option value="0">{{ t('bracket.select_team', _lang) }}</option>
-                {% for team in teams %}
-                <option value="{{ team.id }}"
-                  {% if qpick_ids[n-1] == team.id %}selected{% endif %}>
-                  {{ team.name }} ({{ t('bracket.group_lbl', _lang) }} {{ team.group_letter }})
-                </option>
-                {% endfor %}
-              </select>
-            </div>
-            {% endfor %}
-
-            <hr class="form-divider">
-            <p class="form-label" style="margin-bottom:.5rem">{{ t('bracket.semifinalists', _lang) }}</p>
-            {% for n in [1,2] %}
-            <div class="form-group">
-              <label class="form-label">{{ t('bracket.sf_pick', _lang) }} {{ n }}</label>
-              <select class="form-input" name="semi_{{ n }}_id">
-                <option value="0">{{ t('bracket.select_team', _lang) }}</option>
-                {% for team in teams %}
-                <option value="{{ team.id }}"
-                  {% set sid = pick.semi_1_id if n == 1 else pick.semi_2_id %}
-                  {% if pick and sid == team.id %}selected{% endif %}>
-                  {{ team.name }} ({{ t('bracket.group_lbl', _lang) }} {{ team.group_letter }})
-                </option>
-                {% endfor %}
-              </select>
-            </div>
-            {% endfor %}
-
-            <hr class="form-divider">
-            <div class="form-group">
-              <label class="form-label">{{ t('bracket.finalist_label', _lang) }}</label>
-              <select class="form-input" name="finalist_1_id">
-                <option value="0">{{ t('bracket.select_team', _lang) }}</option>
-                {% for team in teams %}
-                <option value="{{ team.id }}" {% if pick and pick.finalist_1_id == team.id %}selected{% endif %}>
-                  {{ team.name }} ({{ t('bracket.group_lbl', _lang) }} {{ team.group_letter }})
-                </option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">{{ t('bracket.tournament_winner', _lang) }}</label>
-              <select class="form-input" name="winner_id" required>
-                <option value="0">{{ t('bracket.select_team', _lang) }}</option>
-                {% for team in teams %}
-                <option value="{{ team.id }}" {% if pick and pick.winner_id == team.id %}selected{% endif %}>
-                  {{ team.name }} ({{ t('bracket.group_lbl', _lang) }} {{ team.group_letter }})
-                </option>
-                {% endfor %}
-              </select>
-            </div>
-
-            <button type="submit" class="btn btn-primary btn-full btn-lg">
-              {% if pick %}{{ t('bracket.update_picks', _lang) }}{% else %}{{ t('bracket.submit_picks', _lang) }}{% endif %}
-            </button>
-          </form>
-        </div>
+      <!-- ── EDIT FORM ── -->
+      <div class="alert alert-info" style="margin-bottom:1rem;font-size:.82rem">
+        {{ t('bracket.lock_hint', _lang) }}
       </div>
+      <form action="/leagues/{{ league.id }}/bracket" method="post" id="bracketForm">
+        {% set q_ids = [pick.quarter_1_id, pick.quarter_2_id, pick.quarter_3_id, pick.quarter_4_id] if pick else [none,none,none,none] %}
+        {% set s_ids = [pick.semi_1_id, pick.semi_2_id] if pick else [none,none] %}
+        {% set f_id = pick.finalist_1_id if pick else none %}
+        {% set w_id = pick.winner_id if pick else none %}
+
+        <!-- Stage: QF -->
+        <div class="bracket-stage">
+          <div class="bracket-stage-label">Semi-finalists — pick 4 teams that reach the last 4</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+            {% for n in [1,2,3,4] %}
+            {% set cur_id = q_ids[n-1] %}
+            {% set cur_team = teams | selectattr('id','equalto', cur_id) | first if cur_id else none %}
+            <div class="bracket-slot" data-slot="quarter_{{ n }}_id" onclick="openPicker(this)">
+              <input type="hidden" name="quarter_{{ n }}_id" value="{{ cur_id or 0 }}">
+              {% if cur_team %}
+              <img src="{{ flag_url(cur_team.code) }}" class="flag flag-sm slot-flag" alt="">
+              <span class="slot-name">{{ cur_team.name }}</span>
+              {% else %}
+              <span class="slot-placeholder">Pick QF {{ n }}</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Stage: SF -->
+        <div class="bracket-stage">
+          <div class="bracket-stage-label">Finalists — pick 2 teams that reach the final</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.5rem">
+            {% for n in [1,2] %}
+            {% set cur_id = s_ids[n-1] %}
+            {% set cur_team = teams | selectattr('id','equalto', cur_id) | first if cur_id else none %}
+            <div class="bracket-slot" data-slot="semi_{{ n }}_id" onclick="openPicker(this)">
+              <input type="hidden" name="semi_{{ n }}_id" value="{{ cur_id or 0 }}">
+              {% if cur_team %}
+              <img src="{{ flag_url(cur_team.code) }}" class="flag flag-sm slot-flag" alt="">
+              <span class="slot-name">{{ cur_team.name }}</span>
+              {% else %}
+              <span class="slot-placeholder">Pick SF {{ n }}</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <!-- Stage: Runner-up -->
+        <div class="bracket-stage">
+          <div class="bracket-stage-label">Runner-up — 1 team that reaches the final but doesn't win</div>
+          {% set cur_team = teams | selectattr('id','equalto', f_id) | first if f_id else none %}
+          <div class="bracket-slot lg" data-slot="finalist_1_id" onclick="openPicker(this)" style="margin-top:.5rem">
+            <input type="hidden" name="finalist_1_id" value="{{ f_id or 0 }}">
+            {% if cur_team %}
+            <img src="{{ flag_url(cur_team.code) }}" class="flag flag-md slot-flag" alt="">
+            <span class="slot-name" style="font-size:.95rem">{{ cur_team.name }}</span>
+            {% else %}
+            <span class="slot-placeholder">Pick runner-up</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Stage: Winner -->
+        <div class="bracket-stage">
+          <div class="bracket-stage-label" style="color:var(--gold)">World Cup Winner — the team that lifts the trophy</div>
+          {% set cur_team = teams | selectattr('id','equalto', w_id) | first if w_id else none %}
+          <div class="bracket-slot lg winner" data-slot="winner_id" onclick="openPicker(this)" style="margin-top:.5rem">
+            <input type="hidden" name="winner_id" value="{{ w_id or 0 }}">
+            {% if cur_team %}
+            <img src="{{ flag_url(cur_team.code) }}" class="flag flag-md slot-flag" alt="">
+            <span class="slot-name" style="font-size:1rem;font-weight:800">{{ cur_team.name }}</span>
+            {% else %}
+            <span class="slot-placeholder" style="color:var(--gold)">Pick the winner</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:1rem">
+          {% if pick %}Update Picks{% else %}Submit Picks{% endif %}
+        </button>
+      </form>
       {% endif %}
     </div>
 
@@ -218,17 +213,15 @@
             <tr>
               <th>#</th>
               <th>{{ t('league.player', _lang) }}</th>
-              <th>{{ t('bracket.winner_pick_col', _lang) }}</th>
-              <th>{{ t('bracket.pts', _lang) }}</th>
+              <th>Winner pick</th>
+              <th>Pts</th>
             </tr>
           </thead>
           <tbody>
             {% for row in pick_rows %}
             <tr>
               <td>
-                <span class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% else %}rank-other{% endif %}">
-                  {{ loop.index }}
-                </span>
+                <span class="rank-badge {% if loop.index == 1 %}rank-1{% elif loop.index == 2 %}rank-2{% elif loop.index == 3 %}rank-3{% else %}rank-other{% endif %}">{{ loop.index }}</span>
               </td>
               <td>
                 {{ avatar_html(row.user, "xs") | safe }}
@@ -254,7 +247,7 @@
       {% if actual.winner %}
       {% set winner_team = teams | selectattr("id", "equalto", actual.winner) | first %}
       <div class="alert alert-success mt-4">
-        {{ t('bracket.tournament_winner_txt', _lang) }}
+        World Cup Winner:
         {% if winner_team %}
         <strong>
           <img src="{{ flag_url(winner_team.code) }}" class="flag flag-xs" style="display:inline-block" alt="">
@@ -267,4 +260,151 @@
 
   </div>
 </div>
+
+<!-- Team picker overlay -->
+<div id="pickerOverlay" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55)" onclick="closePicker()"></div>
+<div id="pickerPanel" style="display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+     z-index:201;background:var(--pg-card);border:1px solid var(--border);border-radius:8px;
+     width:min(520px,95vw);max-height:75vh;display:flex;flex-direction:column;overflow:hidden">
+  <div style="padding:.75rem 1rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem">
+    <input id="pickerSearch" type="text" placeholder="Search team…"
+           style="flex:1;background:var(--pg-foot);border:1px solid var(--border);padding:.4rem .7rem;
+                  font-size:.88rem;font-family:'Archivo',sans-serif;color:var(--pg-ink)"
+           oninput="filterTeams(this.value)">
+    <button onclick="closePicker()" style="background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--pg-muted);padding:0 .25rem">×</button>
+  </div>
+  <div id="pickerList" style="overflow-y:auto;flex:1;padding:.4rem"></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const teams = {{ teams | tojson(default=[]) | safe }};
+// Build a lookup of flag URLs server-side
+const flagBase = 'https://flagcdn.com/';
+const codeMap = {{ teams | map(attribute='code') | list | tojson | safe }};
+
+const CODE_TO_ISO2 = {
+  "MEX":"mx","RSA":"za","KOR":"kr","CZE":"cz","CAN":"ca","BIH":"ba","QAT":"qa","SUI":"ch",
+  "BRA":"br","MAR":"ma","HAI":"ht","SCO":"gb-sct","USA":"us","PAR":"py","AUS":"au","TUR":"tr",
+  "GER":"de","CUW":"cw","CIV":"ci","ECU":"ec","NED":"nl","JPN":"jp","SWE":"se","TUN":"tn",
+  "BEL":"be","EGY":"eg","IRN":"ir","NZL":"nz","ESP":"es","CPV":"cv","KSA":"sa","URU":"uy",
+  "FRA":"fr","SEN":"sn","IRQ":"iq","NOR":"no","ARG":"ar","ALG":"dz","AUT":"at","JOR":"jo",
+  "POR":"pt","COD":"cd","UZB":"uz","COL":"co","ENG":"gb-eng","CRO":"hr","GHA":"gh","PAN":"pa"
+};
+function teamFlag(code) {
+  const iso = CODE_TO_ISO2[code] || code.toLowerCase().slice(0,2);
+  return `${flagBase}${iso}.svg`;
+}
+
+// Group teams by group_letter for display
+const grouped = {};
+teams.forEach(t => {
+  if (!grouped[t.group_letter]) grouped[t.group_letter] = [];
+  grouped[t.group_letter].push(t);
+});
+
+let activeSlot = null;
+
+function openPicker(slotEl) {
+  activeSlot = slotEl;
+  document.getElementById('pickerSearch').value = '';
+  renderTeams('');
+  document.getElementById('pickerOverlay').style.display = 'block';
+  document.getElementById('pickerPanel').style.display = 'flex';
+  setTimeout(() => document.getElementById('pickerSearch').focus(), 50);
+}
+
+function closePicker() {
+  document.getElementById('pickerOverlay').style.display = 'none';
+  document.getElementById('pickerPanel').style.display = 'none';
+  activeSlot = null;
+}
+
+function filterTeams(q) { renderTeams(q); }
+
+function renderTeams(q) {
+  const list = document.getElementById('pickerList');
+  const lq = q.toLowerCase();
+  list.innerHTML = '';
+  Object.keys(grouped).sort().forEach(letter => {
+    const filtered = grouped[letter].filter(t => !q || t.name.toLowerCase().includes(lq));
+    if (!filtered.length) return;
+    const hdr = document.createElement('div');
+    hdr.style.cssText = 'font-size:.65rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted);padding:.4rem .6rem .2rem';
+    hdr.textContent = 'Group ' + letter;
+    list.appendChild(hdr);
+    filtered.forEach(team => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.cssText = 'display:flex;align-items:center;gap:.6rem;width:100%;padding:.5rem .6rem;background:none;border:none;cursor:pointer;text-align:left;border-radius:4px;transition:background .1s';
+      btn.innerHTML = `<img src="${teamFlag(team.code)}" style="width:24px;height:18px;object-fit:cover;border-radius:2px;flex-shrink:0" alt="">
+        <span style="font-size:.88rem;font-family:'Archivo',sans-serif">${team.name}</span>`;
+      btn.onmouseover = () => btn.style.background = 'var(--pg-foot)';
+      btn.onmouseout  = () => btn.style.background = 'none';
+      btn.onclick = () => selectTeam(team);
+      list.appendChild(btn);
+    });
+  });
+}
+
+function selectTeam(team) {
+  if (!activeSlot) return;
+  activeSlot.querySelector('input[type=hidden]').value = team.id;
+  // Update visual
+  let flag = activeSlot.querySelector('.slot-flag');
+  let name = activeSlot.querySelector('.slot-name');
+  let placeholder = activeSlot.querySelector('.slot-placeholder');
+  if (!flag) {
+    flag = document.createElement('img');
+    flag.className = 'flag flag-sm slot-flag';
+    flag.alt = '';
+    activeSlot.insertBefore(flag, activeSlot.querySelector('input').nextSibling);
+  }
+  if (!name) {
+    name = document.createElement('span');
+    name.className = 'slot-name';
+    activeSlot.appendChild(name);
+  }
+  flag.src = teamFlag(team.code);
+  flag.style.display = '';
+  name.textContent = team.name;
+  if (placeholder) placeholder.style.display = 'none';
+  closePicker();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePicker(); });
+</script>
+
+<style>
+.bracket-stage { margin-bottom: 1.25rem; }
+.bracket-stage-label {
+  font-size: .7rem; font-weight: 800; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--pg-muted);
+}
+.bracket-slot {
+  display: flex; align-items: center; gap: .6rem;
+  padding: .6rem .85rem; background: var(--pg-foot);
+  border: 2px solid var(--border); border-radius: 4px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+  min-height: 44px;
+}
+.bracket-slot:hover { border-color: var(--pg-green); background: rgba(10,125,60,.04); }
+.bracket-slot.lg { padding: .75rem 1rem; min-height: 52px; }
+.bracket-slot.winner { border-color: var(--gold); }
+.bracket-slot.winner:hover { border-color: var(--gold); background: rgba(202,138,4,.06); }
+.slot-placeholder { font-size: .82rem; color: var(--pg-muted); font-style: italic; }
+.slot-name { font-size: .88rem; font-weight: 600; }
+
+.bracket-pick-card {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .5rem .75rem; background: var(--pg-foot);
+  border: 1px solid var(--border); border-radius: 4px;
+  min-height: 40px;
+}
+.bracket-pick-card.correct { border-color: var(--pg-green); background: rgba(10,125,60,.06); }
+.bracket-pick-card.wrong   { border-color: var(--border); opacity: .55; }
+.bracket-pick-card.lg { padding: .65rem 1rem; min-height: 48px; }
+</style>
 {% endblock %}
