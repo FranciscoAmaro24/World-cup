@@ -79,6 +79,7 @@ def _migrate_db():
         ("leagues", "is_public", "BOOLEAN DEFAULT 0"),
         ("leagues", "category", "VARCHAR(20) DEFAULT 'general'"),
         ("predictions", "boosted", "BOOLEAN DEFAULT 0"),
+        ("league_members", "is_favourite", "BOOLEAN DEFAULT 0"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
@@ -130,6 +131,16 @@ def _seed_public_leagues():
                     is_public=True,
                     category="country",
                 ))
+        db.commit()
+
+        # Ensure admin is a member of every league
+        all_leagues = db.query(models.League).all()
+        for league in all_leagues:
+            exists = db.query(models.LeagueMember).filter_by(
+                league_id=league.id, user_id=admin.id
+            ).first()
+            if not exists:
+                db.add(models.LeagueMember(league_id=league.id, user_id=admin.id, sweepstake_paid=True))
         db.commit()
     finally:
         db.close()
@@ -198,9 +209,14 @@ async def index(request: Request, db: Session = Depends(get_db)):
         .all()
     )
     user_leagues = []
+    fav_ids = set()
+    has_favourites = False
     if user:
         memberships = db.query(models.LeagueMember).filter(models.LeagueMember.user_id == user.id).all()
-        user_leagues = [m.league for m in memberships]
+        all_leagues = [m.league for m in memberships]
+        fav_ids = {m.league_id for m in memberships if m.is_favourite}
+        has_favourites = bool(fav_ids)
+        user_leagues = [l for l in all_leagues if l.id in fav_ids] if has_favourites else all_leagues
 
     # Countdown to first match
     first_match = db.query(models.Match).order_by(models.Match.match_date).first()
@@ -209,6 +225,8 @@ async def index(request: Request, db: Session = Depends(get_db)):
         {
             "request": request, "user": user,
             "upcoming": upcoming, "user_leagues": user_leagues,
+            "fav_ids": fav_ids,
+            "has_favourites": has_favourites,
             "now": datetime.utcnow(),
             "first_match": first_match,
         },

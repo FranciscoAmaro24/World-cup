@@ -16,10 +16,13 @@
 
 <div class="container page-content">
 
-  {% if leagues %}
-  <div class="league-grid">
-    {% for league in leagues %}
-    <a href="/leagues/{{ league.id }}" class="league-card">
+  {% macro league_card(league) %}
+  <div class="league-card" style="position:relative">
+    <button class="fav-btn" data-id="{{ league.id }}" data-fav="{{ '1' if league.id in fav_ids else '0' }}"
+      style="position:absolute;top:.6rem;right:.6rem;background:none;border:none;cursor:pointer;
+             font-size:1.1rem;line-height:1;color:{% if league.id in fav_ids %}var(--gold){% else %}var(--pg-muted){% endif %};
+             padding:.15rem .3rem;z-index:2" title="Toggle favourite">&#9733;</button>
+    <a href="/leagues/{{ league.id }}" style="text-decoration:none;display:block">
       {% if league.banner_url %}
       <div style="margin:-1.25rem -1.25rem .9rem;border-radius:var(--radius-lg) var(--radius-lg) 0 0;overflow:hidden;height:80px;position:relative">
         <img src="{{ league.banner_url }}" alt="{{ league.name }}" style="width:100%;height:100%;object-fit:cover;display:block">
@@ -30,7 +33,7 @@
       {% else %}
       <div class="league-card-accent" style="background:{{ league.accent_color }}"></div>
       {% endif %}
-      <div class="league-name" style="display:flex;align-items:center;gap:.5rem">
+      <div class="league-name" style="display:flex;align-items:center;gap:.5rem;padding-right:1.5rem">
         {% if not league.banner_url and league.logo_url %}
         <img src="{{ league.logo_url }}" style="width:24px;height:24px;border-radius:5px;object-fit:cover" alt="">
         {% endif %}
@@ -61,8 +64,31 @@
       </div>
       <span class="btn btn-outline btn-sm">{{ t('league.open', _lang) }}</span>
     </a>
-    {% endfor %}
   </div>
+  {% endmacro %}
+
+  {% if leagues %}
+
+  {% if fav_leagues %}
+  <div class="section-header" style="margin-bottom:.5rem">
+    <h2 class="section-title" style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold)">&#9733; Favourites</h2>
+  </div>
+  <div class="league-grid" style="margin-bottom:2rem">
+    {% for league in fav_leagues %}{{ league_card(league) }}{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if other_leagues %}
+  {% if fav_leagues %}
+  <div class="section-header" style="margin-bottom:.5rem">
+    <h2 class="section-title" style="font-size:.8rem;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted)">All Leagues</h2>
+  </div>
+  {% endif %}
+  <div class="league-grid">
+    {% for league in other_leagues %}{{ league_card(league) }}{% endfor %}
+  </div>
+  {% endif %}
+
   {% else %}
   <div class="empty-state">
     <h3>{{ t('league.empty', _lang) }}</h3>

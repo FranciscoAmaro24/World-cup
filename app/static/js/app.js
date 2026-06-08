@@ -17,7 +17,7 @@ document.querySelectorAll('[data-utc-time]').forEach(el => {
   if (!utc) return;
   try {
     const d = new Date(utc + 'Z');
-    el.textContent = d.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit' });
+    el.textContent = d.toLocaleString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
   } catch (e) {}
 });
 
@@ -38,6 +38,20 @@ document.querySelectorAll('[data-countdown]').forEach(el => {
   }
   update();
   setInterval(update, 60000);
+});
+
+// Favourite league toggle
+document.querySelectorAll('.fav-btn').forEach(btn => {
+  btn.addEventListener('click', async e => {
+    e.preventDefault();
+    e.stopPropagation();
+    const id = btn.dataset.id;
+    const res = await fetch(`/leagues/${id}/favourite`, { method: 'POST' });
+    if (!res.ok) return;
+    const { is_favourite } = await res.json();
+    btn.dataset.fav = is_favourite ? '1' : '0';
+    btn.style.color = is_favourite ? 'var(--gold)' : 'var(--pg-muted)';
+  });
 });
 
 // Copy invite code

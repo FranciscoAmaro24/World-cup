@@ -10,14 +10,7 @@
 
 <!-- Broadcast band -->
 <div class="pg-band" style="border-left:5px solid {{ league.accent_color }}">
-  <span class="pg-live">
-    <span class="dot"></span>
-    {% if league.category == 'country' %}
-    <img src="{{ flag_url(league.invite_code[3:]) }}" style="width:22px;height:16px;object-fit:cover;border-radius:2px;vertical-align:middle" alt="">
-    {% else %}
-    <span style="font-family:sans-serif;font-weight:700">{{ league.name[:1].upper() }}</span>
-    {% endif %}
-  </span>
+  <span class="pg-live"><span class="dot"></span>League</span>
   <h1>{{ league.name }}</h1>
   <div class="pg-band-pts">
     {% if is_admin %}

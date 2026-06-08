@@ -82,6 +82,7 @@ class LeagueMember(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     nickname = Column(String(50), nullable=True)       # custom name shown on this league's leaderboard
     sweepstake_paid = Column(Boolean, default=False)
+    is_favourite = Column(Boolean, default=False)
     joined_at = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (UniqueConstraint("league_id", "user_id"),)

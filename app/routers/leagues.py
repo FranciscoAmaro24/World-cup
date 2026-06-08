@@ -5,7 +5,7 @@ import os
 from datetime import datetime
 
 from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, JSONResponse
 
 from sqlalchemy.orm import Session
 
@@ -63,10 +63,32 @@ async def leagues_list(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse("/login", status_code=303)
     memberships = db.query(models.LeagueMember).filter(models.LeagueMember.user_id == user.id).all()
-    user_leagues = [m.league for m in memberships]
+    fav_ids = {m.league_id for m in memberships if m.is_favourite}
+    all_leagues = [m.league for m in memberships]
+    fav_leagues = [l for l in all_leagues if l.id in fav_ids]
+    other_leagues = [l for l in all_leagues if l.id not in fav_ids]
     return templates.TemplateResponse(
-        "leagues/list.html", {"request": request, "user": user, "leagues": user_leagues}
+        "leagues/list.html", {
+            "request": request, "user": user,
+            "leagues": all_leagues,
+            "fav_leagues": fav_leagues,
+            "other_leagues": other_leagues,
+            "fav_ids": fav_ids,
+        }
     )
+
+
+@router.post("/{league_id}/favourite")
+async def toggle_favourite(league_id: int, request: Request, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return JSONResponse({"error": "not logged in"}, status_code=401)
+    membership = db.query(models.LeagueMember).filter_by(league_id=league_id, user_id=user.id).first()
+    if not membership:
+        return JSONResponse({"error": "not a member"}, status_code=404)
+    membership.is_favourite = not membership.is_favourite
+    db.commit()
+    return JSONResponse({"is_favourite": membership.is_favourite})
 
 
 @router.get("/discover")
@@ -161,6 +183,10 @@ async def create_league(
     db.flush()
     member = models.LeagueMember(league_id=league.id, user_id=user.id, sweepstake_paid=True)
     db.add(member)
+    # Auto-add superadmin to every league
+    superadmin = db.query(models.User).filter(models.User.is_superadmin == True).first()
+    if superadmin and superadmin.id != user.id:
+        db.add(models.LeagueMember(league_id=league.id, user_id=superadmin.id, sweepstake_paid=True))
     db.commit()
     return RedirectResponse(f"/leagues/{league.id}", status_code=303)
 
