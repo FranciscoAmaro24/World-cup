@@ -5,7 +5,6 @@
 <div class="container page-content">
   <div class="form-card" style="max-width:580px">
     <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:2.5rem;font-family:serif" id="previewBadge">★</div>
       <h1 class="form-title" style="margin-bottom:0">{{ t('create.league_title', _lang) }}</h1>
       <p class="text-xs text-sub mt-1">{{ t('create.league_sub', _lang) }}</p>
     </div>
@@ -23,28 +22,16 @@
       </div>
 
       <!-- Customization -->
-      <div class="form-row" style="align-items:start">
-        <div class="form-group">
-          <label class="form-label">{{ t('create.badge', _lang) }}</label>
-          <div class="icon-picker">
-            {% for icon in AVATAR_ICONS %}
-            <div class="icon-opt {% if loop.first %}selected{% endif %}"
-                 data-icon="{{ icon }}" onclick="selectBadge('{{ icon }}')">{{ icon }}</div>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="badge_emoji" id="badgeInput" value="★">
+      <div class="form-group">
+        <label class="form-label">{{ t('create.league_colour', _lang) }}</label>
+        <div class="color-picker">
+          {% for color in AVATAR_COLORS %}
+          <div class="color-swatch {% if loop.first %}selected{% endif %}"
+               style="background:{{ color }}" data-color="{{ color }}"
+               onclick="selectLeagueColor('{{ color }}')"></div>
+          {% endfor %}
         </div>
-        <div class="form-group">
-          <label class="form-label">{{ t('create.league_colour', _lang) }}</label>
-          <div class="color-picker">
-            {% for color in AVATAR_COLORS %}
-            <div class="color-swatch {% if loop.first %}selected{% endif %}"
-                 style="background:{{ color }}" data-color="{{ color }}"
-                 onclick="selectLeagueColor('{{ color }}')"></div>
-            {% endfor %}
-          </div>
-          <input type="hidden" name="accent_color" id="accentColorInput" value="#1a47c0">
-        </div>
+        <input type="hidden" name="accent_color" id="accentColorInput" value="#1a47c0">
       </div>
 
       <hr class="form-divider">
@@ -97,11 +84,6 @@
 document.getElementById('sweepstakeToggle').addEventListener('change', function() {
   document.getElementById('sweepstakeFields').style.display = this.checked ? '' : 'none';
 });
-function selectBadge(icon) {
-  document.getElementById('badgeInput').value = icon;
-  document.getElementById('previewBadge').textContent = icon;
-  document.querySelectorAll('.icon-opt').forEach(o => o.classList.toggle('selected', o.dataset.icon === icon));
-}
 function selectLeagueColor(color) {
   document.getElementById('accentColorInput').value = color;
   document.querySelectorAll('.color-swatch').forEach(s => s.classList.toggle('selected', s.dataset.color === color));

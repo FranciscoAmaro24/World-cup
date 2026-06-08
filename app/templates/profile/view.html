@@ -71,7 +71,7 @@
           {% if league.category == 'country' %}
           <img src="{{ flag_url(league.invite_code[3:]) }}" class="avatar avatar-sm" style="object-fit:cover;padding:2px;background:var(--bg-2)" alt="">
           {% else %}
-          <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem;font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</div>
+          <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem;font-family:sans-serif;font-weight:700">{{ league.name[:1].upper() }}</div>
           {% endif %}
           <div>
             <div style="font-weight:700;font-size:.9rem">{{ league.name }}</div>

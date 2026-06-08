@@ -58,7 +58,7 @@
   <!-- Squad fetcher -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
-      <span class="font-bold text-sm">👕 Squad Data (Wikipedia)</span>
+      <span class="font-bold text-sm">Squad Data (Wikipedia)</span>
       <form action="/admin/fetch-squads" method="post" style="margin:0">
         <button type="submit" class="btn btn-secondary btn-sm">Fetch All Squads</button>
       </form>
@@ -76,7 +76,7 @@
   <!-- Auto-fetch status -->
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
-      <span class="font-bold text-sm">🤖 Auto-Results Fetcher</span>
+      <span class="font-bold text-sm">Auto-Results Fetcher</span>
       <form action="/admin/fetch" method="post" style="margin:0">
         <button type="submit" class="btn btn-primary btn-sm">Fetch Now</button>
       </form>
@@ -134,7 +134,7 @@
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
         <div class="match-teams" style="flex:1;min-width:220px">
           <div class="match-team">
-            <div class="match-team-flag" style="font-size:1.3rem">{{ match.home_team.flag_emoji if match.home_team else '🏳' }}</div>
+            <div class="match-team-flag">{% if match.home_team %}<img src="{{ flag_url(match.home_team.code) }}" style="width:24px;height:18px;object-fit:cover;border-radius:2px" alt="">{% else %}?{% endif %}</div>
             <div class="match-team-name">{{ match.home_team.name if match.home_team else 'TBD' }}</div>
           </div>
           {% if match.status == 'finished' %}
@@ -143,7 +143,7 @@
           <div class="match-score scheduled">vs</div>
           {% endif %}
           <div class="match-team">
-            <div class="match-team-flag" style="font-size:1.3rem">{{ match.away_team.flag_emoji if match.away_team else '🏳' }}</div>
+            <div class="match-team-flag">{% if match.away_team %}<img src="{{ flag_url(match.away_team.code) }}" style="width:24px;height:18px;object-fit:cover;border-radius:2px" alt="">{% else %}?{% endif %}</div>
             <div class="match-team-name">{{ match.away_team.name if match.away_team else 'TBD' }}</div>
           </div>
         </div>
@@ -174,7 +174,7 @@
         </form>
         {% endif %}
       </div>
-      <div class="match-venue">📍 {{ match.venue }}</div>
+      <div class="match-venue">{{ match.venue }}</div>
     </div>
     {% endfor %}
   </div>
@@ -201,7 +201,7 @@
       <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
         <div class="match-teams" style="flex:1;min-width:220px">
           <div class="match-team">
-            <div class="match-team-flag" style="font-size:1.3rem">{{ match.home_team.flag_emoji if match.home_team else '🏳' }}</div>
+            <div class="match-team-flag">{% if match.home_team %}<img src="{{ flag_url(match.home_team.code) }}" style="width:24px;height:18px;object-fit:cover;border-radius:2px" alt="">{% else %}?{% endif %}</div>
             <div class="match-team-name">{{ match.home_display() }}</div>
           </div>
           {% if match.status == 'finished' %}
@@ -210,7 +210,7 @@
           <div class="match-score scheduled">vs</div>
           {% endif %}
           <div class="match-team">
-            <div class="match-team-flag" style="font-size:1.3rem">{{ match.away_team.flag_emoji if match.away_team else '🏳' }}</div>
+            <div class="match-team-flag">{% if match.away_team %}<img src="{{ flag_url(match.away_team.code) }}" style="width:24px;height:18px;object-fit:cover;border-radius:2px" alt="">{% else %}?{% endif %}</div>
             <div class="match-team-name">{{ match.away_display() }}</div>
           </div>
         </div>
@@ -245,7 +245,7 @@
           </form>
         </div>
       </div>
-      <div class="match-venue">📍 {{ match.venue }}</div>
+      <div class="match-venue">{{ match.venue }}</div>
     </div>
     {% endfor %}
   </div>
@@ -319,7 +319,7 @@
 <!-- Users -->
 <div class="card" style="margin-top:2rem;margin-bottom:1.5rem;overflow:hidden">
   <div class="card-header">
-    <span class="font-bold text-sm">👥 Users ({{ users | length }})</span>
+    <span class="font-bold text-sm">Users ({{ users | length }})</span>
   </div>
   <div style="overflow-x:auto">
   <table style="width:100%;border-collapse:collapse;font-size:.82rem">

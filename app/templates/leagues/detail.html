@@ -15,7 +15,7 @@
     {% if league.category == 'country' %}
     <img src="{{ flag_url(league.invite_code[3:]) }}" style="width:22px;height:16px;object-fit:cover;border-radius:2px;vertical-align:middle" alt="">
     {% else %}
-    <span style="font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</span>
+    <span style="font-family:sans-serif;font-weight:700">{{ league.name[:1].upper() }}</span>
     {% endif %}
   </span>
   <h1>{{ league.name }}</h1>

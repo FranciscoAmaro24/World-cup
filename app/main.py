@@ -46,8 +46,9 @@ def avatar_html(user, size: str = "md") -> Markup:
     from markupsafe import escape
     raw_color = getattr(user, "avatar_color", "#1a47c0") or "#1a47c0"
     color = raw_color if _HEX_RE.match(raw_color) else "#1a47c0"
-    icon = escape(getattr(user, "avatar_icon", "★") or "★")
-    fallback = f"this.replaceWith(Object.assign(document.createElement('div'),{{className:'avatar avatar-{size}',style:'background:{color}',textContent:'{icon}'}}))"
+    name = getattr(user, "display_name", None) or getattr(user, "username", "?") or "?"
+    initial = escape(name[0].upper())
+    fallback = f"this.replaceWith(Object.assign(document.createElement('div'),{{className:'avatar avatar-{size}',style:'background:{color};font-family:sans-serif;font-weight:700',textContent:'{initial}'}}))"
     img_url = getattr(user, "avatar_img_url", None)
     if img_url:
         safe_url = escape(img_url)
@@ -55,7 +56,7 @@ def avatar_html(user, size: str = "md") -> Markup:
             f'<img src="{safe_url}" class="avatar avatar-{size}" style="object-fit:cover" alt="" onerror="{fallback}">'
         )
     return Markup(
-        f'<div class="avatar avatar-{size}" style="background:{color};font-family:serif">{icon}</div>'
+        f'<div class="avatar avatar-{size}" style="background:{color};font-family:sans-serif;font-weight:700">{initial}</div>'
     )
 
 
