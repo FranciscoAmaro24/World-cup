@@ -58,7 +58,9 @@ body {
 /* No animated blobs — clean cream background */
 body::before, body::after { display: none; }
 
-body > *:not(#ytBg) { position: relative; z-index: 51; }
+/* Video background sits at z-index 0; all page content at z-index 1+ */
+#ytBg { z-index: 0 !important; }
+body > *:not(#ytBg) { position: relative; z-index: 1; }
 a { color: inherit; text-decoration: none; }
 img { display: block; }
 
@@ -66,8 +68,8 @@ img { display: block; }
 .video-lib-active { border: 1px solid rgba(10,125,60,.35) !important; }
 
 /* ── When background video is active ──────────────────────── */
-body.video-playing::before,
-body.video-playing::after { opacity: 0; }
+/* Remove cream body bg so the fixed video div shows through */
+body.video-playing { background-color: transparent !important; }
 
 body.video-playing .card,
 body.video-playing .league-card,
@@ -75,8 +77,6 @@ body.video-playing .market-card,
 body.video-playing .pg-fixture-card,
 body.video-playing .pg-band {
   background: rgba(0,0,0,.72) !important;
-  backdrop-filter: blur(4px) !important;
-  -webkit-backdrop-filter: blur(4px) !important;
 }
 
 /* ─── FLAGS ──────────────────────────────────────────────── */
@@ -119,7 +119,7 @@ body.video-playing .pg-band {
   align-items: center;
   padding: 0 2rem;
   border-bottom: 2px solid rgba(255,255,255,.08);
-  position: sticky; top: 0; z-index: 100;
+  position: sticky !important; top: 0; z-index: 100 !important;
 }
 .navbar-brand {
   display: flex; align-items: center; gap: .6rem;
