@@ -220,22 +220,17 @@
     }
   }
 
-  // Single click = play/pause
+  // Single click = toggle on/off
   logoBtn?.addEventListener('click', function(e) {
     e.preventDefault();
-    if (bgOn && !playing) {
-      bgVideo.play(); playing = true; playIcon.textContent = '⏸';
-    } else if (bgOn && playing) {
-      bgVideo.pause(); playing = false; playIcon.textContent = '▶';
-    } else {
-      startAudio();
-    }
+    if (bgOn) { stopAll(); }
+    else if (bgVideo.getAttribute('src')) { startAudio(); }
   });
 
   logoBtn?.addEventListener('mouseenter', () => { playIcon.style.opacity = '1'; });
   logoBtn?.addEventListener('mouseleave', () => { if (playing || bgOn) playIcon.style.opacity = '0'; });
 
-  // Double click = toggle full background video
+  // Double click = full background video (with body class for full immersion)
   logoBtn?.addEventListener('dblclick', function(e) {
     e.preventDefault();
     if (bgOn) { stopAll(); }
