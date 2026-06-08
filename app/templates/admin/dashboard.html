@@ -349,8 +349,8 @@
         </td>
         <td style="padding:.55rem .75rem;color:var(--text-2)">{% if u.email and not u.email.startswith('_noemail.') %}{{ u.email }}{% else %}—{% endif %}</td>
         <td style="padding:.55rem .5rem;text-align:center;font-weight:600"
-            class="{% if u.credits < 2 %}text-danger{% elif u.credits > 20 %}text-success{% endif %}">
-          {{ "%.1f"|format(u.credits) }}
+            class="{% if u.credits is not none and u.credits < 2 %}text-danger{% elif u.credits is not none and u.credits > 20 %}text-success{% endif %}">
+          {{ "%.1f"|format(u.credits) if u.credits is not none else "—" }}
         </td>
         <td style="padding:.55rem .5rem;text-align:center;color:var(--text-2)">
           {{ u.memberships | length }}

@@ -98,11 +98,14 @@ def _migrate_db():
 
     # Repair: a previous migration used SELECT * which positionally swapped
     # created_at and avatar_img_url on DBs with a different original column order.
-    # Detect by checking whether created_at holds a file path instead of a date.
     row = cur.execute("SELECT created_at FROM users WHERE created_at IS NOT NULL LIMIT 1").fetchone()
     if row and row[0] and str(row[0]).startswith("/"):
         cur.execute("UPDATE users SET created_at = avatar_img_url, avatar_img_url = created_at")
         conn.commit()
+
+    # Fill null credits (ALTER TABLE DEFAULT isn't applied to existing rows in SQLite)
+    cur.execute("UPDATE users SET credits = 10.0 WHERE credits IS NULL")
+    conn.commit()
 
     conn.close()
 
