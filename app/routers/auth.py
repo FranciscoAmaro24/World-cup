@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import RedirectResponse
 
 from sqlalchemy.orm import Session
-import os
+import re
 
 from database import get_db
 import models
@@ -10,6 +10,18 @@ import auth
 from shared import templates
 
 router = APIRouter()
+
+_BANNED_WORDS = {
+    "nigger", "nigga", "nigg", "n1gger", "n1gga",
+    "faggot", "fagg0t", "fag", "tranny",
+    "chink", "spic", "spick", "kike", "gook", "wetback",
+    "retard", "retarded",
+    "cunt", "cünт",
+}
+
+def _contains_banned_word(text: str) -> bool:
+    normalised = re.sub(r"[^a-z0-9]", "", text.lower())
+    return any(w in normalised for w in _BANNED_WORDS)
 
 
 @router.get("/login")
@@ -52,7 +64,6 @@ async def register_page(request: Request, db: Session = Depends(get_db)):
 async def register(
     request: Request,
     username: str = Form(...),
-    email: str = Form(...),
     password: str = Form(...),
     db: Session = Depends(get_db),
 ):
@@ -60,6 +71,12 @@ async def register(
         return templates.TemplateResponse(
             "register.html",
             {"request": request, "user": None, "error": "Username must be 3–30 characters"},
+            status_code=400,
+        )
+    if _contains_banned_word(username):
+        return templates.TemplateResponse(
+            "register.html",
+            {"request": request, "user": None, "error": "ahahaha very funny, choose smth else pls"},
             status_code=400,
         )
     if len(password) < 6:
@@ -74,16 +91,9 @@ async def register(
             {"request": request, "user": None, "error": "Username already taken"},
             status_code=400,
         )
-    if db.query(models.User).filter(models.User.email == email).first():
-        return templates.TemplateResponse(
-            "register.html",
-            {"request": request, "user": None, "error": "Email already registered"},
-            status_code=400,
-        )
     is_first = db.query(models.User).count() == 0
     new_user = models.User(
         username=username,
-        email=email,
         password_hash=auth.hash_password(password),
         is_superadmin=is_first,
     )

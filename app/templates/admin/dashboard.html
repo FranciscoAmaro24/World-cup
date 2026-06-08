@@ -347,7 +347,7 @@
             </div>
           </div>
         </td>
-        <td style="padding:.55rem .75rem;color:var(--text-2)">{{ u.email }}</td>
+        <td style="padding:.55rem .75rem;color:var(--text-2)">{{ u.email or '—' }}</td>
         <td style="padding:.55rem .5rem;text-align:center;font-weight:600"
             class="{% if u.credits < 2 %}text-danger{% elif u.credits > 20 %}text-success{% endif %}">
           {{ "%.1f"|format(u.credits) }}

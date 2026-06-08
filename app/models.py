@@ -15,7 +15,7 @@ class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, nullable=False, index=True)
-    email = Column(String(100), unique=True, nullable=False, index=True)
+    email = Column(String(100), unique=True, nullable=True, index=True)
     password_hash = Column(String(200), nullable=False)
     is_superadmin = Column(Boolean, default=False)
     display_name = Column(String(50), nullable=True)
