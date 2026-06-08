@@ -8,7 +8,7 @@ AVATAR_COLORS = [
     "#1a47c0", "#7c3aed", "#dc2626", "#ea580c",
     "#0d9488", "#db2777", "#16a34a", "#d97706",
 ]
-AVATAR_ICONS = ["⚽", "🏆", "⭐", "⚡", "🦁", "🦅", "🔥", "👑", "🎯", "🏅", "🐉", "🌟"]
+AVATAR_ICONS = ["★", "♦", "♠", "♣", "♥", "▲", "●", "◆", "✦", "✿", "♪", "◉"]
 
 
 class User(Base):
@@ -22,7 +22,7 @@ class User(Base):
     bio = Column(String(120), nullable=True)
     credits = Column(Float, default=10.0)
     avatar_color = Column(String(10), default="#1a47c0")
-    avatar_icon = Column(String(6), default="⚽")
+    avatar_icon = Column(String(6), default="★")
     avatar_img_url = Column(String(200), nullable=True)
     profile_bg = Column(String(100), nullable=True)     # CSS gradient/color for whole-app background
     profile_banner_url = Column(String(200), nullable=True)  # banner image on profile page
@@ -44,7 +44,7 @@ class League(Base):
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     description = Column(String(200), nullable=True)
     accent_color = Column(String(10), default="#1a47c0")
-    badge_emoji = Column(String(6), default="🏆")
+    badge_emoji = Column(String(6), default="★")
     banner_url = Column(String(200), nullable=True)
 
     # Match score prediction points

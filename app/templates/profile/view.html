@@ -58,7 +58,7 @@
   </div>
 </div>
 
-<div class="container page-content">
+<div class="container page-content" style="padding-top:1.5rem">
   <div class="grid-2">
 
     <!-- Leagues -->
@@ -68,7 +68,11 @@
       <div style="display:flex;flex-direction:column;gap:.6rem">
         {% for league in leagues %}
         <a href="/leagues/{{ league.id }}" class="bracket-slot" style="text-decoration:none">
-          <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem">{{ league.badge_emoji }}</div>
+          {% if league.category == 'country' %}
+          <img src="{{ flag_url(league.invite_code[3:]) }}" class="avatar avatar-sm" style="object-fit:cover;padding:2px;background:var(--bg-2)" alt="">
+          {% else %}
+          <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-size:1rem;font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</div>
+          {% endif %}
           <div>
             <div style="font-weight:700;font-size:.9rem">{{ league.name }}</div>
             <div class="text-xs text-muted">{{ league.members|length }} members</div>

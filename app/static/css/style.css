@@ -283,7 +283,8 @@ body.video-playing .pg-band {
   font-family: "Archivo Black", sans-serif;
   font-size: 30px; letter-spacing: -.01em;
   text-transform: uppercase; line-height: 1.05;
-  flex: 1; min-width: 0; word-break: break-word;
+  flex: 1; min-width: 0;
+  overflow-wrap: break-word; /* break at word boundaries only, never mid-word */
 }
 .pg-band-pts {
   position: relative; z-index: 1;
@@ -758,7 +759,7 @@ input:checked + .slider::before { transform: translateX(20px); background: #fff;
 .icon-picker { display: flex; gap: .4rem; flex-wrap: wrap; }
 .icon-opt {
   width: 42px; height: 42px; display: flex; align-items: center; justify-content: center;
-  font-size: 1.35rem; background: var(--pg-foot); border: 2px solid transparent;
+  font-size: 1.35rem; font-family: serif; background: var(--pg-foot); border: 2px solid transparent;
   border-radius: 0; cursor: pointer; transition: all .15s;
 }
 .icon-opt:hover { border-color: var(--border-2); }
@@ -909,7 +910,7 @@ input:checked + .slider::before { transform: translateX(20px); background: #fff;
 
 /* ─── MISC ───────────────────────────────────────────────── */
 .empty-state { text-align: center; padding: 3rem 2rem; color: var(--pg-muted); }
-.empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state-icon { font-size: 3rem; margin-bottom: 1rem; display:flex; justify-content:center; }
 .empty-state h3 { font-family: "Archivo Black", sans-serif; font-size: 1rem; color: var(--pg-ink); margin-bottom: .5rem; }
 .empty-state p { font-family: "Spectral", serif; font-size: .9rem; margin-bottom: 1.5rem; }
 .superadmin-dot { display: inline-block; width: 6px; height: 6px; background: var(--pg-lime); border-radius: 50%; margin-left: 4px; vertical-align: middle; }
@@ -1018,22 +1019,22 @@ footer {
 .mobile-nav {
   display: none; position: fixed; inset: 0; z-index: 200;
   background: var(--pg-ink);
-  flex-direction: column; align-items: center; justify-content: center; gap: .7rem;
-  overflow-y: auto; padding: 3rem 1rem 2rem;
+  flex-direction: column; align-items: center; justify-content: flex-start; gap: 0;
+  overflow-y: auto; padding: 1rem 0 1.5rem;
 }
 .mobile-nav.open { display: flex; }
 .mobile-nav a {
   font-family: "Archivo", sans-serif;
-  font-size: .95rem; font-weight: 800;
-  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7);
-  padding: .4rem 1.5rem; width: 100%; text-align: center;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  font-size: .85rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.65);
+  padding: .65rem 1.5rem; width: 100%; text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,.05);
 }
 .mobile-nav a:last-child { border-bottom: none; }
 .mobile-nav a.active, .mobile-nav a:hover { color: var(--pg-lime); background: rgba(255,255,255,.04); }
 .mobile-nav-close {
-  position: absolute; top: .75rem; right: 1rem;
-  background: none; border: none; font-size: 1.3rem;
+  position: fixed; top: .6rem; right: .9rem; z-index: 201;
+  background: none; border: none; font-size: 1.2rem;
   color: rgba(255,255,255,.5); cursor: pointer;
 }
 

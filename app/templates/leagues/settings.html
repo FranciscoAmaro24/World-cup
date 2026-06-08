@@ -27,7 +27,7 @@
           {% if league.logo_url %}
           <img src="{{ league.logo_url }}" style="width:100%;height:100%;object-fit:cover">
           {% else %}
-          <div class="avatar avatar-md" style="background:{{ league.accent_color }}">{{ league.badge_emoji }}</div>
+          <div class="avatar avatar-md" style="background:{{ league.accent_color }};font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</div>
           {% endif %}
           <div style="position:absolute;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;
                opacity:0;transition:opacity .15s;font-size:.6rem;color:#fff;font-weight:700" class="logo-hover">{{ t('league.change_logo', _lang) }}</div>
@@ -100,11 +100,11 @@
           <label class="form-label">{{ t('league.badge', _lang) }}</label>
           <div class="icon-picker" id="leagueIconPicker">
             {% for icon in AVATAR_ICONS %}
-            <div class="icon-opt {% if (league.badge_emoji or '🏆') == icon %}selected{% endif %}"
+            <div class="icon-opt {% if (league.badge_emoji or '★') == icon %}selected{% endif %}"
                  data-icon="{{ icon }}" onclick="selectLeagueIcon('{{ icon }}')">{{ icon }}</div>
             {% endfor %}
           </div>
-          <input type="hidden" name="badge_emoji" id="leagueIconInput" value="{{ league.badge_emoji or '🏆' }}">
+          <input type="hidden" name="badge_emoji" id="leagueIconInput" value="{{ league.badge_emoji or '★' }}">
         </div>
       </div>
 

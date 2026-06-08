@@ -34,7 +34,7 @@
           {% if league.logo_url %}
           <img src="{{ league.logo_url }}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;flex-shrink:0" alt="">
           {% else %}
-          <div class="avatar avatar-sm" style="background:{{ league.accent_color or '#f5a623' }}">{{ league.badge_emoji }}</div>
+          <div class="avatar avatar-sm" style="background:{{ league.accent_color or '#f5a623' }};font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</div>
           {% endif %}
           <div>
             <div style="font-weight:700;color:var(--text-1)">{{ league.name }}</div>
@@ -64,10 +64,10 @@
     {% for league in country_leagues %}
     {% set joined = league.id in joined_ids %}
     <div class="card" style="padding:.75rem 1rem;display:flex;align-items:center;gap:.65rem;border:1px solid {% if joined %}var(--primary){% else %}var(--border){% endif %}">
-      <span style="font-size:1.4rem">{{ league.badge_emoji }}</span>
+      <img src="{{ flag_url(league.invite_code[3:]) }}" style="width:32px;height:24px;object-fit:cover;border-radius:3px;flex-shrink:0" alt="">
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:.82rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-          {{ league.name | replace(league.badge_emoji + ' ', '') }}
+          {{ league.name }}
         </div>
         <div style="font-size:.68rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</div>
       </div>
@@ -91,7 +91,7 @@
     {% for league in other_public %}
     {% set joined = league.id in joined_ids %}
     <div class="card" style="padding:.9rem 1rem;display:flex;align-items:center;gap:.75rem;border:1px solid var(--border)">
-      <div class="avatar avatar-sm" style="background:{{ league.accent_color }}">{{ league.badge_emoji }}</div>
+      <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:.85rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ league.name }}</div>
         <div style="font-size:.7rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</div>
@@ -110,7 +110,7 @@
 
   {% if not global_leagues and not country_leagues and not other_public %}
   <div class="card"><div class="card-body empty-state">
-    <div class="empty-state-icon">🔍</div>
+    <div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div>
     <h3>{{ t('discover.empty', _lang) }}</h3>
     <p>{{ t('discover.empty_hint', _lang) }}</p>
   </div></div>

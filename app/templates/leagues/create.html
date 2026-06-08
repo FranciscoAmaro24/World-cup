@@ -5,11 +5,11 @@
 <div class="container page-content">
   <div class="form-card" style="max-width:580px">
     <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:2.5rem" id="previewBadge">🏆</div>
+      <div style="font-size:2.5rem;font-family:serif" id="previewBadge">★</div>
       <h1 class="form-title" style="margin-bottom:0">{{ t('create.league_title', _lang) }}</h1>
       <p class="text-xs text-sub mt-1">{{ t('create.league_sub', _lang) }}</p>
     </div>
-    {% if error %}<div class="alert alert-error">⚠ {{ error }}</div>{% endif %}
+    {% if error %}<div class="alert alert-error">{{ error }}</div>{% endif %}
 
     <form action="/leagues/create" method="post">
 
@@ -27,12 +27,12 @@
         <div class="form-group">
           <label class="form-label">{{ t('create.badge', _lang) }}</label>
           <div class="icon-picker">
-            {% for icon in ["🏆","⚽","🦁","⭐","🔥","⚡","👑","🦅","🎯","🐉","🏅","🌟"] %}
+            {% for icon in AVATAR_ICONS %}
             <div class="icon-opt {% if loop.first %}selected{% endif %}"
                  data-icon="{{ icon }}" onclick="selectBadge('{{ icon }}')">{{ icon }}</div>
             {% endfor %}
           </div>
-          <input type="hidden" name="badge_emoji" id="badgeInput" value="🏆">
+          <input type="hidden" name="badge_emoji" id="badgeInput" value="★">
         </div>
         <div class="form-group">
           <label class="form-label">{{ t('create.league_colour', _lang) }}</label>
@@ -48,7 +48,7 @@
       </div>
 
       <hr class="form-divider">
-      <p class="text-xs text-sub mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">⚙ {{ t('create.scoring_rules', _lang) }}</p>
+      <p class="text-xs text-sub mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">{{ t('create.scoring_rules', _lang) }}</p>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">{{ t('create.exact_pts', _lang) }}</label>
@@ -63,7 +63,7 @@
       </div>
 
       <hr class="form-divider">
-      <p class="text-xs text-sub mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">💰 {{ t('create.sweepstake_section', _lang) }} ({{ t('create.optional', _lang) }})</p>
+      <p class="text-xs text-sub mb-2" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">{{ t('create.sweepstake_section', _lang) }} ({{ t('create.optional', _lang) }})</p>
       <div class="form-group">
         <div class="form-switch">
           <label class="switch">

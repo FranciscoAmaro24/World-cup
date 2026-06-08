@@ -46,7 +46,7 @@ def avatar_html(user, size: str = "md") -> Markup:
     from markupsafe import escape
     raw_color = getattr(user, "avatar_color", "#1a47c0") or "#1a47c0"
     color = raw_color if _HEX_RE.match(raw_color) else "#1a47c0"
-    icon = escape(getattr(user, "avatar_icon", "⚽") or "⚽")
+    icon = escape(getattr(user, "avatar_icon", "★") or "★")
     fallback = f"this.replaceWith(Object.assign(document.createElement('div'),{{className:'avatar avatar-{size}',style:'background:{color}',textContent:'{icon}'}}))"
     img_url = getattr(user, "avatar_img_url", None)
     if img_url:
@@ -55,7 +55,7 @@ def avatar_html(user, size: str = "md") -> Markup:
             f'<img src="{safe_url}" class="avatar avatar-{size}" style="object-fit:cover" alt="" onerror="{fallback}">'
         )
     return Markup(
-        f'<div class="avatar avatar-{size}" style="background:{color}">{icon}</div>'
+        f'<div class="avatar avatar-{size}" style="background:{color};font-family:serif">{icon}</div>'
     )
 
 
@@ -99,12 +99,12 @@ def _seed_public_leagues():
         # Global league
         if not db.query(models.League).filter(models.League.category == "global").first():
             gl = models.League(
-                name="🌍 World Cup 2026 Global",
+                name="World Cup 2026 Global",
                 invite_code="WC2026GL",
                 admin_id=admin.id,
                 description="The main global prediction league — anyone can join.",
                 accent_color="#f5a623",
-                badge_emoji="🌍",
+                badge_emoji="W",
                 is_public=True,
                 category="global",
             )
@@ -120,12 +120,12 @@ def _seed_public_leagues():
             code = f"FAN{team.code}"
             if code not in existing_codes:
                 db.add(models.League(
-                    name=f"{team.flag_emoji} {team.name} Fans",
+                    name=f"{team.name} Fans",
                     invite_code=code,
                     admin_id=admin.id,
                     description=f"Public league for fans of {team.name}.",
                     accent_color="#1a47c0",
-                    badge_emoji=team.flag_emoji,
+                    badge_emoji=team.code,
                     is_public=True,
                     category="country",
                 ))

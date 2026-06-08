@@ -70,7 +70,7 @@
           </span>
         </a>
         {% if user.is_superadmin %}
-        <a href="/admin" class="btn-nav btn-nav-outline" style="color:var(--gold);border-color:var(--gold)">⚙</a>
+        <a href="/admin" class="btn-nav btn-nav-outline" style="color:var(--gold);border-color:var(--gold)">Admin</a>
         {% endif %}
         <form action="/logout" method="post" style="margin:0">
           <button type="submit" class="btn-nav btn-nav-outline">{{ t('nav.logout', _lang) }}</button>
@@ -111,7 +111,7 @@
 
     {% if user %}
     <a href="/profile/{{ user.username }}" style="color:var(--pg-lime)">{{ t('nav.profile', _lang) }}</a>
-    {% if user.is_superadmin %}<a href="/admin" style="color:var(--pg-lime)">⚙ {{ t('nav.admin', _lang) }}</a>{% endif %}
+    {% if user.is_superadmin %}<a href="/admin" style="color:var(--pg-lime)">{{ t('nav.admin', _lang) }}</a>{% endif %}
     <form action="/logout" method="post" style="width:100%;text-align:center;padding:0 2rem">
       <button type="submit" style="background:transparent;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.5);
         padding:.35rem 1.5rem;font-family:'Archivo',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%">

@@ -71,11 +71,11 @@
       <p class="form-label mt-3">{{ t('profile.avatar_icon', _lang) }}</p>
       <div class="icon-picker mb-3" id="iconPicker">
         {% for icon in AVATAR_ICONS %}
-        <div class="icon-opt {% if (user.avatar_icon or '⚽') == icon %}selected{% endif %}"
+        <div class="icon-opt {% if (user.avatar_icon or '★') == icon %}selected{% endif %}"
              data-icon="{{ icon }}" onclick="selectIcon('{{ icon }}')">{{ icon }}</div>
         {% endfor %}
       </div>
-      <input type="hidden" name="avatar_icon" id="avatarIconInput" value="{{ user.avatar_icon or '⚽' }}">
+      <input type="hidden" name="avatar_icon" id="avatarIconInput" value="{{ user.avatar_icon or '★' }}">
 
       <hr class="form-divider">
       <div class="form-group">

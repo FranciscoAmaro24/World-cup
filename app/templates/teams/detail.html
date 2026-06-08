@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{{ team.flag_emoji }} {{ team.name }} Squad — FIFA World Cup 2026{% endblock %}
+{% block title %}{{ team.name }} Squad — FIFA World Cup 2026{% endblock %}
 {% block content %}
 <div class="container page-content">
 
@@ -9,7 +9,7 @@
       <img src="{{ flag_url(team.code) }}" alt="{{ team.name }}"
            style="width:72px;height:auto;border-radius:6px;box-shadow:0 2px 8px rgba(0,0,0,.4)">
       <div>
-        <h1 style="margin-bottom:.25rem">{{ team.flag_emoji }} {{ team.name }}</h1>
+        <h1 style="margin-bottom:.25rem">{{ team.name }}</h1>
         <p class="page-header-sub">
           Group {{ team.group_letter }}
           {% if team.eliminated %}
@@ -28,7 +28,7 @@
   <!-- No squad data yet -->
   <div class="card">
     <div class="card-body empty-state">
-      <div class="empty-state-icon">👕</div>
+      <div class="empty-state-icon"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.57a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.57a2 2 0 0 0-1.34-2.23z"/></svg></div>
       <h3>Squad not available yet</h3>
       <p>An admin can fetch all squads from Wikipedia via the admin panel.</p>
     </div>
@@ -70,7 +70,7 @@
           </td>
           <td style="padding:.55rem .5rem;text-align:center;font-size:.78rem;
                color:{% if p.goals > 0 %}var(--pg-green){% else %}var(--pg-muted){% endif %};font-weight:{% if p.goals > 0 %}700{% else %}400{% endif %}">
-            {% if p.goals %}{{ p.goals }}⚽{% else %}—{% endif %}
+            {% if p.goals %}{{ p.goals }}{% else %}—{% endif %}
           </td>
           <td style="padding:.55rem .5rem;color:var(--pg-muted);font-size:.78rem">
             {% if p.club %}
