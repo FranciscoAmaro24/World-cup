@@ -163,12 +163,27 @@
           <div class="form-group">
             <label class="form-label">Points per win</label>
             <input class="form-input" type="number" name="sweep_pts_win" value="{{ league.sweep_pts_win or 2 }}" min="0" max="20">
-            <p class="form-hint">Awarded per match win / knockout advancement.</p>
+            <p class="form-hint">Per match win / knockout advancement.</p>
           </div>
           <div class="form-group">
             <label class="form-label">Points per draw</label>
             <input class="form-input" type="number" name="sweep_pts_draw" value="{{ league.sweep_pts_draw or 0 }}" min="0" max="10">
-            <p class="form-hint">Group stage draws only (knockout draws go to ET).</p>
+            <p class="form-hint">Group stage draws only.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points per goal</label>
+            <input class="form-input" type="number" name="sweep_pts_goal" value="{{ league.sweep_pts_goal or 0 }}" min="0" max="10">
+            <p class="form-hint">Per goal scored in 90 min. 0 = disabled.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points per clean sheet</label>
+            <input class="form-input" type="number" name="sweep_pts_clean_sheet" value="{{ league.sweep_pts_clean_sheet or 0 }}" min="0" max="10">
+            <p class="form-hint">Per match with 0 goals conceded in 90 min. 0 = disabled.</p>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Points per goal difference</label>
+            <input class="form-input" type="number" name="sweep_pts_goal_diff" value="{{ league.sweep_pts_goal_diff or 0 }}" min="0" max="10">
+            <p class="form-hint">Per positive goal difference in 90 min (e.g. win 3-1 = 2 pts). 0 = disabled.</p>
           </div>
         </div>
       </div>

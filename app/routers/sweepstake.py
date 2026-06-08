@@ -13,14 +13,17 @@ router = APIRouter()
 
 
 def _calc_sweep_points(league: models.League, db: Session) -> dict:
-    """Returns {user_id: points} based on match wins for assigned teams."""
+    """Returns {user_id: points} based on wins, draws, goals and clean sheets."""
     assignments = db.query(models.SweepstakeAssignment).filter_by(league_id=league.id).all()
     if not assignments:
         return {}
 
     team_ids = {a.team_id for a in assignments}
-    pts_win = (league.sweep_pts_win or 2)
-    pts_draw = (league.sweep_pts_draw or 0)
+    pts_win         = (league.sweep_pts_win or 2)
+    pts_draw        = (league.sweep_pts_draw or 0)
+    pts_goal        = getattr(league, "sweep_pts_goal", 0) or 0
+    pts_clean_sheet = getattr(league, "sweep_pts_clean_sheet", 0) or 0
+    pts_goal_diff   = getattr(league, "sweep_pts_goal_diff", 0) or 0
 
     team_pts: dict[int, int] = {tid: 0 for tid in team_ids}
 
@@ -29,21 +32,44 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
         h, a = m.home_score, m.away_score
         if h is None or a is None:
             continue
-        # Group stage: use score
+
+        # Win / draw points
         if m.round == "group":
-            if h > a and m.home_team_id in team_pts:
-                team_pts[m.home_team_id] += pts_win
-            elif a > h and m.away_team_id in team_pts:
-                team_pts[m.away_team_id] += pts_win
-            elif h == a:
+            if h > a:
+                if m.home_team_id in team_pts:
+                    team_pts[m.home_team_id] += pts_win
+            elif a > h:
+                if m.away_team_id in team_pts:
+                    team_pts[m.away_team_id] += pts_win
+            else:
                 if m.home_team_id in team_pts:
                     team_pts[m.home_team_id] += pts_draw
                 if m.away_team_id in team_pts:
                     team_pts[m.away_team_id] += pts_draw
         else:
-            # Knockout: use winner_team_id (captures ET/pens advancement)
             if m.winner_team_id and m.winner_team_id in team_pts:
                 team_pts[m.winner_team_id] += pts_win
+
+        # Goal points (goals scored by each side)
+        if pts_goal:
+            if m.home_team_id in team_pts:
+                team_pts[m.home_team_id] += h * pts_goal
+            if m.away_team_id in team_pts:
+                team_pts[m.away_team_id] += a * pts_goal
+
+        # Clean sheet points (0 goals conceded in 90 min)
+        if pts_clean_sheet:
+            if a == 0 and m.home_team_id in team_pts:
+                team_pts[m.home_team_id] += pts_clean_sheet
+            if h == 0 and m.away_team_id in team_pts:
+                team_pts[m.away_team_id] += pts_clean_sheet
+
+        # Goal difference points (positive margin only)
+        if pts_goal_diff:
+            if m.home_team_id in team_pts:
+                team_pts[m.home_team_id] += max(0, h - a) * pts_goal_diff
+            if m.away_team_id in team_pts:
+                team_pts[m.away_team_id] += max(0, a - h) * pts_goal_diff
 
     user_pts: dict[int, int] = {}
     for a in assignments:

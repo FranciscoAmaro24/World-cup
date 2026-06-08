@@ -68,6 +68,9 @@ class League(Base):
     sweepstake_drawn = Column(Boolean, default=False)
     sweep_pts_win = Column(Integer, default=2)             # points per match win
     sweep_pts_draw = Column(Integer, default=0)            # points per draw (group stage)
+    sweep_pts_goal = Column(Integer, default=0)            # points per goal scored
+    sweep_pts_clean_sheet = Column(Integer, default=0)     # points per clean sheet kept
+    sweep_pts_goal_diff = Column(Integer, default=0)       # points per positive goal difference
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

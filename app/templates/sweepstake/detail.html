@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Sweepstake — {{ league.name }}{% endblock %}
+{% block title %}Sweepstake: {{ league.name }}{% endblock %}
 {% block content %}
 {% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
 <div class="container page-content">
@@ -27,7 +27,7 @@
       {% if groups %}
       <span class="tag tag-gray">{{ groups|length }} group{% if groups|length != 1 %}s{% endif %} · {{ groups|sum(attribute='teams')|length }} teams</span>
       {% endif %}
-      <span class="tag tag-gray">Win: {{ league.sweep_pts_win or 2 }}pts · Draw: {{ league.sweep_pts_draw or 0 }}pts</span>
+      <span class="tag tag-gray">Win: {{ league.sweep_pts_win or 2 }}pts · Draw: {{ league.sweep_pts_draw or 0 }}pts · Goal: {{ league.sweep_pts_goal or 0 }}pts · CS: {{ league.sweep_pts_clean_sheet or 0 }}pts · GD: {{ league.sweep_pts_goal_diff or 0 }}pts</span>
     </div>
   </div>
 
@@ -200,5 +200,15 @@
     </div>
 
   </div>
+
+  <!-- Money disclaimer -->
+  <div style="border:2px solid var(--border-2);border-radius:var(--radius-lg);padding:1rem 1.25rem;margin-top:2rem;background:var(--pg-foot)">
+    <div style="font-family:'Archivo Black',sans-serif;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-ink);margin-bottom:.35rem">No money handled by this platform</div>
+    <p style="font-size:.78rem;color:var(--pg-muted);margin:0;line-height:1.6">
+      This platform does not collect, hold or transfer money. The buy-in and prize pot are a <strong style="color:var(--text-2)">private arrangement between league members</strong>, managed entirely outside this app.
+      The league admin is responsible for collecting and distributing funds.
+    </p>
+  </div>
+
 </div>
 {% endblock %}
