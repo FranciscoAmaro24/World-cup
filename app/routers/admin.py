@@ -338,3 +338,53 @@ def _set_stage(db, team_id: int, round_code: str, winner: bool = False):
     new_stage = "winner" if winner else round_code
     if STAGE_REACHED.get(new_stage, 0) > STAGE_REACHED.get(team.stage_reached or "group", 0):
         team.stage_reached = new_stage
+
+
+@router.post("/users/{user_id}/delete")
+async def delete_user(request: Request, user_id: int, db: Session = Depends(get_db)):
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    target = db.query(models.User).filter(models.User.id == user_id).first()
+    if target and not target.is_superadmin and target.id != admin.id:
+        db.delete(target)
+        db.commit()
+    return RedirectResponse("/admin#users", status_code=303)
+
+
+@router.post("/users/{user_id}/leagues/{league_id}/remove")
+async def remove_user_from_league(
+    request: Request, user_id: int, league_id: int, db: Session = Depends(get_db)
+):
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    m = db.query(models.LeagueMember).filter_by(user_id=user_id, league_id=league_id).first()
+    if m:
+        db.delete(m)
+        db.commit()
+    return RedirectResponse("/admin#users", status_code=303)
+
+
+@router.post("/users/{user_id}/credits")
+async def adjust_credits(
+    request: Request,
+    user_id: int,
+    action: str = Form(...),
+    amount: float = Form(0),
+    db: Session = Depends(get_db),
+):
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    target = db.query(models.User).filter(models.User.id == user_id).first()
+    if target:
+        current = target.credits or 0
+        if action == "set":
+            target.credits = max(0, amount)
+        elif action == "add":
+            target.credits = current + amount
+        elif action == "sub":
+            target.credits = max(0, current - amount)
+        db.commit()
+    return RedirectResponse("/admin#users", status_code=303)

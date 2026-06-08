@@ -332,11 +332,12 @@
         <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Leagues</th>
         <th style="padding:.45rem .75rem;text-align:left;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Joined</th>
         <th style="padding:.45rem .5rem;text-align:center;font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border)">Role</th>
+        <th style="padding:.45rem .5rem;border-bottom:1px solid var(--border)"></th>
       </tr>
     </thead>
     <tbody>
       {% for u in users %}
-      <tr style="border-bottom:1px solid var(--border)">
+      <tr id="urow-{{ u.id }}" style="border-bottom:1px solid var(--border)">
         <td style="padding:.55rem .75rem;color:var(--text-3)">{{ u.id }}</td>
         <td style="padding:.55rem .75rem">
           <div style="display:flex;align-items:center;gap:.6rem">
@@ -365,6 +366,58 @@
           <span class="tag tag-gray" style="font-size:.6rem">User</span>
           {% endif %}
         </td>
+        <td style="padding:.35rem .5rem;text-align:right;white-space:nowrap">
+          <button type="button" onclick="toggleUD({{ u.id }})"
+                  style="background:none;border:1px solid var(--border);border-radius:4px;padding:.2rem .5rem;cursor:pointer;font-size:.75rem;color:var(--pg-muted)">•••</button>
+        </td>
+      </tr>
+      <tr id="ud-{{ u.id }}" style="display:none;background:var(--pg-foot)">
+        <td colspan="8" style="padding:.75rem 1rem">
+          <div style="display:flex;gap:2rem;flex-wrap:wrap;align-items:flex-start">
+
+            <!-- Credits -->
+            <div>
+              <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.4rem">Credits</div>
+              <form action="/admin/users/{{ u.id }}/credits" method="post" style="display:flex;gap:.3rem;align-items:center">
+                <input type="number" name="amount" value="{{ u.credits or 0 }}" step="1" min="0"
+                       class="form-input" style="width:72px;font-size:.8rem;padding:.2rem .4rem">
+                <button type="submit" name="action" value="set" class="btn btn-sm btn-secondary">Set</button>
+                <button type="submit" name="action" value="add" class="btn btn-sm btn-secondary">+ Add</button>
+                <button type="submit" name="action" value="sub" class="btn btn-sm btn-secondary">- Take</button>
+              </form>
+            </div>
+
+            <!-- Leagues -->
+            {% if u.memberships %}
+            <div>
+              <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.4rem">Remove from league</div>
+              <div style="display:flex;flex-wrap:wrap;gap:.3rem">
+                {% for m in u.memberships %}
+                <form action="/admin/users/{{ u.id }}/leagues/{{ m.league_id }}/remove" method="post" style="margin:0"
+                      onsubmit="return confirm('Remove {{ u.username }} from {{ m.league.name }}?')">
+                  <button type="submit" class="btn btn-sm"
+                          style="background:var(--pg-foot);border:1px solid var(--border);color:var(--pg-ink);font-size:.75rem;display:flex;align-items:center;gap:.3rem">
+                    {{ m.league.name }} <span style="color:#dc2626;font-weight:700">×</span>
+                  </button>
+                </form>
+                {% endfor %}
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Delete user -->
+            {% if not u.is_superadmin %}
+            <div style="margin-left:auto">
+              <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.4rem">Danger</div>
+              <form action="/admin/users/{{ u.id }}/delete" method="post"
+                    onsubmit="return confirm('Permanently delete {{ u.username }}? This cannot be undone.')">
+                <button type="submit" class="btn btn-sm btn-danger">Delete user</button>
+              </form>
+            </div>
+            {% endif %}
+
+          </div>
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -376,6 +429,11 @@
 {% endblock %}
 {% block scripts %}
 <script>
+function toggleUD(id) {
+  const row = document.getElementById('ud-' + id);
+  row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+}
+
 // Auto-activate knockout tab if anchored
 if (window.location.hash === '#knockout') {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
