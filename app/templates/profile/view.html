@@ -13,14 +13,21 @@
     <div class="profile-header">
       {{ avatar_html(target, "xl") | safe }}
       <div class="profile-info">
-        <h1>{{ target.display_name or target.username }}</h1>
-        <div class="handle">@{{ target.username }}
-          {% if target.is_superadmin %}<span class="tag tag-gold" style="margin-left:.5rem">Admin</span>{% endif %}
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;flex-wrap:wrap">
+          <div>
+            <h1>{{ target.display_name or target.username }}</h1>
+            <div class="handle">@{{ target.username }}
+              {% if target.is_superadmin %}<span class="tag tag-gold" style="margin-left:.5rem">Admin</span>{% endif %}
+            </div>
+          </div>
+          {% if is_own %}
+          <a href="/profile/edit" class="btn btn-secondary btn-sm" style="white-space:nowrap;flex-shrink:0">Edit Profile</a>
+          {% endif %}
         </div>
         {% if target.bio %}<p class="bio">{{ target.bio }}</p>{% endif %}
         {% if target.favorite_team %}
         <div class="fav-team">
-          <img src="{{ flag_url(target.favorite_team.code) }}" class="flag flag-sm" alt="">
+          <img src="{{ flag_url(target.favorite_team.code) }}" class="flag flag-xs" alt="">
           Supports {{ target.favorite_team.name }}
         </div>
         {% endif %}
@@ -47,9 +54,6 @@
           </div>
         </div>
       </div>
-      {% if is_own %}
-      <a href="/profile/edit" class="btn btn-secondary btn-sm" style="align-self:flex-start;margin-left:auto">Edit Profile</a>
-      {% endif %}
     </div>
   </div>
 </div>

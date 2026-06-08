@@ -93,21 +93,34 @@
     <a href="/leagues/discover" class="{% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
     <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
     <a href="/teams" class="{% if '/teams' in request.url.path %}active{% endif %}">{{ t('nav.teams', _lang) }}</a>
-    <!-- Language switch in mobile -->
-    <form action="/set-language" method="post" style="margin:.5rem 0;display:flex;gap:4px;padding:0 1rem">
+
+    <!-- Divider -->
+    <div style="width:40%;height:1px;background:rgba(255,255,255,.12);margin:.25rem 0"></div>
+
+    <!-- Language switch -->
+    <form action="/set-language" method="post" style="display:flex;gap:6px;padding:0 2rem;width:100%;justify-content:center">
       <button type="submit" name="lang" value="en"
-              style="flex:1;background:{% if _lang == 'en' %}var(--primary){% else %}var(--bg-3){% endif %};
-                     border:1px solid var(--border);border-radius:6px;color:#fff;padding:.4rem;font-size:.75rem;font-weight:700;cursor:pointer">EN</button>
+              style="background:{% if _lang == 'en' %}var(--pg-green){% else %}rgba(255,255,255,.1){% endif %};
+                     border:1px solid rgba(255,255,255,.2);color:#fff;padding:.35rem 1.25rem;
+                     font-family:'Archivo',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.1em;cursor:pointer">EN</button>
       <button type="submit" name="lang" value="pt"
-              style="flex:1;background:{% if _lang == 'pt' %}var(--primary){% else %}var(--bg-3){% endif %};
-                     border:1px solid var(--border);border-radius:6px;color:#fff;padding:.4rem;font-size:.75rem;font-weight:700;cursor:pointer">PT</button>
+              style="background:{% if _lang == 'pt' %}var(--pg-green){% else %}rgba(255,255,255,.1){% endif %};
+                     border:1px solid rgba(255,255,255,.2);color:#fff;padding:.35rem 1.25rem;
+                     font-family:'Archivo',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.1em;cursor:pointer">PT</button>
     </form>
+
     {% if user %}
-    <a href="/profile/{{ user.username }}" style="font-size:1rem;color:var(--gold)">{{ t('nav.profile', _lang) }}</a>
-    {% if user.is_superadmin %}<a href="/admin" style="font-size:1rem;color:var(--gold)">⚙ {{ t('nav.admin', _lang) }}</a>{% endif %}
+    <a href="/profile/{{ user.username }}" style="color:var(--pg-lime)">{{ t('nav.profile', _lang) }}</a>
+    {% if user.is_superadmin %}<a href="/admin" style="color:var(--pg-lime)">⚙ {{ t('nav.admin', _lang) }}</a>{% endif %}
+    <form action="/logout" method="post" style="width:100%;text-align:center;padding:0 2rem">
+      <button type="submit" style="background:transparent;border:1.5px solid rgba(255,255,255,.25);color:rgba(255,255,255,.5);
+        padding:.35rem 1.5rem;font-family:'Archivo',sans-serif;font-size:.72rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;width:100%">
+        {{ t('nav.logout', _lang) }}
+      </button>
+    </form>
     {% else %}
-    <a href="/login" style="font-size:1rem">{{ t('nav.login', _lang) }}</a>
-    <a href="/register" style="font-size:1rem;color:var(--gold)">{{ t('nav.signup', _lang) }}</a>
+    <a href="/login">{{ t('nav.login', _lang) }}</a>
+    <a href="/register" style="color:var(--pg-lime)">{{ t('nav.signup', _lang) }}</a>
     {% endif %}
   </div>
 

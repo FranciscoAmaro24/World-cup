@@ -859,15 +859,32 @@ input:checked + .slider::before { transform: translateX(20px); background: #fff;
 .bracket-slot.correct { border-color: rgba(10,125,60,.4); background: rgba(10,125,60,.04); }
 
 /* ─── PROFILE ────────────────────────────────────────────── */
-.profile-hero { background: var(--pg-foot); border-bottom: 1px solid var(--border); padding: 2.5rem 0; }
-.profile-header { display: flex; align-items: flex-end; gap: 1.5rem; }
-.profile-info h1 { font-family: "Archivo Black", sans-serif; font-size: 1.6rem; font-weight: 400; }
-.profile-info .handle { font-size: .85rem; color: var(--pg-muted); margin-top: .15rem; }
-.profile-info .bio { font-family: "Spectral", serif; font-size: .9rem; color: var(--pg-ink); margin-top: .5rem; max-width: 400px; }
-.profile-stats { display: flex; gap: 2rem; margin-top: 1rem; flex-wrap: wrap; }
-.profile-stat-val { font-family: "Rajdhani", sans-serif; font-size: 1.4rem; font-weight: 700; color: var(--pg-ink); }
-.profile-stat-lbl { font-size: .63rem; color: var(--pg-muted); text-transform: uppercase; letter-spacing: .08em; }
-.fav-team { display: flex; align-items: center; gap: .5rem; font-size: .8rem; color: var(--pg-muted); margin-top: .5rem; }
+.profile-hero { background: var(--pg-foot); border-bottom: 1px solid var(--border); padding: 2rem 0; }
+.profile-header { display: flex; align-items: flex-start; gap: 1.25rem; flex-wrap: wrap; }
+.profile-info { flex: 1; min-width: 0; }
+.profile-info h1 { font-family: "Archivo Black", sans-serif; font-size: 1.5rem; font-weight: 400; }
+.profile-info .handle { font-size: .82rem; color: var(--pg-muted); margin-top: .15rem; }
+.profile-info .bio { font-family: "Spectral", serif; font-size: .88rem; color: var(--pg-ink); margin-top: .4rem; max-width: 400px; }
+.profile-stats {
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  gap: .5rem 1.5rem;
+  margin-top: .9rem;
+  align-items: start;
+}
+.profile-stat { display: flex; flex-direction: column; }
+.profile-stat-val { font-family: "Rajdhani", sans-serif; font-size: 1.35rem; font-weight: 700; color: var(--pg-ink); line-height: 1.1; }
+.profile-stat-lbl { font-size: .58rem; color: var(--pg-muted); text-transform: uppercase; letter-spacing: .08em; margin-top: 2px; white-space: nowrap; }
+.fav-team { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: var(--pg-muted); margin-top: .4rem; }
+
+@media (max-width: 600px) {
+  .profile-hero { padding: 1.25rem 0; }
+  .profile-header { gap: .85rem; }
+  .avatar-xl { width: 64px !important; height: 64px !important; font-size: 1.3rem !important; }
+  .profile-info h1 { font-size: 1.15rem; }
+  /* 3 columns on mobile so stats fit in a row */
+  .profile-stats { grid-template-columns: repeat(3, auto); gap: .5rem 1rem; }
+}
 
 /* ─── PAGE HEADER ────────────────────────────────────────── */
 .page-header { padding: 1.5rem 0 1.25rem; border-bottom: 2px solid var(--pg-ink); margin-bottom: 2rem; }
@@ -1001,19 +1018,23 @@ footer {
 .mobile-nav {
   display: none; position: fixed; inset: 0; z-index: 200;
   background: var(--pg-ink);
-  flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem;
+  flex-direction: column; align-items: center; justify-content: center; gap: .7rem;
+  overflow-y: auto; padding: 3rem 1rem 2rem;
 }
 .mobile-nav.open { display: flex; }
 .mobile-nav a {
-  font-family: "Archivo Black", sans-serif;
-  font-size: 1.4rem; font-weight: 400;
-  letter-spacing: .08em; text-transform: uppercase; color: rgba(255,255,255,.8);
+  font-family: "Archivo", sans-serif;
+  font-size: .95rem; font-weight: 800;
+  letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.7);
+  padding: .4rem 1.5rem; width: 100%; text-align: center;
+  border-bottom: 1px solid rgba(255,255,255,.06);
 }
-.mobile-nav a.active, .mobile-nav a:hover { color: var(--pg-lime); }
+.mobile-nav a:last-child { border-bottom: none; }
+.mobile-nav a.active, .mobile-nav a:hover { color: var(--pg-lime); background: rgba(255,255,255,.04); }
 .mobile-nav-close {
-  position: absolute; top: 1rem; right: 1.25rem;
-  background: none; border: none; font-size: 1.5rem;
-  color: rgba(255,255,255,.6); cursor: pointer;
+  position: absolute; top: .75rem; right: 1rem;
+  background: none; border: none; font-size: 1.3rem;
+  color: rgba(255,255,255,.5); cursor: pointer;
 }
 
 /* ─── RESPONSIVE ─────────────────────────────────────────── */
