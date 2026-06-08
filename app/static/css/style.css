@@ -924,10 +924,7 @@ input:checked + .slider::before { transform: translateX(20px); background: #fff;
 }
 @keyframes lc-pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
 
-@media (max-width: 768px) {
-  .grid-2 { grid-template-columns: 1fr; }
-  .grid-3 { grid-template-columns: 1fr 1fr; }
-}
+/* grid-2/3 collapse handled inside ≤900px block above */
 
 footer {
   margin-top: 4rem; padding: 2rem;
@@ -1032,28 +1029,73 @@ footer {
   .pg-band { padding: 14px 16px; }
   .pg-band h1, .pg-band-title { font-size: 20px; }
   .pg-band-pts { display: none; }
+
+  /* Tables: make containing cards scroll horizontally */
+  .card { overflow-x: auto; }
+  .standings-grid > div { overflow-x: auto; }
+
+  /* Leaderboard: hide bracket column */
+  .leaderboard-table th:nth-child(4),
+  .leaderboard-table td:nth-child(4) { display: none; }
+
+  /* Grid layouts: single column */
+  .grid-2 { grid-template-columns: 1fr; }
+  .grid-3 { grid-template-columns: 1fr 1fr; }
 }
 
 @media (max-width: 640px) {
-  .pg-fixture-card { grid-template-columns: 90px 1fr; }
+  .pg-fixture-card { grid-template-columns: 80px 1fr; }
   .pg-fixture-act { display: none; }
+
+  /* Flags only — hide all team/country names in fixture cards */
+  .pg-team-name { display: none; }
+
+  /* More compact fixture mid */
+  .pg-fixture-mid { gap: 6px; padding: 8px 10px; justify-content: space-between; }
+  .pg-team { flex: 0 0 auto; }
+  .pg-flag-mid { width: 32px; height: 22px; }
+
+  /* Leaderboard: hide match pts too — just rank, player, total */
+  .leaderboard-table th:nth-child(3),
+  .leaderboard-table td:nth-child(3) { display: none; }
+  .leaderboard-table { font-size: .8rem; }
+  .leaderboard-table th, .leaderboard-table td { padding: .5rem .6rem; }
 }
 
 @media (max-width: 500px) {
-  .container { padding: 0 1rem; }
-  .page-header h1 { font-size: 1.2rem; }
+  .container { padding: 0 .75rem; }
+  .page-header h1 { font-size: 1.1rem; }
+  .pg-fixture-list { padding: 8px 10px; gap: 6px; }
 
-  .pg-fixture-card { grid-template-columns: 1fr; }
-  .pg-fixture-when {
-    display: flex; align-items: center; gap: 10px;
-    border-right: none; border-bottom: 1px solid rgba(21,39,29,.1);
-    padding: 8px 12px;
-  }
-  .pg-fixture-mid { gap: 8px; padding: 8px 12px; }
-  .pg-team-name { font-size: 13px; }
-  .pg-flag-mid { width: 26px; height: 17px; }
-  .pg-led { font-size: 17px; padding: 4px 10px; min-width: 56px; }
+  /* Fixture cards: horizontal strip (time | flags+board) */
+  .pg-fixture-card { grid-template-columns: 72px 1fr; }
+  .pg-fixture-when { padding: 8px 10px; }
+  .pg-fixture-when .t { font-size: 18px; }
+  .pg-fixture-when .d { font-size: 9px; }
+  .pg-fixture-when .g { font-size: 8px; padding: 1px 5px; }
+  .pg-led { font-size: 16px; padding: 4px 8px; min-width: 50px; }
+  .pg-led.empty { font-size: 14px; }
+
+  /* Keep flags visible but compact */
+  .pg-flag-mid { width: 28px; height: 19px; }
+
+  /* Tags, buttons: wrap nicely */
+  .tags { gap: .25rem; }
+  .tag { font-size: .58rem; padding: 1px 6px; }
+  .btn-sm { padding: .28rem .6rem; font-size: .66rem; }
 
   .form-row { grid-template-columns: 1fr; }
   .league-grid { grid-template-columns: 1fr; }
+
+  /* Section headers: prevent overflow */
+  .section-header { flex-wrap: wrap; gap: .5rem; }
+
+  /* Alert: ensure text wraps */
+  .alert { font-size: .78rem; flex-wrap: wrap; }
 }
+
+/* Ensure no element can break the viewport on any page */
+* { max-width: 100%; }
+img, table { max-width: 100%; }
+table { min-width: 0; }
+pre, code { overflow-x: auto; }
