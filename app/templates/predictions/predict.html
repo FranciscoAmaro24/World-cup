@@ -287,9 +287,8 @@
 }
 </style>
 
-{% block scripts %}
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
   var home = {{ init_h }};
   var away = {{ init_a }};
   var boosted = {{ 'true' if prediction and prediction.boosted else 'false' }};
@@ -310,10 +309,9 @@
     document.getElementById('stakeVal').textContent = '+' + pts;
   }
 
-  /* stepper buttons */
   document.querySelectorAll('.step-up, .step-down').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      var side = this.dataset.side;
+      var side = this.getAttribute('data-side');
       var delta = this.classList.contains('step-up') ? 1 : -1;
       if (side === 'home') home = clamp(home + delta);
       else away = clamp(away + delta);
@@ -334,8 +332,7 @@
   };
 
   update();
-})();
+});
 </script>
-{% endblock %}
 
 {% endblock %}

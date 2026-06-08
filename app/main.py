@@ -66,6 +66,8 @@ def _migrate_db():
     if not db_url.startswith("sqlite"):
         return
     path = db_url.replace("sqlite:///", "").replace("sqlite://", "")
+    if not path or path == ":memory:":
+        return  # in-memory test DB — create_all handles schema, no migration needed
     conn = sqlite3.connect(path)
     cur = conn.cursor()
     migrations = [
@@ -75,6 +77,7 @@ def _migrate_db():
         ("leagues", "logo_url", "VARCHAR(200)"),
         ("leagues", "is_public", "BOOLEAN DEFAULT 0"),
         ("leagues", "category", "VARCHAR(20) DEFAULT 'general'"),
+        ("predictions", "boosted", "BOOLEAN DEFAULT 0"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
