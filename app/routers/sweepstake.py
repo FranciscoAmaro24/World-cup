@@ -11,6 +11,15 @@ from shared import templates
 
 router = APIRouter()
 
+# FIFA-based default draw pots for WC 2026
+_FIFA_POTS: dict[int, list[str]] = {
+    1: ["ARG", "FRA", "ESP", "ENG", "BRA", "POR", "NED", "GER"],
+    2: ["AUT", "SUI", "JPN", "SEN", "KOR", "CRO", "SWE", "MEX", "TUR", "NOR", "COL", "URU", "BEL", "MAR"],
+    3: ["ECU", "CIV", "ALG", "AUS", "TUN", "GHA", "CZE", "KSA", "UZB", "COD", "RSA", "IRN", "USA"],
+    4: ["IRQ", "EGY", "PAR", "SCO", "PAN", "JOR", "NZL", "CAN", "QAT", "BIH", "CUW", "HAI", "CPV"],
+}
+_POT_NAMES = {1: "Pot 1 — Favourites", 2: "Pot 2 — Contenders", 3: "Pot 3 — Dark Horses", 4: "Pot 4 — Underdogs"}
+
 
 def _calc_sweep_points(league: models.League, db: Session) -> dict:
     """Returns {user_id: points} based on wins, draws, goals, clean sheets and big win bonus."""
@@ -348,4 +357,38 @@ async def update_group_settings(
     if grp:
         grp.pts_win = int(pts_win) if pts_win.strip().isdigit() else None
         db.commit()
+    return RedirectResponse(f"/leagues/{league_id}/sweepstake/groups", status_code=303)
+
+
+@router.post("/leagues/{league_id}/sweepstake/groups/setup-default")
+async def setup_default_groups(request: Request, league_id: int, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league or (league.admin_id != user.id and not user.is_superadmin):
+        return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+
+    # Clear existing groups and their team assignments
+    for grp in list(league.sweepstake_groups):
+        db.delete(grp)
+    db.flush()
+
+    # Build code → team map from DB
+    teams = {t.code: t for t in db.query(models.Team).all()}
+
+    for pot_num in range(1, 5):
+        grp = models.SweepstakeGroup(
+            league_id=league_id,
+            name=_POT_NAMES[pot_num],
+            order_index=pot_num - 1,
+        )
+        db.add(grp)
+        db.flush()
+        for code in _FIFA_POTS[pot_num]:
+            team = teams.get(code)
+            if team:
+                db.add(models.SweepstakeGroupTeam(group_id=grp.id, team_id=team.id))
+
+    db.commit()
     return RedirectResponse(f"/leagues/{league_id}/sweepstake/groups", status_code=303)
