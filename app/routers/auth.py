@@ -94,6 +94,7 @@ async def register(
     is_first = db.query(models.User).count() == 0
     new_user = models.User(
         username=username,
+        email=f"_noemail.{username}@wc2026",
         password_hash=auth.hash_password(password),
         is_superadmin=is_first,
     )

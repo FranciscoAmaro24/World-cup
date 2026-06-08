@@ -96,35 +96,13 @@ def _migrate_db():
             cur.execute(f"ALTER TABLE {table} ADD COLUMN {col} {col_type}")
     conn.commit()
 
-    # Make users.email nullable if it isn't already (SQLite requires table recreation)
-    cols = cur.execute("PRAGMA table_info(users)").fetchall()
-    email_col = next((c for c in cols if c[1] == "email"), None)
-    if email_col and email_col[3] == 1:  # notnull = 1
-        cur.executescript("""
-            BEGIN;
-            CREATE TABLE users_migrated (
-                id INTEGER NOT NULL PRIMARY KEY,
-                username VARCHAR(50) NOT NULL UNIQUE,
-                email VARCHAR(100) UNIQUE,
-                password_hash VARCHAR(200) NOT NULL,
-                is_superadmin BOOLEAN,
-                display_name VARCHAR(50),
-                bio VARCHAR(120),
-                avatar_color VARCHAR(10),
-                avatar_icon VARCHAR(6),
-                favorite_team_id INTEGER REFERENCES teams(id),
-                created_at DATETIME,
-                credits REAL DEFAULT 10.0,
-                avatar_img_url TEXT,
-                profile_bg VARCHAR(100),
-                profile_banner_url VARCHAR(200)
-            );
-            INSERT INTO users_migrated SELECT * FROM users;
-            DROP TABLE users;
-            ALTER TABLE users_migrated RENAME TO users;
-            CREATE INDEX IF NOT EXISTS ix_users_id ON users(id);
-            COMMIT;
-        """)
+    # Repair: a previous migration used SELECT * which positionally swapped
+    # created_at and avatar_img_url on DBs with a different original column order.
+    # Detect by checking whether created_at holds a file path instead of a date.
+    row = cur.execute("SELECT created_at FROM users WHERE created_at IS NOT NULL LIMIT 1").fetchone()
+    if row and row[0] and str(row[0]).startswith("/"):
+        cur.execute("UPDATE users SET created_at = avatar_img_url, avatar_img_url = created_at")
+        conn.commit()
 
     conn.close()
 
