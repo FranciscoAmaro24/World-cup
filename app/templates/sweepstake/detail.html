@@ -25,7 +25,8 @@
       <span class="tag tag-green">{{ t('sweep.drawn', _lang) }}</span>
       {% endif %}
       {% if groups %}
-      <span class="tag tag-gray">{{ groups|length }} group{% if groups|length != 1 %}s{% endif %} · {{ groups|sum(attribute='teams')|length }} teams</span>
+      {% set team_count = namespace(n=0) %}{% for g in groups %}{% set team_count.n = team_count.n + g.teams|length %}{% endfor %}
+      <span class="tag tag-gray">{{ groups|length }} group{% if groups|length != 1 %}s{% endif %} · {{ team_count.n }} teams</span>
       {% endif %}
       <span class="tag tag-gray">Win: {{ league.sweep_pts_win or 2 }}pts · Draw: {{ league.sweep_pts_draw or 0 }}pts · Goal: {{ league.sweep_pts_goal or 0 }}pts · CS: {{ league.sweep_pts_clean_sheet or 0 }}pts{% if league.sweep_big_win_threshold %} · Big win (≥{{ league.sweep_big_win_threshold }}gd): +{{ league.sweep_big_win_pts or 0 }}pts{% endif %}</span>
     </div>

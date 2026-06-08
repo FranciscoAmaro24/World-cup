@@ -281,8 +281,11 @@ async def upload_bg_video(
     filename = (video.filename or "").strip()
     if not filename.lower().endswith(".mp4"):
         return RedirectResponse("/admin?err=not_mp4", status_code=303)
-    # Sanitise filename
-    filename = "".join(c for c in filename if c.isalnum() or c in "-_. ").strip() or "video.mp4"
+    # Sanitise filename — only keep safe chars, then strip dots from edges to block traversal
+    filename = "".join(c for c in filename if c.isalnum() or c in "-_. ").strip().strip(".")
+    if not filename.lower().endswith(".mp4"):
+        filename = filename or "video"
+        filename += ".mp4"
     os.makedirs(VIDEOS_DIR, exist_ok=True)
     dest = os.path.join(VIDEOS_DIR, filename)
     with open(dest, "wb") as f:

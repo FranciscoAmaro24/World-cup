@@ -161,6 +161,8 @@ class TestBracketPicks:
     def test_submit_picks_saves_to_db(self, client, db):
         user_id, league_id, team_ids = self._setup(client, db)
         t1, t2, t3, t4 = team_ids
+        _group_match(db, t1, t2, 1, 0, status="finished", num=7002)
+        db.commit()
         resp = client.post(
             f"/leagues/{league_id}/bracket",
             data={
@@ -180,6 +182,8 @@ class TestBracketPicks:
     def test_update_picks_no_duplicate(self, client, db):
         user_id, league_id, team_ids = self._setup(client, db)
         t1, t2, t3, t4 = team_ids
+        _group_match(db, t1, t2, 1, 0, status="finished", num=7003)
+        db.commit()
         form = {
             "quarter_1_id": t1, "quarter_2_id": t2,
             "quarter_3_id": t3, "quarter_4_id": t4,
@@ -237,6 +241,8 @@ class TestBracketPicks:
         from bracket_utils import is_bracket_locked
         _, league_id, team_ids = self._setup(client, db)
         t1, t2 = team_ids[0], team_ids[1]
+        # Group stage must be finished for the bracket window to open
+        _group_match(db, t1, t2, 1, 0, status="finished", num=7004)
         _future_ko_match(db, t1, t2)
         db.flush()
         assert is_bracket_locked(db) is False

@@ -6,7 +6,9 @@
 
   <div style="margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
     <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">← {{ t('bracket.back', _lang) }} {{ league.name }}</a>
-    {% if locked %}
+    {% if lock_status == 'group_unfinished' %}
+    <span class="tag tag-gray" style="font-size:.8rem;padding:.4rem .8rem">Waiting for group stage</span>
+    {% elif lock_status == 'ko_started' %}
     <span class="tag tag-gray" style="font-size:.8rem;padding:.4rem .8rem">Locked</span>
     {% else %}
     <span class="tag tag-green" style="font-size:.8rem;padding:.4rem .8rem">Open for picks</span>
@@ -110,7 +112,13 @@
 
           </div>
           {% else %}
-          <div class="empty-state"><p>{{ t('bracket.deadline_missed', _lang) }}</p></div>
+          <div class="empty-state">
+            {% if lock_status == 'group_unfinished' %}
+            <p>Bracket picks open once all group stage matches are finished.</p>
+            {% else %}
+            <p>No picks submitted before the deadline.</p>
+            {% endif %}
+          </div>
           {% endif %}
         </div>
       </div>
@@ -118,7 +126,7 @@
       {% else %}
       <!-- ── EDIT FORM ── -->
       <div class="alert alert-info" style="margin-bottom:1rem;font-size:.82rem">
-        {{ t('bracket.lock_hint', _lang) }}
+        Picks lock when the first knockout match kicks off. You have until then to change your mind.
       </div>
       <form action="/leagues/{{ league.id }}/bracket" method="post" id="bracketForm">
         {% set q_ids = [pick.quarter_1_id, pick.quarter_2_id, pick.quarter_3_id, pick.quarter_4_id] if pick else [none,none,none,none] %}

@@ -400,7 +400,7 @@ async def upload_banner(
         f.write(data)
 
     if league.banner_url:
-        old = os.path.join(os.path.dirname(__file__), "..", "static", league.banner_url.lstrip("/"))
+        old = os.path.join(LEAGUE_UPLOAD_DIR, os.path.basename(league.banner_url))
         try:
             os.remove(old)
         except OSError:
@@ -478,7 +478,7 @@ async def remove_banner(request: Request, league_id: int, db: Session = Depends(
     if not league or league.admin_id != user.id:
         return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
     if league.banner_url:
-        old = os.path.join(os.path.dirname(__file__), "..", "static", league.banner_url.lstrip("/"))
+        old = os.path.join(LEAGUE_UPLOAD_DIR, os.path.basename(league.banner_url))
         try:
             os.remove(old)
         except OSError:

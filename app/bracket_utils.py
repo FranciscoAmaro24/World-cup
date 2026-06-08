@@ -54,15 +54,39 @@ def calc_bracket_points(pick: models.TournamentPick, league: models.League, actu
     return pts
 
 
-def is_bracket_locked(db: Session) -> bool:
-    """Bracket picks lock when the first knockout match kicks off."""
+def bracket_lock_status(db: Session) -> str:
+    """
+    Returns the lock state:
+      'group_unfinished' — group stage not fully done yet (too early to pick)
+      'ko_started'       — first KO match already kicked off (too late to pick)
+      'open'             — window is open: all groups done, KO not started
+    """
+    from datetime import datetime
+    now = datetime.utcnow()
+
+    any_group = db.query(models.Match).filter(models.Match.round == "group").first()
+    if not any_group:
+        return "group_unfinished"
+
+    unfinished_group = (
+        db.query(models.Match)
+        .filter(models.Match.round == "group", models.Match.status != "finished")
+        .first()
+    )
+    if unfinished_group:
+        return "group_unfinished"
+
     first_ko = (
         db.query(models.Match)
         .filter(models.Match.round != "group")
         .order_by(models.Match.match_date)
         .first()
     )
-    if first_ko:
-        from datetime import datetime
-        return datetime.utcnow() >= first_ko.match_date
-    return False
+    if first_ko and now >= first_ko.match_date:
+        return "ko_started"
+
+    return "open"
+
+
+def is_bracket_locked(db: Session) -> bool:
+    return bracket_lock_status(db) != "open"

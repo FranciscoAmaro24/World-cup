@@ -14,7 +14,7 @@ from database import get_db
 import models
 import auth
 from shared import templates
-from bracket_utils import get_actual_bracket, calc_bracket_points, is_bracket_locked
+from bracket_utils import get_actual_bracket, calc_bracket_points, is_bracket_locked, bracket_lock_status
 
 router = APIRouter()
 
@@ -35,7 +35,8 @@ async def bracket_page(request: Request, league_id: int, db: Session = Depends(g
         return RedirectResponse("/leagues", status_code=303)
 
     teams = db.query(models.Team).order_by(models.Team.group_letter, models.Team.name).all()
-    locked = is_bracket_locked(db)
+    lock_status = bracket_lock_status(db)
+    locked = lock_status != "open"
     pick = db.query(models.TournamentPick).filter(
         models.TournamentPick.user_id == user.id,
         models.TournamentPick.league_id == league_id,
@@ -61,6 +62,7 @@ async def bracket_page(request: Request, league_id: int, db: Session = Depends(g
             "league": league,
             "teams": teams,
             "locked": locked,
+            "lock_status": lock_status,
             "pick": pick,
             "pick_rows": pick_rows,
             "actual": actual,

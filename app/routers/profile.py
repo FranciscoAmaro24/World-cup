@@ -138,7 +138,7 @@ async def upload_avatar(
 
     # Delete old avatar file if present
     if user.avatar_img_url:
-        old_file = os.path.join(os.path.dirname(__file__), "..", "static", user.avatar_img_url.lstrip("/"))
+        old_file = os.path.join(UPLOAD_DIR, os.path.basename(user.avatar_img_url))
         try:
             os.remove(old_file)
         except OSError:
@@ -188,7 +188,7 @@ async def remove_avatar(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse("/login", status_code=303)
     if user.avatar_img_url:
-        old_file = os.path.join(os.path.dirname(__file__), "..", "static", user.avatar_img_url.lstrip("/"))
+        old_file = os.path.join(UPLOAD_DIR, os.path.basename(user.avatar_img_url))
         try:
             os.remove(old_file)
         except OSError:
