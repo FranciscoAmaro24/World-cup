@@ -13,30 +13,19 @@
     <p class="page-header-sub">{{ league.name }}: organise teams into pots before the draw</p>
   </div>
 
-  <div class="alert alert-info" style="margin-bottom:1.5rem;font-size:.85rem">
-    Create groups (e.g. <strong>Top Seeds</strong>, <strong>Mid Tier</strong>, <strong>Underdogs</strong>) and drag teams into each one.
-    When you draw, each paid member receives <strong>1 random team per group</strong>.
+  <div class="alert alert-info" style="margin-bottom:1.5rem;font-size:.85rem;font-family:'Archivo',sans-serif">
+    Create groups (e.g. <span style="font-weight:700">Top Seeds</span>, <span style="font-weight:700">Mid Tier</span>, <span style="font-weight:700">Underdogs</span>) and assign teams into each one.
+    When you draw, each paid member receives <span style="font-weight:700">1 random team per group</span>.
     Teams not assigned to any group are excluded from the draw.
   </div>
 
-  <!-- Default FIFA pots shortcut -->
-  <div class="card" style="margin-bottom:1.5rem;overflow:hidden">
-    <div class="card-header" style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <span class="font-bold text-sm">FIFA-based pots</span>
-        <span class="tag tag-gray" style="font-size:.6rem;margin-left:.5rem">4 × 12 teams</span>
-      </div>
-      <form action="/leagues/{{ league.id }}/sweepstake/groups/setup-default" method="post"
-            onsubmit="return confirm('This will replace all existing groups. Continue?')">
-        <button type="submit" class="btn btn-secondary btn-sm">Set up default pots</button>
-      </form>
-    </div>
-    <div class="card-body" style="font-size:.78rem;color:var(--pg-muted);display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem">
-      <div><strong style="color:var(--pg-ink)">Pot 1 — Favourites (8)</strong><br>ARG · FRA · ESP · ENG · BRA · POR · NED · GER</div>
-      <div><strong style="color:var(--pg-ink)">Pot 2 — Contenders (14)</strong><br>AUT · SUI · JPN · SEN · KOR · CRO · SWE · MEX · TUR · NOR · COL · URU · BEL · MAR</div>
-      <div><strong style="color:var(--pg-ink)">Pot 3 — Dark Horses (13)</strong><br>ECU · CIV · ALG · AUS · TUN · GHA · CZE · KSA · UZB · COD · RSA · IRN · USA</div>
-      <div><strong style="color:var(--pg-ink)">Pot 4 — Underdogs (13)</strong><br>IRQ · EGY · PAR · SCO · PAN · JOR · NZL · CAN · QAT · BIH · CUW · HAI · CPV</div>
-    </div>
+  <!-- Suggested groups shortcut -->
+  <div style="margin-bottom:1.5rem;display:flex;align-items:center;gap:.75rem">
+    <form action="/leagues/{{ league.id }}/sweepstake/groups/setup-default" method="post"
+          onsubmit="return confirm('This will replace all existing groups. Continue?')">
+      <button type="submit" class="btn btn-secondary btn-sm">Add default groups</button>
+    </form>
+    <span style="font-size:.78rem;color:var(--pg-muted)">Suggested groups based on FIFA rankings (4 pots, 8-14 teams each)</span>
   </div>
 
   <!-- Create group -->

@@ -18,7 +18,7 @@ _FIFA_POTS: dict[int, list[str]] = {
     3: ["ECU", "CIV", "ALG", "AUS", "TUN", "GHA", "CZE", "KSA", "UZB", "COD", "RSA", "IRN", "USA"],
     4: ["IRQ", "EGY", "PAR", "SCO", "PAN", "JOR", "NZL", "CAN", "QAT", "BIH", "CUW", "HAI", "CPV"],
 }
-_POT_NAMES = {1: "Pot 1 — Favourites", 2: "Pot 2 — Contenders", 3: "Pot 3 — Dark Horses", 4: "Pot 4 — Underdogs"}
+_POT_NAMES = {1: "Pot 1: Favourites", 2: "Pot 2: Contenders", 3: "Pot 3: Dark Horses", 4: "Pot 4: Underdogs"}
 
 
 def _calc_sweep_points(league: models.League, db: Session) -> dict:
