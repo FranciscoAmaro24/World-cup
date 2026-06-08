@@ -72,6 +72,7 @@ class League(Base):
     sweep_pts_clean_sheet = Column(Integer, default=0)     # points per clean sheet kept
     sweep_big_win_threshold = Column(Integer, default=0)   # min GD to trigger big win bonus (0 = off)
     sweep_big_win_pts = Column(Integer, default=0)         # bonus points for a big win
+    sweep_upset_pts = Column(Integer, default=0)           # bonus for a lower-tier team beating a higher-tier team
 
     created_at = Column(DateTime, default=datetime.utcnow)
 

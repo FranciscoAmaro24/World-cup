@@ -26,15 +26,28 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
     big_win_threshold   = getattr(league, "sweep_big_win_threshold", 0) or 0
     big_win_pts         = getattr(league, "sweep_big_win_pts", 0) or 0
 
-    # Per-group pts_win overrides (keyed by team_id)
-    group_pts_win_map: dict[int, int] = {}
+    upset_pts = getattr(league, "sweep_upset_pts", 0) or 0
+
+    # Per-group maps (keyed by team_id)
+    group_pts_win_map: dict[int, int] = {}   # team_id -> pts_win override
+    team_tier: dict[int, int] = {}           # team_id -> group.order_index (lower = better)
     for grp in league.sweepstake_groups:
+        for gt in grp.teams:
+            team_tier[gt.team_id] = grp.order_index
         if grp.pts_win is not None:
             for gt in grp.teams:
                 group_pts_win_map[gt.team_id] = grp.pts_win
 
     def win_pts(team_id: int) -> int:
         return group_pts_win_map.get(team_id, default_pts_win)
+
+    def is_upset(winner_id: int, loser_id: int) -> bool:
+        """True when winner is from a higher order_index (worse) group than the loser."""
+        if not upset_pts:
+            return False
+        wt = team_tier.get(winner_id)
+        lt = team_tier.get(loser_id)
+        return wt is not None and lt is not None and wt > lt
 
     team_pts: dict[int, int] = {tid: 0 for tid in team_ids}
 
@@ -44,14 +57,18 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
         if h is None or a is None:
             continue
 
-        # Win / draw points (per-group override supported)
+        # Win / draw points (per-group override + upset bonus supported)
         if m.round == "group":
             if h > a:
                 if m.home_team_id in team_pts:
                     team_pts[m.home_team_id] += win_pts(m.home_team_id)
+                    if is_upset(m.home_team_id, m.away_team_id):
+                        team_pts[m.home_team_id] += upset_pts
             elif a > h:
                 if m.away_team_id in team_pts:
                     team_pts[m.away_team_id] += win_pts(m.away_team_id)
+                    if is_upset(m.away_team_id, m.home_team_id):
+                        team_pts[m.away_team_id] += upset_pts
             else:
                 if m.home_team_id in team_pts:
                     team_pts[m.home_team_id] += pts_draw
@@ -59,7 +76,10 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
                     team_pts[m.away_team_id] += pts_draw
         else:
             if m.winner_team_id and m.winner_team_id in team_pts:
+                loser_id = m.away_team_id if m.winner_team_id == m.home_team_id else m.home_team_id
                 team_pts[m.winner_team_id] += win_pts(m.winner_team_id)
+                if is_upset(m.winner_team_id, loser_id):
+                    team_pts[m.winner_team_id] += upset_pts
 
         # Goal points (goals scored in 90 min)
         if pts_goal:
@@ -136,7 +156,7 @@ async def sweepstake_page(request: Request, league_id: int, db: Session = Depend
             "paid_count": paid_count,
             "user_teams": user_teams,
             "user_assignments": user_assignments,
-            "is_admin": league.admin_id == user.id,
+            "is_admin": league.admin_id == user.id or user.is_superadmin,
             "sweep_lb": sweep_lb,
             "groups": groups,
         },
@@ -149,7 +169,7 @@ async def toggle_paid(request: Request, league_id: int, member_user_id: int, db:
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     member = db.query(models.LeagueMember).filter(
         models.LeagueMember.league_id == league_id,
@@ -167,7 +187,7 @@ async def draw_teams(request: Request, league_id: int, db: Session = Depends(get
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id or league.sweepstake_drawn:
+    if not league or league.admin_id != user.id and not user.is_superadmin or league.sweepstake_drawn:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
 
     paid_members = [m for m in league.members if m.sweepstake_paid]
@@ -217,7 +237,7 @@ async def reset_draw(request: Request, league_id: int, db: Session = Depends(get
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     db.query(models.SweepstakeAssignment).filter_by(league_id=league_id).delete()
     league.sweepstake_drawn = False
@@ -233,7 +253,7 @@ async def groups_page(request: Request, league_id: int, db: Session = Depends(ge
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     all_teams = db.query(models.Team).order_by(models.Team.group_letter, models.Team.name).all()
     # Teams already assigned to any group in this league
@@ -258,7 +278,7 @@ async def create_group(request: Request, league_id: int, name: str = Form(...), 
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     order = len(league.sweepstake_groups)
     db.add(models.SweepstakeGroup(league_id=league_id, name=name.strip()[:50], order_index=order))
@@ -272,7 +292,7 @@ async def delete_group(request: Request, league_id: int, group_id: int, db: Sess
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     grp = db.query(models.SweepstakeGroup).filter_by(id=group_id, league_id=league_id).first()
     if grp:
@@ -287,7 +307,7 @@ async def add_team_to_group(request: Request, league_id: int, group_id: int, tea
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     grp = db.query(models.SweepstakeGroup).filter_by(id=group_id, league_id=league_id).first()
     if grp:
@@ -304,7 +324,7 @@ async def remove_team_from_group(request: Request, league_id: int, group_id: int
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     gt = db.query(models.SweepstakeGroupTeam).filter_by(group_id=group_id, team_id=team_id).first()
     if gt:
@@ -322,7 +342,7 @@ async def update_group_settings(
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
     grp = db.query(models.SweepstakeGroup).filter_by(id=group_id, league_id=league_id).first()
     if grp:

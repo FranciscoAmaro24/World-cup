@@ -192,6 +192,11 @@
             <input class="form-input" type="number" name="sweep_big_win_pts" value="{{ league.sweep_big_win_pts or 0 }}" min="0" max="10">
             <p class="form-hint">Bonus points for hitting that goal difference threshold.</p>
           </div>
+          <div class="form-group">
+            <label class="form-label">Upset bonus</label>
+            <input class="form-input" type="number" name="sweep_upset_pts" value="{{ league.sweep_upset_pts or 0 }}" min="0" max="10">
+            <p class="form-hint">Extra points when a lower-tier group team beats a higher-tier one. 0 = disabled.</p>
+          </div>
         </div>
       </div>
 

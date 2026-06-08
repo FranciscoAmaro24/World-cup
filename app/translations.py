@@ -265,7 +265,7 @@ EN: dict[str, str] = {
     "teams.eliminated":     "Eliminated",
 
     # ── Footer ────────────────────────────────────────
-    "footer.text":  "WC2026 Predictor · Built for friends & fun · Francisco Amaro ©",
+    "footer.text":  "WC2026 Predictor · Built for friends & fun · Francisco Amaro © · (I promise it's not a virus)",
 
     # ── Discover (extra) ──────────────────────────────
     "discover.empty":      "No public leagues yet",
@@ -658,7 +658,7 @@ PT: dict[str, str] = {
     "teams.eliminated":     "Eliminado",
 
     # ── Footer ────────────────────────────────────────
-    "footer.text":  "Predictor WC2026 · Feito para amigos & diversão · Francisco Amaro ©",
+    "footer.text":  "Predictor WC2026 · Feito para amigos & diversão · Francisco Amaro © · (juro que não é vírus)",
 
     # ── Discover (extra) ──────────────────────────────
     "discover.empty":      "Sem ligas públicas ainda",

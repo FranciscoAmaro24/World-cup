@@ -87,6 +87,7 @@ def _migrate_db():
         ("leagues", "sweep_pts_clean_sheet", "INTEGER DEFAULT 0"),
         ("leagues", "sweep_big_win_threshold", "INTEGER DEFAULT 0"),
         ("leagues", "sweep_big_win_pts", "INTEGER DEFAULT 0"),
+        ("leagues", "sweep_upset_pts", "INTEGER DEFAULT 0"),
         ("sweepstake_groups", "pts_win", "INTEGER"),
         ("sweepstake_assignments", "group_id", "INTEGER"),
     ]

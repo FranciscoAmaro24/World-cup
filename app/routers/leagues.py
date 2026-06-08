@@ -288,7 +288,7 @@ async def league_detail(request: Request, league_id: int, db: Session = Depends(
             "upcoming_matches": upcoming_matches,
             "user_preds": user_preds,
             "recent_results": recent_results,
-            "is_admin": league.admin_id == user.id,
+            "is_admin": league.admin_id == user.id or user.is_superadmin,
             "user_bracket_pick": user_bracket_pick,
             "now": datetime.utcnow(),
         },
@@ -301,7 +301,7 @@ async def settings_page(request: Request, league_id: int, db: Session = Depends(
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}", status_code=303)
     return templates.TemplateResponse(
         "leagues/settings.html", {"request": request, "user": user, "league": league, "error": None, "success": None}
@@ -333,13 +333,14 @@ async def update_settings(
     sweep_pts_clean_sheet: int = Form(0),
     sweep_big_win_threshold: int = Form(0),
     sweep_big_win_pts: int = Form(0),
+    sweep_upset_pts: int = Form(0),
     db: Session = Depends(get_db),
 ):
     user = auth.get_current_user(request, db)
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}", status_code=303)
     league.name = name.strip()
     league.description = description.strip()[:200] or None
@@ -363,6 +364,7 @@ async def update_settings(
     league.sweep_pts_clean_sheet = max(0, sweep_pts_clean_sheet)
     league.sweep_big_win_threshold = max(0, sweep_big_win_threshold)
     league.sweep_big_win_pts = max(0, sweep_big_win_pts)
+    league.sweep_upset_pts = max(0, sweep_upset_pts)
     db.commit()
     return templates.TemplateResponse(
         "leagues/settings.html",
@@ -381,7 +383,7 @@ async def upload_banner(
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
 
     ext = os.path.splitext(banner.filename or "")[1].lower()
@@ -435,7 +437,7 @@ async def upload_logo(
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
     ext = os.path.splitext(logo.filename or "")[1].lower()
     if ext not in ALLOWED_EXTS:
@@ -485,7 +487,7 @@ async def remove_banner(request: Request, league_id: int, db: Session = Depends(
     if not user:
         return RedirectResponse("/login", status_code=303)
     league = db.query(models.League).filter(models.League.id == league_id).first()
-    if not league or league.admin_id != user.id:
+    if not league or league.admin_id != user.id and not user.is_superadmin:
         return RedirectResponse(f"/leagues/{league_id}/settings", status_code=303)
     if league.banner_url:
         old = os.path.join(LEAGUE_UPLOAD_DIR, os.path.basename(league.banner_url))
