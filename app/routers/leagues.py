@@ -28,28 +28,36 @@ def _gen_code() -> str:
 
 
 def _get_leaderboard(league: models.League, db: Session):
-    members = league.members
+    # Two bulk queries instead of 2×N per-member queries
+    all_preds = db.query(models.Prediction).filter(
+        models.Prediction.league_id == league.id,
+        models.Prediction.points_awarded.isnot(None),
+    ).all()
+    all_picks = db.query(models.TournamentPick).filter(
+        models.TournamentPick.league_id == league.id,
+    ).all()
+
+    pred_pts: dict[int, int] = {}
+    pred_count: dict[int, int] = {}
+    for p in all_preds:
+        pred_pts[p.user_id] = pred_pts.get(p.user_id, 0) + p.points_awarded
+        pred_count[p.user_id] = pred_count.get(p.user_id, 0) + 1
+
+    pick_by_user = {p.user_id: p for p in all_picks}
+
     rows = []
-    for m in members:
-        preds = db.query(models.Prediction).filter(
-            models.Prediction.league_id == league.id,
-            models.Prediction.user_id == m.user_id,
-            models.Prediction.points_awarded.isnot(None),
-        ).all()
-        match_pts = sum(p.points_awarded for p in preds)
-        bracket_pick = db.query(models.TournamentPick).filter(
-            models.TournamentPick.league_id == league.id,
-            models.TournamentPick.user_id == m.user_id,
-        ).first()
-        bracket_pts = bracket_pick.points_awarded if bracket_pick else 0
+    for m in league.members:
+        match_pts   = pred_pts.get(m.user_id, 0)
+        bracket_pick = pick_by_user.get(m.user_id)
+        bracket_pts  = bracket_pick.points_awarded if bracket_pick else 0
         rows.append({
-            "user": m.user,
-            "member": m,
-            "points": match_pts + bracket_pts,
-            "match_points": match_pts,
+            "user":           m.user,
+            "member":         m,
+            "points":         match_pts + bracket_pts,
+            "match_points":   match_pts,
             "bracket_points": bracket_pts,
-            "predictions": len(preds),
-            "has_bracket": bracket_pick is not None,
+            "predictions":    pred_count.get(m.user_id, 0),
+            "has_bracket":    bracket_pick is not None,
         })
     rows.sort(key=lambda x: x["points"], reverse=True)
     for i, row in enumerate(rows):
