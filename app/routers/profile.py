@@ -207,6 +207,8 @@ async def view_profile(request: Request, username: str, db: Session = Depends(ge
     stats = _user_stats(target, db)
     memberships = db.query(models.LeagueMember).filter(models.LeagueMember.user_id == target.id).all()
     leagues = [m.league for m in memberships]
+    from routers.leagues import _member_counts
+    counts = _member_counts(db, [l.id for l in leagues])
     recent_preds = (
         db.query(models.Prediction)
         .filter(models.Prediction.user_id == target.id, models.Prediction.points_awarded.isnot(None))
@@ -224,5 +226,6 @@ async def view_profile(request: Request, username: str, db: Session = Depends(ge
             "leagues": leagues,
             "recent_preds": recent_preds,
             "is_own": viewer and viewer.id == target.id,
+            "member_counts": counts,
         },
     )

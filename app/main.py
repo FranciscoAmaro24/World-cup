@@ -247,6 +247,8 @@ async def index(request: Request, db: Session = Depends(get_db)):
 
     # Countdown to first match
     first_match = db.query(models.Match).order_by(models.Match.match_date).first()
+    from routers.leagues import _member_counts
+    counts = _member_counts(db, [l.id for l in user_leagues])
     return templates.TemplateResponse(
         "index.html",
         {
@@ -256,6 +258,7 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "has_favourites": has_favourites,
             "now": datetime.utcnow(),
             "first_match": first_match,
+            "member_counts": counts,
         },
     )
 

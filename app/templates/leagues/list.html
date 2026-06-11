@@ -42,7 +42,7 @@
       <div class="league-code font-mono">CODE: {{ league.invite_code }}</div>
       <div class="league-stats mt-3">
         <div class="league-stat">
-          <div class="league-stat-val">{{ league.members | length }}</div>
+          <div class="league-stat-val">{{ member_counts.get(league.id, 0) }}</div>
           <div class="league-stat-lbl">{{ t('league.stat_members', _lang) }}</div>
         </div>
         <div class="league-stat">

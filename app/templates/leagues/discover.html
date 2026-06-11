@@ -42,7 +42,7 @@
           </div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-top:.75rem">
-          <span style="font-size:.72rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</span>
+          <span style="font-size:.72rem;color:var(--text-3)">{{ member_counts.get(league.id, 0) }} {{ t('league.members', _lang) }}</span>
           {% if joined %}
           <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">{{ t('btn.view', _lang) }} →</a>
           {% else %}
@@ -69,7 +69,7 @@
         <div style="font-weight:600;font-size:.82rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
           {{ league.name }}
         </div>
-        <div style="font-size:.68rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</div>
+        <div style="font-size:.68rem;color:var(--text-3)">{{ member_counts.get(league.id, 0) }} {{ t('league.members', _lang) }}</div>
       </div>
       {% if joined %}
       <a href="/leagues/{{ league.id }}" style="font-size:.68rem;color:var(--primary);font-weight:700">{{ t('btn.view', _lang) }}</a>
@@ -94,7 +94,7 @@
       <div class="avatar avatar-sm" style="background:{{ league.accent_color }};font-family:serif">{{ (league.badge_emoji or league.name)[:1] }}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:600;font-size:.85rem;color:var(--text-1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ league.name }}</div>
-        <div style="font-size:.7rem;color:var(--text-3)">{{ league.members|length }} {{ t('league.members', _lang) }}</div>
+        <div style="font-size:.7rem;color:var(--text-3)">{{ member_counts.get(league.id, 0) }} {{ t('league.members', _lang) }}</div>
       </div>
       {% if joined %}
       <a href="/leagues/{{ league.id }}" class="btn btn-secondary btn-sm">{{ t('btn.view', _lang) }}</a>

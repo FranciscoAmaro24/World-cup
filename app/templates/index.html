@@ -90,7 +90,7 @@
           <p style="font-family:'Spectral',serif;font-style:italic;font-size:.78rem;color:var(--pg-muted);margin-bottom:.75rem">{{ league.description }}</p>
           {% endif %}
           <div class="league-stats">
-            <div class="league-stat"><div class="league-stat-val">{{ league.members|length }}</div><div class="league-stat-lbl">{{ t('league.members', _lang) }}</div></div>
+            <div class="league-stat"><div class="league-stat-val">{{ member_counts.get(league.id, 0) }}</div><div class="league-stat-lbl">{{ t('league.members', _lang) }}</div></div>
             <div class="league-stat"><div class="league-stat-val">{{ league.points_exact_score }}</div><div class="league-stat-lbl">Exact pts</div></div>
           </div>
           <div class="tags">

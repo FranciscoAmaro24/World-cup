@@ -50,13 +50,15 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
     def win_pts(team_id: int) -> int:
         return group_pts_win_map.get(team_id, default_pts_win)
 
-    def is_upset(winner_id: int, loser_id: int) -> bool:
-        """True when winner is from a higher order_index (worse) group than the loser."""
+    def upset_bonus(winner_id: int, loser_id: int) -> int:
+        """Returns bonus points = tier_diff × upset_pts when winner is from a worse group."""
         if not upset_pts:
-            return False
+            return 0
         wt = team_tier.get(winner_id)
         lt = team_tier.get(loser_id)
-        return wt is not None and lt is not None and wt > lt
+        if wt is None or lt is None or wt <= lt:
+            return 0
+        return (wt - lt) * upset_pts
 
     team_pts: dict[int, int] = {tid: 0 for tid in team_ids}
 
@@ -71,13 +73,11 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
             if h > a:
                 if m.home_team_id in team_pts:
                     team_pts[m.home_team_id] += win_pts(m.home_team_id)
-                    if is_upset(m.home_team_id, m.away_team_id):
-                        team_pts[m.home_team_id] += upset_pts
+                    team_pts[m.home_team_id] += upset_bonus(m.home_team_id, m.away_team_id)
             elif a > h:
                 if m.away_team_id in team_pts:
                     team_pts[m.away_team_id] += win_pts(m.away_team_id)
-                    if is_upset(m.away_team_id, m.home_team_id):
-                        team_pts[m.away_team_id] += upset_pts
+                    team_pts[m.away_team_id] += upset_bonus(m.away_team_id, m.home_team_id)
             else:
                 if m.home_team_id in team_pts:
                     team_pts[m.home_team_id] += pts_draw
@@ -87,8 +87,7 @@ def _calc_sweep_points(league: models.League, db: Session) -> dict:
             if m.winner_team_id and m.winner_team_id in team_pts:
                 loser_id = m.away_team_id if m.winner_team_id == m.home_team_id else m.home_team_id
                 team_pts[m.winner_team_id] += win_pts(m.winner_team_id)
-                if is_upset(m.winner_team_id, loser_id):
-                    team_pts[m.winner_team_id] += upset_pts
+                team_pts[m.winner_team_id] += upset_bonus(m.winner_team_id, loser_id)
 
         # Goal points (goals scored in 90 min)
         if pts_goal:

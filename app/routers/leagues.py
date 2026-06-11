@@ -7,6 +7,7 @@ from datetime import datetime
 from fastapi import APIRouter, Request, Depends, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, JSONResponse
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -14,6 +15,19 @@ import models
 import auth
 from shared import templates
 from image_utils import process_image
+
+
+def _member_counts(db: Session, league_ids: list[int]) -> dict[int, int]:
+    """Single GROUP BY query returning {league_id: member_count} for all given league ids."""
+    if not league_ids:
+        return {}
+    rows = (
+        db.query(models.LeagueMember.league_id, func.count(models.LeagueMember.id))
+        .filter(models.LeagueMember.league_id.in_(league_ids))
+        .group_by(models.LeagueMember.league_id)
+        .all()
+    )
+    return {lid: cnt for lid, cnt in rows}
 
 _uploads_base = os.getenv("UPLOADS_DIR", os.path.join(os.path.dirname(__file__), "..", "static", "uploads"))
 LEAGUE_UPLOAD_DIR = os.path.join(_uploads_base, "leagues")
@@ -84,6 +98,8 @@ async def leagues_list(request: Request, db: Session = Depends(get_db)):
     all_leagues = member_leagues + admin_only_leagues
     fav_leagues = [l for l in member_leagues if l.id in fav_ids]
     other_leagues = [l for l in member_leagues if l.id not in fav_ids]
+    all_shown = all_leagues + admin_only_leagues
+    counts = _member_counts(db, [l.id for l in all_shown])
     return templates.TemplateResponse(
         "leagues/list.html", {
             "request": request, "user": user,
@@ -92,6 +108,7 @@ async def leagues_list(request: Request, db: Session = Depends(get_db)):
             "other_leagues": other_leagues,
             "fav_ids": fav_ids,
             "admin_only_leagues": admin_only_leagues,
+            "member_counts": counts,
         }
     )
 
@@ -127,12 +144,15 @@ async def discover(request: Request, db: Session = Depends(get_db)):
     other_public = db.query(models.League).filter(
         models.League.is_public == True, models.League.category == "general"
     ).order_by(models.League.name).all()
+    all_discover = global_leagues + country_leagues + other_public
+    counts = _member_counts(db, [l.id for l in all_discover])
     return templates.TemplateResponse("leagues/discover.html", {
         "request": request, "user": user,
         "global_leagues": global_leagues,
         "country_leagues": country_leagues,
         "other_public": other_public,
         "joined_ids": joined_ids,
+        "member_counts": counts,
     })
 
 

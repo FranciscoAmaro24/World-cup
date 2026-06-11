@@ -75,7 +75,7 @@
           {% endif %}
           <div>
             <div style="font-weight:700;font-size:.9rem">{{ league.name }}</div>
-            <div class="text-xs text-muted">{{ league.members|length }} members</div>
+            <div class="text-xs text-muted">{{ member_counts.get(league.id, 0) }} members</div>
           </div>
         </a>
         {% endfor %}
