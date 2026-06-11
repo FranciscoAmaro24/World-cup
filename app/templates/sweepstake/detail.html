@@ -13,7 +13,16 @@
       <h1>{{ t('sweep.title', _lang) }}</h1>
       <p class="page-header-sub">{{ league.name }}</p>
     </div>
-    <a href="/rules#sweepstake" class="btn btn-secondary btn-sm">How it works</a>
+    <div style="display:flex;gap:.5rem;align-items:center">
+      {% if league.sweepstake_drawn %}
+      <a href="/leagues/{{ league.id }}/sweepstake/reveal" class="btn btn-primary btn-sm"
+         style="display:flex;align-items:center;gap:.4rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><polygon points="5,3 19,12 5,21"/></svg>
+        Watch the draw
+      </a>
+      {% endif %}
+      <a href="/rules#sweepstake" class="btn btn-secondary btn-sm">How it works</a>
+    </div>
   </div>
 
   <!-- Pot summary -->
@@ -165,6 +174,27 @@
           </form>
           {% endif %}
           {% if league.sweepstake_drawn %}
+          {% if groups_with_gaps %}
+          <div style="border:1px solid #f59e0b;border-radius:var(--radius);padding:.75rem 1rem;background:rgba(245,158,11,.07)">
+            <div style="font-size:.72rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#f59e0b;margin-bottom:.5rem">
+              ⚠ Pot ran out of teams
+            </div>
+            <div style="display:flex;flex-direction:column;gap:.4rem">
+              {% for group, missing in groups_with_gaps %}
+              <form action="/leagues/{{ league.id }}/sweepstake/groups/{{ group.id }}/reroll" method="post"
+                    style="display:flex;align-items:center;justify-content:space-between;gap:.5rem"
+                    onsubmit="return confirm('Assign a random repeat team from &quot;{{ group.name }}&quot; to {{ missing }} member{% if missing != 1 %}s{% endif %} who got nothing?')">
+                <span style="font-size:.78rem;color:var(--text-2)">{{ group.name }}
+                  <span style="color:var(--pg-muted);font-size:.7rem">· {{ missing }} missing</span>
+                </span>
+                <button type="submit" class="btn btn-sm" style="background:#f59e0b;color:#000;font-weight:700;white-space:nowrap">
+                  Reroll
+                </button>
+              </form>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
           <form action="/leagues/{{ league.id }}/sweepstake/reset" method="post">
             <button type="submit" class="btn btn-danger btn-full"
                     onclick="return confirm('Reset the draw? All assignments will be cleared.')">

@@ -50,6 +50,11 @@
         <div style="display:flex;align-items:center;gap:.5rem">
           <span class="font-bold">{{ group.name }}</span>
           <span class="tag tag-gray" style="font-size:.65rem">{{ group.teams|length }} team{% if group.teams|length != 1 %}s{% endif %}</span>
+          {% if paid_count and group.teams|length < paid_count %}
+          <span class="tag" style="font-size:.6rem;background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.4)">
+            ⚠ {{ paid_count - group.teams|length }} short
+          </span>
+          {% endif %}
           {% if group.pts_win is not none %}
           <span class="tag tag-green" style="font-size:.65rem">Win: {{ group.pts_win }}pts</span>
           {% else %}

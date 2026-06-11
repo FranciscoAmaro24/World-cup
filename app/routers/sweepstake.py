@@ -153,6 +153,18 @@ async def sweepstake_page(request: Request, league_id: int, db: Session = Depend
 
     groups = league.sweepstake_groups
 
+    # Detect which groups have paid members missing an assignment (pot ran out of teams)
+    paid_user_ids = {m.user_id for m in members if m.sweepstake_paid}
+    assigned_by_group: dict[int, set] = {}
+    for a in assignments:
+        if a.group_id:
+            assigned_by_group.setdefault(a.group_id, set()).add(a.user_id)
+    groups_with_gaps = [
+        (g, len(paid_user_ids - assigned_by_group.get(g.id, set())))
+        for g in groups
+        if paid_user_ids - assigned_by_group.get(g.id, set())
+    ] if league.sweepstake_drawn else []
+
     return templates.TemplateResponse(
         "sweepstake/detail.html",
         {
@@ -167,6 +179,7 @@ async def sweepstake_page(request: Request, league_id: int, db: Session = Depend
             "is_admin": league.admin_id == user.id or user.is_superadmin,
             "sweep_lb": sweep_lb,
             "groups": groups,
+            "groups_with_gaps": groups_with_gaps,
         },
     )
 
@@ -289,7 +302,9 @@ async def reveal_page(request: Request, league_id: int, db: Session = Depends(ge
         {"user": lst[0].user, "assignments": lst}
         for lst in by_user.values() if lst
     ]
-    random.shuffle(draw_results)
+    # Deterministic shuffle so every user watching the replay sees the same order
+    rng = random.Random(league_id * 7919 + len(draw_results))
+    rng.shuffle(draw_results)
 
     all_teams = db.query(models.Team).all()
 
@@ -322,6 +337,7 @@ async def groups_page(request: Request, league_id: int, db: Session = Depends(ge
         for g in league.sweepstake_groups
         for gt in g.teams
     }
+    paid_count = sum(1 for m in league.members if m.sweepstake_paid)
     return templates.TemplateResponse("sweepstake/groups.html", {
         "request": request,
         "user": user,
@@ -329,6 +345,7 @@ async def groups_page(request: Request, league_id: int, db: Session = Depends(ge
         "groups": league.sweepstake_groups,
         "all_teams": all_teams,
         "assigned_team_ids": assigned_team_ids,
+        "paid_count": paid_count,
     })
 
 
@@ -391,6 +408,41 @@ async def remove_team_from_group(request: Request, league_id: int, group_id: int
         db.delete(gt)
         db.commit()
     return RedirectResponse(f"/leagues/{league_id}/sweepstake/groups", status_code=303)
+
+
+@router.post("/leagues/{league_id}/sweepstake/groups/{group_id}/reroll")
+async def reroll_group(request: Request, league_id: int, group_id: int, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league or (league.admin_id != user.id and not user.is_superadmin):
+        return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+    if not league.sweepstake_drawn:
+        return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+
+    grp = db.query(models.SweepstakeGroup).filter_by(id=group_id, league_id=league_id).first()
+    if not grp or not grp.teams:
+        return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+
+    team_ids = [gt.team_id for gt in grp.teams]
+    paid_user_ids = {m.user_id for m in league.members if m.sweepstake_paid}
+    already_assigned = {
+        a.user_id
+        for a in db.query(models.SweepstakeAssignment).filter_by(league_id=league_id, group_id=group_id).all()
+    }
+    missing_user_ids = paid_user_ids - already_assigned
+
+    for uid in missing_user_ids:
+        db.add(models.SweepstakeAssignment(
+            league_id=league_id,
+            user_id=uid,
+            team_id=random.choice(team_ids),
+            group_id=group_id,
+        ))
+
+    db.commit()
+    return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
 
 
 @router.post("/leagues/{league_id}/sweepstake/groups/{group_id}/update")
