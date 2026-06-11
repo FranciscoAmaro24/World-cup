@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Draw Reveal — {{ league.name }}{% endblock %}
+{% block content %}
+{% set _lang = request.cookies.get('lang', user.language if user and user.language else 'en') %}
+
+<div class="pg-band" style="padding:28px 36px">
+  <span class="pg-live"><span class="dot"></span>Live Draw</span>
+  <h1 style="font-size:2rem;letter-spacing:.06em">DRAW REVEAL</h1>
+  <p style="font-family:'Spectral',serif;font-style:italic;color:rgba(255,255,255,.75);margin-top:.25rem">{{ league.name }}</p>
+</div>
+
+<div class="container page-content" style="max-width:860px">
+
+  <!-- Controls -->
+  <div style="text-align:center;padding:1.5rem 0 2rem">
+    <button id="startBtn" onclick="startReveal()"
+            class="btn btn-primary"
+            style="font-size:1rem;padding:.75rem 3rem;letter-spacing:.08em;font-family:'Archivo Black',sans-serif">
+      START REVEAL
+    </button>
+    <a href="/leagues/{{ league.id }}/sweepstake" id="doneBtn"
+       class="btn btn-primary"
+       style="display:none;font-size:1rem;padding:.75rem 3rem;font-family:'Archivo Black',sans-serif">
+      VIEW STANDINGS
+    </a>
+    <p id="revealStatus"
+       style="font-family:'Spectral',serif;font-style:italic;font-size:.9rem;color:var(--pg-muted);margin-top:.75rem">
+      {{ draw_results|length }} participant{% if draw_results|length != 1 %}s{% endif %} — click to begin
+    </p>
+  </div>
+
+  <!-- Progress bar -->
+  <div id="progressWrap" style="display:none;height:3px;background:var(--pg-foot);border-radius:2px;overflow:hidden;margin-bottom:2rem">
+    <div id="progressFill" style="height:100%;background:var(--pg-green);width:0%;transition:width .6s ease"></div>
+  </div>
+
+  <!-- User cards -->
+  <div style="display:flex;flex-direction:column;gap:.85rem">
+    {% for result in draw_results %}
+    <div class="rcard card" id="rcard-{{ loop.index0 }}"
+         style="overflow:hidden;opacity:.3;transition:opacity .4s,transform .35s,box-shadow .35s">
+      <div class="card-body" style="display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;padding:.85rem 1.25rem">
+
+        <!-- Avatar + name -->
+        <div style="display:flex;align-items:center;gap:.6rem;min-width:130px">
+          {{ avatar_html(result.user, 'sm') | safe }}
+          <div>
+            <div style="font-family:'Archivo Black',sans-serif;font-size:.88rem;line-height:1.2">
+              {{ result.user.display_name or result.user.username }}
+            </div>
+            {% if result.user.id == user.id %}
+            <span class="you-badge">YOU</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Team slots -->
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;flex:1">
+          {% for a in result.assignments %}
+          <div class="rslot"
+               data-code="{{ a.team.code }}"
+               data-name="{{ a.team.name }}"
+               data-flag="{{ flag_url(a.team.code) }}"
+               style="display:flex;flex-direction:column;align-items:center;gap:.2rem;min-width:84px">
+            <div style="font-size:.52rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--pg-muted)">
+              {{ a.group.name.split(':')[0] if a.group else 'Team' }}
+            </div>
+            <div class="rslot-inner"
+                 style="background:var(--pg-foot);border:1px solid var(--border);border-radius:4px;
+                        padding:.35rem .55rem;display:flex;align-items:center;gap:.35rem;
+                        min-width:84px;min-height:34px;justify-content:center">
+              <span style="font-size:1.3rem;color:var(--border-2);font-weight:700;line-height:1">?</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="text-align:center;padding:2rem 0 1rem">
+    <a href="/leagues/{{ league.id }}/sweepstake" id="doneBtnBottom"
+       class="btn btn-secondary" style="display:none">
+      Skip to standings
+    </a>
+  </div>
+
+</div>
+
+<!-- Team data for JS animation -->
+<script id="allTeamsData" type="application/json">
+[{% for t in all_teams %}{"c":"{{ t.code }}","n":"{{ t.name }}","f":"{{ flag_url(t.code) }}"}{% if not loop.last %},{% endif %}{% endfor %}]
+</script>
+
+{% endblock %}
+{% block scripts %}
+<style>
+.rcard.active {
+  opacity: 1 !important;
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: 0 0 0 2px var(--pg-green), 0 8px 28px rgba(10,125,60,.18);
+}
+.rcard.done {
+  opacity: 1 !important;
+  transform: none;
+  border-left: 3px solid var(--pg-green);
+}
+.rslot.revealed .rslot-inner {
+  border-color: var(--pg-green);
+  background: rgba(10,125,60,.06);
+  animation: slotPop .38s cubic-bezier(.18,.89,.32,1.28);
+}
+@keyframes slotPop {
+  0%   { transform: scale(1); }
+  55%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+</style>
+<script>
+const allTeams = JSON.parse(document.getElementById('allTeamsData').textContent);
+const cards    = Array.from(document.querySelectorAll('.rcard'));
+let current    = 0;
+
+function startReveal() {
+  document.getElementById('startBtn').style.display     = 'none';
+  document.getElementById('progressWrap').style.display = 'block';
+  document.getElementById('doneBtnBottom').style.display = '';
+  revealCard(current);
+}
+
+function revealCard(idx) {
+  if (idx >= cards.length) {
+    document.getElementById('doneBtn').style.display        = '';
+    document.getElementById('doneBtnBottom').style.display  = 'none';
+    document.getElementById('revealStatus').textContent     = 'Draw complete!';
+    document.getElementById('progressFill').style.width     = '100%';
+    return;
+  }
+
+  const card = cards[idx];
+  card.classList.add('active');
+  card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+  document.getElementById('revealStatus').textContent =
+    'Revealing ' + (idx + 1) + ' of ' + cards.length + '...';
+  document.getElementById('progressFill').style.width =
+    ((idx / cards.length) * 100) + '%';
+
+  const slots   = card.querySelectorAll('.rslot');
+  let   settled = 0;
+
+  slots.forEach((slot, i) => {
+    // stagger each pot slot by 600ms
+    setTimeout(() => {
+      spinSlot(slot, () => {
+        settled++;
+        if (settled === slots.length) {
+          card.classList.remove('active');
+          card.classList.add('done');
+          current++;
+          setTimeout(() => revealCard(current), 1300);
+        }
+      });
+    }, i * 600);
+  });
+}
+
+function spinSlot(slotEl, onDone) {
+  const inner     = slotEl.querySelector('.rslot-inner');
+  const finalCode = slotEl.dataset.code;
+  const finalName = slotEl.dataset.name;
+  const finalFlag = slotEl.dataset.flag;
+  const TICKS     = 24;
+  let   tick      = 0;
+
+  function next() {
+    const t = allTeams[Math.floor(Math.random() * allTeams.length)];
+    inner.innerHTML =
+      '<img src="' + t.f + '" style="width:26px;height:18px;object-fit:cover;border-radius:2px">' +
+      '<span style="font-size:.7rem;font-weight:700;font-family:\'Rajdhani\',sans-serif">' + t.c + '</span>';
+    tick++;
+    if (tick < TICKS) {
+      // ease-out: starts at ~55ms, ends at ~220ms
+      const delay = 55 + Math.pow(tick / TICKS, 1.9) * 175;
+      setTimeout(next, delay);
+    } else {
+      inner.innerHTML =
+        '<img src="' + finalFlag + '" style="width:26px;height:18px;object-fit:cover;border-radius:2px">' +
+        '<span style="font-size:.7rem;font-weight:700;font-family:\'Rajdhani\',sans-serif">' + finalName + '</span>';
+      slotEl.classList.add('revealed');
+      onDone();
+    }
+  }
+
+  next();
+}
+</script>
+{% endblock %}

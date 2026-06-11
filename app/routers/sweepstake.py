@@ -13,8 +13,8 @@ router = APIRouter()
 
 # FIFA-based default draw pots for WC 2026
 _FIFA_POTS: dict[int, list[str]] = {
-    1: ["ARG", "FRA", "ESP", "ENG", "BRA", "POR", "NED", "GER"],
-    2: ["AUT", "SUI", "JPN", "SEN", "KOR", "CRO", "SWE", "MEX", "TUR", "NOR", "COL", "URU", "BEL", "MAR"],
+    1: ["ARG", "FRA", "ESP", "ENG", "BRA", "POR", "NED", "GER", "MAR"],
+    2: ["AUT", "SUI", "JPN", "SEN", "KOR", "CRO", "SWE", "MEX", "TUR", "NOR", "COL", "URU", "BEL"],
     3: ["ECU", "CIV", "ALG", "AUS", "TUN", "GHA", "CZE", "KSA", "UZB", "COD", "RSA", "IRN", "USA"],
     4: ["IRQ", "EGY", "PAR", "SCO", "PAN", "JOR", "NZL", "CAN", "QAT", "BIH", "CUW", "HAI", "CPV"],
 }
@@ -207,11 +207,15 @@ async def draw_teams(request: Request, league_id: int, db: Session = Depends(get
 
     groups = league.sweepstake_groups
     if groups:
-        # Group draw: each paid member gets 1 random team per group
+        # Group draw: each paid member gets 1 random team per group.
+        # Member order is shuffled independently per group so a good draw
+        # in one pot doesn't correlate with a good draw in another.
         for group in groups:
             team_ids = [gt.team_id for gt in group.teams]
             random.shuffle(team_ids)
-            for i, member in enumerate(paid_members):
+            member_order = list(paid_members)
+            random.shuffle(member_order)
+            for i, member in enumerate(member_order):
                 if i < len(team_ids):
                     db.add(models.SweepstakeAssignment(
                         league_id=league_id,
@@ -237,7 +241,7 @@ async def draw_teams(request: Request, league_id: int, db: Session = Depends(get
 
     league.sweepstake_drawn = True
     db.commit()
-    return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+    return RedirectResponse(f"/leagues/{league_id}/sweepstake/reveal", status_code=303)
 
 
 @router.post("/leagues/{league_id}/sweepstake/reset")
@@ -252,6 +256,54 @@ async def reset_draw(request: Request, league_id: int, db: Session = Depends(get
     league.sweepstake_drawn = False
     db.commit()
     return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+
+
+@router.get("/leagues/{league_id}/sweepstake/reveal")
+async def reveal_page(request: Request, league_id: int, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league:
+        return RedirectResponse("/leagues", status_code=303)
+    membership = db.query(models.LeagueMember).filter_by(
+        league_id=league_id, user_id=user.id
+    ).first()
+    if not membership and not user.is_superadmin:
+        return RedirectResponse("/leagues", status_code=303)
+    if not league.sweepstake_drawn:
+        return RedirectResponse(f"/leagues/{league_id}/sweepstake", status_code=303)
+
+    assignments = (
+        db.query(models.SweepstakeAssignment)
+        .filter_by(league_id=league_id)
+        .all()
+    )
+
+    by_user: dict = {}
+    for a in assignments:
+        by_user.setdefault(a.user_id, []).append(a)
+    for lst in by_user.values():
+        lst.sort(key=lambda a: (a.group.order_index if a.group else 99))
+
+    draw_results = [
+        {"user": lst[0].user, "assignments": lst}
+        for lst in by_user.values() if lst
+    ]
+    random.shuffle(draw_results)
+
+    all_teams = db.query(models.Team).all()
+
+    return templates.TemplateResponse(
+        "sweepstake/reveal.html",
+        {
+            "request": request,
+            "user": user,
+            "league": league,
+            "draw_results": draw_results,
+            "all_teams": all_teams,
+        },
+    )
 
 
 # ── Group management ─────────────────────────────────────────
