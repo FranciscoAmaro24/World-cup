@@ -112,6 +112,49 @@
         {% endif %}
       </div>
 
+      <!-- SWEEPSTAKE STANDINGS (live) -->
+      {% if sweep_lb %}
+      <div class="section-header" style="margin-top:1.5rem">
+        <h2 class="section-title">Sweepstake</h2>
+        <a href="/leagues/{{ league.id }}/sweepstake" class="btn btn-gold btn-sm">Full sweepstake →</a>
+      </div>
+      <div class="card">
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th width="36">#</th>
+              <th>{{ t('league.player', _lang) }}</th>
+              <th>Teams</th>
+              <th>Pts</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in sweep_lb %}
+            <tr>
+              <td>
+                <span class="rank-badge {% if loop.index==1 %}rank-1{% elif loop.index==2 %}rank-2{% elif loop.index==3 %}rank-3{% else %}rank-other{% endif %}">{{ loop.index }}</span>
+              </td>
+              <td>
+                {{ avatar_html(row.user, "xs") | safe }}
+                <span style="margin-left:.4rem">{{ row.user.display_name or row.user.username }}</span>
+                {% if row.user.id == user.id %}<span class="you-badge">YOU</span>{% endif %}
+              </td>
+              <td>
+                <div style="display:flex;gap:.2rem;flex-wrap:wrap">
+                  {% for team in row.teams %}
+                  <img src="{{ flag_url(team.code) }}" title="{{ team.name }}" alt="{{ team.name }}"
+                       style="width:20px;height:14px;object-fit:cover;border-radius:2px;opacity:{% if team.eliminated %}.35{% else %}1{% endif %}">
+                  {% endfor %}
+                </div>
+              </td>
+              <td class="points-cell">{{ row.pts }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
       <!-- Nickname -->
       {% if user %}
       {% set my_membership = league.members | selectattr('user_id', 'equalto', user.id) | first %}

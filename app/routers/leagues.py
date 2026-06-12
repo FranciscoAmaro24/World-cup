@@ -306,6 +306,24 @@ async def league_detail(request: Request, league_id: int, db: Session = Depends(
         models.TournamentPick.league_id == league_id,
         models.TournamentPick.user_id == user.id,
     ).first()
+
+    # Live sweepstake standings (computed on the fly from finished matches, so always current)
+    sweep_lb = []
+    if league.sweepstake_enabled and league.sweepstake_drawn:
+        from routers.sweepstake import _calc_sweep_points
+        sweep_pts = _calc_sweep_points(league, db)
+        teams_by_user: dict = {}
+        for a in league.sweepstake_assignments:
+            teams_by_user.setdefault(a.user_id, []).append(a.team)
+        sweep_lb = sorted(
+            [
+                {"user": m.user, "pts": sweep_pts.get(m.user_id, 0),
+                 "teams": teams_by_user.get(m.user_id, [])}
+                for m in league.members
+            ],
+            key=lambda x: x["pts"], reverse=True,
+        )
+
     return templates.TemplateResponse(
         "leagues/detail.html",
         {
@@ -318,6 +336,7 @@ async def league_detail(request: Request, league_id: int, db: Session = Depends(
             "recent_results": recent_results,
             "is_admin": league.admin_id == user.id or user.is_superadmin,
             "user_bracket_pick": user_bracket_pick,
+            "sweep_lb": sweep_lb,
             "now": datetime.utcnow(),
         },
     )
