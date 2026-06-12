@@ -19,11 +19,38 @@ MAX_SIZE = 10 * 1024 * 1024
 router = APIRouter()
 
 
+def _canonical_league_id(user: models.User, db: Session) -> int | None:
+    """The single league whose predictions represent this user overall.
+
+    Predictions are now replicated across every league a user is in, so profile views
+    must pick one league to avoid counting a match once per league. Preference:
+    admin-set main league → global league → first membership.
+    """
+    member_ids = [
+        m.league_id for m in db.query(models.LeagueMember)
+        .filter(models.LeagueMember.user_id == user.id).all()
+    ]
+    if not member_ids:
+        return None
+    if user.main_league_id and user.main_league_id in member_ids:
+        return user.main_league_id
+    global_league = db.query(models.League).filter(
+        models.League.category == "global", models.League.id.in_(member_ids)
+    ).first()
+    if global_league:
+        return global_league.id
+    return member_ids[0]
+
+
 def _user_stats(user: models.User, db: Session) -> dict:
-    preds = db.query(models.Prediction).filter(
+    canon_id = _canonical_league_id(user, db)
+    q = db.query(models.Prediction).filter(
         models.Prediction.user_id == user.id,
         models.Prediction.points_awarded.isnot(None),
-    ).all()
+    )
+    if canon_id is not None:
+        q = q.filter(models.Prediction.league_id == canon_id)
+    preds = q.all()
     total_pts = sum(p.points_awarded for p in preds)
     exact = sum(1 for p in preds if p.match and p.home_score_pred == p.match.home_score and p.away_score_pred == p.match.away_score)
     correct = sum(1 for p in preds if p.points_awarded and p.points_awarded > 0)
@@ -209,13 +236,14 @@ async def view_profile(request: Request, username: str, db: Session = Depends(ge
     leagues = [m.league for m in memberships]
     from routers.leagues import _member_counts
     counts = _member_counts(db, [l.id for l in leagues])
-    recent_preds = (
+    canon_id = _canonical_league_id(target, db)
+    recent_q = (
         db.query(models.Prediction)
         .filter(models.Prediction.user_id == target.id, models.Prediction.points_awarded.isnot(None))
-        .order_by(models.Prediction.submitted_at.desc())
-        .limit(5)
-        .all()
     )
+    if canon_id is not None:
+        recent_q = recent_q.filter(models.Prediction.league_id == canon_id)
+    recent_preds = recent_q.order_by(models.Prediction.submitted_at.desc()).limit(5).all()
     return templates.TemplateResponse(
         "profile/view.html",
         {

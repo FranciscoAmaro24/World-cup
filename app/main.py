@@ -220,36 +220,59 @@ def _seed_public_leagues():
         db.close()
 
 
-def _replicate_predictions_to_global():
-    """One-time migration: copy each user's predictions to the global league so they're visible on the home page."""
+def _backfill_and_rescore_predictions():
+    """Unify historical predictions across every league a user belongs to, and (re)score finished matches.
+
+    Idempotent. For each (user, match) it takes the latest-submitted prediction as canonical,
+    ensures a row exists in *every* league the user is a member of (including the global league),
+    and recomputes points_awarded for matches that have already finished, using each league's
+    own scoring config. Existing rows keep their `boosted` flag; new replica rows are unboosted.
+    """
     from database import SessionLocal
+    from routers.predictions import calculate_points
     db = SessionLocal()
     try:
-        global_league = db.query(models.League).filter(models.League.category == "global").first()
-        if not global_league:
-            return
-        existing_preds = db.query(models.Prediction).all()
-        seen = {}  # (user_id, match_id) -> prediction (latest submitted)
-        for p in existing_preds:
+        all_preds = db.query(models.Prediction).all()
+
+        # Canonical prediction per (user, match): latest submitted wins
+        canonical: dict = {}
+        for p in all_preds:
             key = (p.user_id, p.match_id)
-            if key not in seen or (p.submitted_at and (not seen[key].submitted_at or p.submitted_at > seen[key].submitted_at)):
-                seen[key] = p
-        for (uid, mid), p in seen.items():
-            in_global = db.query(models.Prediction).filter(
-                models.Prediction.user_id == uid,
-                models.Prediction.match_id == mid,
-                models.Prediction.league_id == global_league.id,
-            ).first()
-            if not in_global:
-                db.add(models.Prediction(
-                    user_id=uid,
-                    match_id=mid,
-                    league_id=global_league.id,
-                    home_score_pred=p.home_score_pred,
-                    away_score_pred=p.away_score_pred,
-                    boosted=False,
-                    submitted_at=p.submitted_at,
-                ))
+            cur = canonical.get(key)
+            if cur is None or (p.submitted_at and (not cur.submitted_at or p.submitted_at > cur.submitted_at)):
+                canonical[key] = p
+
+        memberships: dict = {}
+        for m in db.query(models.LeagueMember).all():
+            memberships.setdefault(m.user_id, set()).add(m.league_id)
+
+        matches = {mt.id: mt for mt in db.query(models.Match).all()}
+        leagues = {l.id: l for l in db.query(models.League).all()}
+        existing = {(p.user_id, p.match_id, p.league_id): p for p in all_preds}
+
+        for (uid, mid), src in canonical.items():
+            match = matches.get(mid)
+            for lid in memberships.get(uid, set()):
+                league = leagues.get(lid)
+                if not league:
+                    continue
+                row = existing.get((uid, mid, lid))
+                if row is None:
+                    row = models.Prediction(
+                        user_id=uid,
+                        match_id=mid,
+                        league_id=lid,
+                        home_score_pred=src.home_score_pred,
+                        away_score_pred=src.away_score_pred,
+                        boosted=False,
+                        submitted_at=src.submitted_at,
+                    )
+                    db.add(row)
+                    existing[(uid, mid, lid)] = row
+                # Score (or re-score) matches that have already finished
+                if match and match.status == "finished" and match.home_score is not None:
+                    row.points_awarded = calculate_points(row, match, league)
+
         db.commit()
     finally:
         db.close()
@@ -261,7 +284,7 @@ async def lifespan(app: FastAPI):
     _backup_db()                       # snapshot BEFORE any migration mutates data
     _migrate_db()
     _seed_public_leagues()
-    _replicate_predictions_to_global()
+    _backfill_and_rescore_predictions()
     task = asyncio.create_task(results_fetcher.results_loop())
     yield
     task.cancel()

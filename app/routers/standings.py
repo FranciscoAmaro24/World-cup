@@ -42,33 +42,69 @@ def compute_group(db: Session, letter: str) -> list[dict]:
     return sorted(stats.values(), key=lambda x: (-x["Pts"], -x["GD"], -x["GF"]))
 
 
+def _result(h, a):
+    return "H" if h > a else ("A" if a > h else "D")
+
+
 @router.get("/leaderboard")
 async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
-    """Redirect to the global public league, or show a standalone board if it doesn't exist."""
-    global_league = db.query(models.League).filter(models.League.category == "global").first()
-    if global_league:
-        return RedirectResponse(f"/leagues/{global_league.id}", status_code=302)
-    # Fallback: standalone leaderboard (before global league is seeded)
+    """Site-wide leaderboard ranking every user across all their predictions.
+
+    Predictions are unified across leagues, so each (user, match) is deduped to the
+    latest-submitted prediction and scored once with a single consistent config
+    (the global league's, falling back to defaults). Boosts are ignored here so the
+    global ranking is comparable across everyone, regardless of which leagues they're in.
+    """
     user = auth.get_current_user(request, db)
-    users = db.query(models.User).all()
+    global_league = db.query(models.League).filter(models.League.category == "global").first()
+    exact_pts  = global_league.points_exact_score if global_league else 3
+    result_pts = global_league.points_correct_result if global_league else 1
+
+    finished = {
+        m.id: m for m in db.query(models.Match).filter(models.Match.status == "finished").all()
+        if m.home_score is not None and m.away_score is not None
+    }
+
+    # Canonical prediction per (user, match): latest submitted wins
+    by_user: dict[int, dict[int, models.Prediction]] = {}
+    for p in db.query(models.Prediction).all():
+        d = by_user.setdefault(p.user_id, {})
+        cur = d.get(p.match_id)
+        if cur is None or (p.submitted_at and (not cur.submitted_at or p.submitted_at > cur.submitted_at)):
+            d[p.match_id] = p
+
+    # Bracket points from the global league (consistent global context)
+    bracket_by_user: dict[int, int] = {}
+    if global_league:
+        for tp in db.query(models.TournamentPick).filter(
+            models.TournamentPick.league_id == global_league.id
+        ).all():
+            bracket_by_user[tp.user_id] = tp.points_awarded or 0
+
     rows = []
-    for u in users:
-        preds = db.query(models.Prediction).filter(
-            models.Prediction.user_id == u.id,
-            models.Prediction.points_awarded.isnot(None),
-        ).all()
-        match_pts = sum(p.points_awarded for p in preds)
-        bracket_pts = sum(
-            tp.points_awarded
-            for tp in db.query(models.TournamentPick).filter(models.TournamentPick.user_id == u.id).all()
-        )
+    for u in db.query(models.User).all():
+        canon = by_user.get(u.id, {})
+        if not canon and u.id not in bracket_by_user:
+            continue  # never predicted anything — skip
+        match_pts = 0
+        for mid, p in canon.items():
+            m = finished.get(mid)
+            if not m:
+                continue
+            if p.home_score_pred == m.home_score and p.away_score_pred == m.away_score:
+                match_pts += exact_pts
+            elif _result(p.home_score_pred, p.away_score_pred) == _result(m.home_score, m.away_score):
+                match_pts += result_pts
+        bracket_pts = bracket_by_user.get(u.id, 0)
         rows.append({
-            "user": u, "match_pts": match_pts,
+            "user": u,
+            "match_pts": match_pts,
             "bracket_pts": bracket_pts,
             "total": match_pts + bracket_pts,
-            "predictions": len(preds),
+            "predictions": len(canon),
         })
-    rows.sort(key=lambda x: -x["total"])
+
+    rows.sort(key=lambda x: (-x["total"], -x["predictions"]))
     for i, row in enumerate(rows):
         row["rank"] = i + 1
     return templates.TemplateResponse(

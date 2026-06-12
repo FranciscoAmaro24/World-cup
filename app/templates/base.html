@@ -35,6 +35,7 @@
       <a href="/fixtures" class="nav-link {% if '/fixtures' in request.url.path %}active{% endif %}">{{ t('nav.matches', _lang) }}</a>
       <a href="/knockout" class="nav-link {% if '/knockout' in request.url.path %}active{% endif %}">{{ t('nav.bracket', _lang) }}</a>
       <a href="/standings" class="nav-link {% if '/standings' in request.url.path %}active{% endif %}">{{ t('nav.standings', _lang) }}</a>
+      <a href="/leaderboard" class="nav-link {% if '/leaderboard' in request.url.path %}active{% endif %}">{{ t('nav.leaderboard', _lang) }}</a>
       <a href="/leagues" class="nav-link {% if '/leagues' in request.url.path and '/leagues/' not in request.url.path and '/discover' not in request.url.path %}active{% endif %}">{{ t('nav.leagues', _lang) }}</a>
       <a href="/leagues/discover" class="nav-link {% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
       <a href="/markets" class="nav-link {% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
@@ -90,6 +91,7 @@
     <a href="/fixtures" class="{% if '/fixtures' in request.url.path %}active{% endif %}">{{ t('nav.matches', _lang) }}</a>
     <a href="/knockout" class="{% if '/knockout' in request.url.path %}active{% endif %}">{{ t('nav.bracket', _lang) }}</a>
     <a href="/standings" class="{% if '/standings' in request.url.path %}active{% endif %}">{{ t('nav.standings', _lang) }}</a>
+    <a href="/leaderboard" class="{% if '/leaderboard' in request.url.path %}active{% endif %}">{{ t('nav.leaderboard', _lang) }}</a>
     <a href="/leagues" class="{% if '/leagues' in request.url.path and '/discover' not in request.url.path %}active{% endif %}">{{ t('nav.leagues', _lang) }}</a>
     <a href="/leagues/discover" class="{% if '/discover' in request.url.path %}active{% endif %}">{{ t('nav.discover', _lang) }}</a>
     <a href="/markets" class="{% if '/markets' in request.url.path %}active{% endif %}">{{ t('nav.markets', _lang) }}</a>
