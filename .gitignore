@@ -4,6 +4,8 @@ __pycache__/
 venv/
 .venv/
 data/worldcup.db
+data/backups/
+*.db
 app/static/uploads/
 app/static/img/*.mp4
 *.egg-info/

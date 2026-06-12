@@ -60,7 +60,6 @@ async def predict_page(request: Request, league_id: int, match_id: int, db: Sess
     existing = db.query(models.Prediction).filter(
         models.Prediction.user_id == user.id,
         models.Prediction.match_id == match_id,
-        models.Prediction.league_id == league_id,
     ).first()
     return templates.TemplateResponse(
         "predictions/predict.html",
@@ -101,25 +100,37 @@ async def save_prediction(
     if home_score < 0 or away_score < 0 or home_score > 20 or away_score > 20:
         return RedirectResponse(f"/leagues/{league_id}", status_code=303)
     is_boosted = boosted in ("1", "true", "on")
-    existing = db.query(models.Prediction).filter(
-        models.Prediction.user_id == user.id,
-        models.Prediction.match_id == match_id,
-        models.Prediction.league_id == league_id,
-    ).first()
-    if existing:
-        existing.home_score_pred = home_score
-        existing.away_score_pred = away_score
-        existing.boosted = is_boosted
-        existing.submitted_at = datetime.utcnow()
-    else:
-        pred = models.Prediction(
-            user_id=user.id,
-            match_id=match_id,
-            league_id=league_id,
-            home_score_pred=home_score,
-            away_score_pred=away_score,
-            boosted=is_boosted,
-        )
-        db.add(pred)
+    now = datetime.utcnow()
+
+    # All leagues the user belongs to
+    all_league_ids = [
+        m.league_id for m in db.query(models.LeagueMember).filter(
+            models.LeagueMember.user_id == user.id
+        ).all()
+    ]
+
+    # Upsert a prediction row for every league the user is in
+    for lid in all_league_ids:
+        pred = db.query(models.Prediction).filter(
+            models.Prediction.user_id == user.id,
+            models.Prediction.match_id == match_id,
+            models.Prediction.league_id == lid,
+        ).first()
+        if pred:
+            pred.home_score_pred = home_score
+            pred.away_score_pred = away_score
+            pred.submitted_at = now
+            if lid == league_id:
+                pred.boosted = is_boosted  # only keep boost for the league they're on
+        else:
+            db.add(models.Prediction(
+                user_id=user.id,
+                match_id=match_id,
+                league_id=lid,
+                home_score_pred=home_score,
+                away_score_pred=away_score,
+                boosted=(is_boosted if lid == league_id else False),
+            ))
+
     db.commit()
     return RedirectResponse(f"/leagues/{league_id}", status_code=303)

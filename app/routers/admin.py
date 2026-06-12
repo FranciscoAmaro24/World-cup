@@ -369,6 +369,26 @@ async def remove_user_from_league(
     return RedirectResponse("/admin#users", status_code=303)
 
 
+@router.post("/users/{user_id}/main-league")
+async def set_main_league(
+    request: Request, user_id: int, league_id: int = Form(...), db: Session = Depends(get_db)
+):
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    target = db.query(models.User).filter(models.User.id == user_id).first()
+    if target:
+        if league_id == 0:
+            target.main_league_id = None
+        else:
+            # Only allow leagues the user actually belongs to
+            member = db.query(models.LeagueMember).filter_by(user_id=user_id, league_id=league_id).first()
+            if member:
+                target.main_league_id = league_id
+        db.commit()
+    return RedirectResponse("/admin#users", status_code=303)
+
+
 @router.post("/users/{user_id}/credits")
 async def adjust_credits(
     request: Request,

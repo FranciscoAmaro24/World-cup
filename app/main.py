@@ -60,14 +60,60 @@ def avatar_html(user, size: str = "md") -> Markup:
     )
 
 
+def _sqlite_path() -> str | None:
+    """Return the on-disk SQLite file path, or None for non-file DBs (e.g. in-memory / non-sqlite)."""
+    db_url = str(engine.url)
+    if not db_url.startswith("sqlite"):
+        return None
+    path = db_url.replace("sqlite:///", "").replace("sqlite://", "")
+    if not path or path == ":memory:":
+        return None
+    return path
+
+
+def _backup_db(keep: int = 20):
+    """Snapshot the SQLite DB before migrations run, so no data is lost on a bad upgrade.
+
+    Uses SQLite's online backup API (safe with the file open), writes a timestamped
+    copy into a `backups/` folder next to the DB, and prunes to the most recent `keep`.
+    """
+    import sqlite3
+    import glob
+    path = _sqlite_path()
+    if not path or not os.path.exists(path):
+        return  # nothing to back up yet (fresh DB)
+
+    backup_dir = os.path.join(os.path.dirname(path) or ".", "backups")
+    os.makedirs(backup_dir, exist_ok=True)
+    stamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    dest = os.path.join(backup_dir, f"worldcup-{stamp}.db")
+
+    try:
+        src = sqlite3.connect(path)
+        dst = sqlite3.connect(dest)
+        with dst:
+            src.backup(dst)
+        dst.close()
+        src.close()
+        print(f"[backup] DB snapshot written to {dest} ({os.path.getsize(dest)} bytes)")
+    except Exception as e:
+        print(f"[backup] WARNING: DB backup failed: {e}")
+        return
+
+    # Prune old backups, keeping the most recent `keep`
+    snaps = sorted(glob.glob(os.path.join(backup_dir, "worldcup-*.db")))
+    for old in snaps[:-keep]:
+        try:
+            os.remove(old)
+        except OSError:
+            pass
+
+
 def _migrate_db():
     """Add columns that didn't exist in older DB versions."""
     import sqlite3
-    db_url = str(engine.url)
-    if not db_url.startswith("sqlite"):
-        return
-    path = db_url.replace("sqlite:///", "").replace("sqlite://", "")
-    if not path or path == ":memory:":
+    path = _sqlite_path()
+    if not path:
         return  # in-memory test DB — create_all handles schema, no migration needed
     conn = sqlite3.connect(path)
     cur = conn.cursor()
@@ -90,6 +136,7 @@ def _migrate_db():
         ("leagues", "sweep_upset_pts", "INTEGER DEFAULT 0"),
         ("sweepstake_groups", "pts_win", "INTEGER"),
         ("sweepstake_assignments", "group_id", "INTEGER"),
+        ("users", "main_league_id", "INTEGER"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
@@ -173,11 +220,48 @@ def _seed_public_leagues():
         db.close()
 
 
+def _replicate_predictions_to_global():
+    """One-time migration: copy each user's predictions to the global league so they're visible on the home page."""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        global_league = db.query(models.League).filter(models.League.category == "global").first()
+        if not global_league:
+            return
+        existing_preds = db.query(models.Prediction).all()
+        seen = {}  # (user_id, match_id) -> prediction (latest submitted)
+        for p in existing_preds:
+            key = (p.user_id, p.match_id)
+            if key not in seen or (p.submitted_at and (not seen[key].submitted_at or p.submitted_at > seen[key].submitted_at)):
+                seen[key] = p
+        for (uid, mid), p in seen.items():
+            in_global = db.query(models.Prediction).filter(
+                models.Prediction.user_id == uid,
+                models.Prediction.match_id == mid,
+                models.Prediction.league_id == global_league.id,
+            ).first()
+            if not in_global:
+                db.add(models.Prediction(
+                    user_id=uid,
+                    match_id=mid,
+                    league_id=global_league.id,
+                    home_score_pred=p.home_score_pred,
+                    away_score_pred=p.away_score_pred,
+                    boosted=False,
+                    submitted_at=p.submitted_at,
+                ))
+        db.commit()
+    finally:
+        db.close()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
+    _backup_db()                       # snapshot BEFORE any migration mutates data
     _migrate_db()
     _seed_public_leagues()
+    _replicate_predictions_to_global()
     task = asyncio.create_task(results_fetcher.results_loop())
     yield
     task.cancel()
@@ -249,6 +333,29 @@ async def index(request: Request, db: Session = Depends(get_db)):
     first_match = db.query(models.Match).order_by(models.Match.match_date).first()
     from routers.leagues import _member_counts
     counts = _member_counts(db, [l.id for l in user_leagues])
+
+    # User's predictions for upcoming matches (any league — predictions are now unified)
+    user_predictions: dict[int, models.Prediction] = {}
+    if user and upcoming:
+        upcoming_ids = [m.id for m in upcoming]
+        preds = db.query(models.Prediction).filter(
+            models.Prediction.user_id == user.id,
+            models.Prediction.match_id.in_(upcoming_ids),
+        ).all()
+        for p in preds:
+            if p.match_id not in user_predictions:
+                user_predictions[p.match_id] = p
+
+    # League used for predict links on the home page.
+    # Admin can set a user's main_league_id; otherwise fall back to first membership.
+    first_league_id = None
+    if user and user.memberships:
+        member_league_ids = {m.league_id for m in user.memberships}
+        if user.main_league_id and user.main_league_id in member_league_ids:
+            first_league_id = user.main_league_id
+        else:
+            first_league_id = user.memberships[0].league_id
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -259,6 +366,8 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "now": datetime.utcnow(),
             "first_match": first_match,
             "member_counts": counts,
+            "user_predictions": user_predictions,
+            "first_league_id": first_league_id,
         },
     )
 

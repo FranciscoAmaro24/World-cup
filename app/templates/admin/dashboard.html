@@ -84,7 +84,7 @@
     <div class="card-body" style="display:flex;gap:2rem;flex-wrap:wrap">
       <div>
         <div class="text-xs text-muted mb-1">Source</div>
-        <div class="text-sm">openfootball/worldcup.json (GitHub, no key) + football-data.org (optional)</div>
+        <div class="text-sm">ESPN API (no key needed) + football-data.org (optional)</div>
       </div>
       <div>
         <div class="text-xs text-muted mb-1">Last Fetched</div>
@@ -386,6 +386,22 @@
                 <button type="submit" name="action" value="sub" class="btn btn-sm btn-secondary">- Take</button>
               </form>
             </div>
+
+            <!-- Main league (only when in more than one) -->
+            {% if u.memberships | length > 1 %}
+            <div>
+              <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.4rem">Main league (home page)</div>
+              <form action="/admin/users/{{ u.id }}/main-league" method="post" style="display:flex;gap:.3rem;align-items:center">
+                <select name="league_id" class="form-input" style="font-size:.78rem;padding:.2rem .4rem;min-width:150px">
+                  <option value="0" {% if not u.main_league_id %}selected{% endif %}>Auto (first league)</option>
+                  {% for m in u.memberships %}
+                  <option value="{{ m.league_id }}" {% if u.main_league_id == m.league_id %}selected{% endif %}>{{ m.league.name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-sm btn-secondary">Set</button>
+              </form>
+            </div>
+            {% endif %}
 
             <!-- Leagues -->
             {% if u.memberships %}

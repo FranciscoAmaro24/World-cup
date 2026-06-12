@@ -155,8 +155,20 @@
         </div>
 
         <div class="pg-fixture-act">
-          {% if user and user.memberships %}
-          <a href="/leagues/{{ user.memberships[0].league_id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
+          {% if user and first_league_id %}
+            {% set my_pred = user_predictions.get(match.id) %}
+            {% if my_pred %}
+            <div style="text-align:center">
+              <span style="display:block;font-family:'Archivo Black',sans-serif;font-size:.82rem;letter-spacing:.04em;color:var(--pg-green)">
+                {{ my_pred.home_score_pred }} – {{ my_pred.away_score_pred }}
+              </span>
+              {% if not match.is_locked() %}
+              <a href="/leagues/{{ first_league_id }}/predict/{{ match.id }}" style="font-size:.65rem;color:var(--pg-muted);text-decoration:underline">Edit</a>
+              {% endif %}
+            </div>
+            {% elif not match.is_locked() %}
+            <a href="/leagues/{{ first_league_id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
+            {% endif %}
           {% elif user %}
           <a href="/leagues" class="pg-btn-predict">Join a League</a>
           {% else %}

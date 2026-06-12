@@ -27,6 +27,7 @@ class User(Base):
     profile_bg = Column(String(100), nullable=True)     # CSS gradient/color for whole-app background
     profile_banner_url = Column(String(200), nullable=True)  # banner image on profile page
     favorite_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
+    main_league_id = Column(Integer, ForeignKey("leagues.id"), nullable=True)  # canonical league for home-page predictions
     created_at = Column(DateTime, default=datetime.utcnow)
 
     memberships = relationship("LeagueMember", back_populates="user", cascade="all, delete-orphan")
@@ -34,6 +35,7 @@ class User(Base):
     sweepstake_assignments = relationship("SweepstakeAssignment", back_populates="user")
     tournament_picks = relationship("TournamentPick", back_populates="user", cascade="all, delete-orphan")
     favorite_team = relationship("Team", foreign_keys=[favorite_team_id])
+    main_league = relationship("League", foreign_keys=[main_league_id])
 
 
 class League(Base):
