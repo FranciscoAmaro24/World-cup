@@ -52,9 +52,9 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
 
     Predictions are unified across leagues, so each (user, match) is deduped to the
     latest-submitted prediction and scored once with the global league's config. The
-    2x boost is only honoured when the user boosted *their global-league prediction*
-    for that match — a boost applied in some private league does not count here. A
-    boosted exact pays exact_pts × multiplier; a boosted miss pays 0 (double-or-nothing).
+    2x boost is honoured if the user boosted that match in *any* league — boosts "leak"
+    into the global board so a user's choice counts no matter which league they made it
+    in. A boosted exact pays exact_pts × multiplier; a boosted miss pays 0 (double-or-nothing).
     """
     user = auth.get_current_user(request, db)
     global_league = db.query(models.League).filter(models.League.category == "global").first()
@@ -68,23 +68,19 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
     }
 
     # Canonical prediction per (user, match): latest submitted wins (scores are identical
-    # across a user's leagues, so any row gives the right prediction).
+    # across a user's leagues). Track whether they boosted this match in ANY league.
     by_user: dict[int, dict[int, models.Prediction]] = {}
+    boosted_matches: set = set()  # (user_id, match_id) boosted somewhere
     for p in db.query(models.Prediction).all():
         d = by_user.setdefault(p.user_id, {})
         cur = d.get(p.match_id)
         if cur is None or (p.submitted_at and (not cur.submitted_at or p.submitted_at > cur.submitted_at)):
             d[p.match_id] = p
+        if p.boosted:
+            boosted_matches.add((p.user_id, p.match_id))
 
-    # Boost only counts from the user's GLOBAL-league prediction for that match.
-    global_boosted: set = set()
     bracket_by_user: dict[int, int] = {}
     if global_league:
-        for p in db.query(models.Prediction).filter(
-            models.Prediction.league_id == global_league.id,
-            models.Prediction.boosted == True,
-        ).all():
-            global_boosted.add((p.user_id, p.match_id))
         for tp in db.query(models.TournamentPick).filter(
             models.TournamentPick.league_id == global_league.id
         ).all():
@@ -96,12 +92,12 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
         if not canon and u.id not in bracket_by_user:
             continue  # never predicted anything — skip
         match_pts = 0
-        boost_pts = 0  # extra points earned purely from the global 2x boost
+        boost_pts = 0  # extra points earned purely from the 2x boost
         for mid, p in canon.items():
             m = finished.get(mid)
             if not m:
                 continue
-            boosted = (u.id, mid) in global_boosted
+            boosted = (u.id, mid) in boosted_matches
             is_exact = (p.home_score_pred == m.home_score and p.away_score_pred == m.away_score)
             if is_exact:
                 if boosted:
