@@ -38,7 +38,9 @@
             </a>
             {% if user and row.user.id == user.id %}<span class="you-badge" style="margin-left:.4rem">YOU</span>{% endif %}
           </td>
-          <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">{{ row.match_pts }}</td>
+          <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">
+            {{ row.match_pts }}{% if row.boost_pts %}<span title="Includes +{{ row.boost_pts }} from 2x boosts" style="margin-left:.25rem;font-size:.62rem;font-weight:800;color:var(--pg-green)">⚡+{{ row.boost_pts }}</span>{% endif %}
+          </td>
           <td style="padding:.6rem .5rem;text-align:center;color:var(--text-2)">{{ row.bracket_pts }}</td>
           <td style="padding:.6rem .75rem;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:1rem;color:var(--pg-green)">{{ row.total }}</td>
         </tr>

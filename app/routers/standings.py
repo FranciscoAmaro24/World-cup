@@ -51,21 +51,24 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
     """Site-wide leaderboard ranking every user across all their predictions.
 
     Predictions are unified across leagues, so each (user, match) is deduped to the
-    latest-submitted prediction and scored once with a single consistent config
-    (the global league's, falling back to defaults). Boosts are ignored here so the
-    global ranking is comparable across everyone, regardless of which leagues they're in.
+    latest-submitted prediction and scored once with the global league's config. The
+    2x boost is only honoured when the user boosted *their global-league prediction*
+    for that match — a boost applied in some private league does not count here. A
+    boosted exact pays exact_pts × multiplier; a boosted miss pays 0 (double-or-nothing).
     """
     user = auth.get_current_user(request, db)
     global_league = db.query(models.League).filter(models.League.category == "global").first()
     exact_pts  = global_league.points_exact_score if global_league else 3
     result_pts = global_league.points_correct_result if global_league else 1
+    boost_mult = (global_league.boost_multiplier if global_league else 2) or 2
 
     finished = {
         m.id: m for m in db.query(models.Match).filter(models.Match.status == "finished").all()
         if m.home_score is not None and m.away_score is not None
     }
 
-    # Canonical prediction per (user, match): latest submitted wins
+    # Canonical prediction per (user, match): latest submitted wins (scores are identical
+    # across a user's leagues, so any row gives the right prediction).
     by_user: dict[int, dict[int, models.Prediction]] = {}
     for p in db.query(models.Prediction).all():
         d = by_user.setdefault(p.user_id, {})
@@ -73,9 +76,15 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
         if cur is None or (p.submitted_at and (not cur.submitted_at or p.submitted_at > cur.submitted_at)):
             d[p.match_id] = p
 
-    # Bracket points from the global league (consistent global context)
+    # Boost only counts from the user's GLOBAL-league prediction for that match.
+    global_boosted: set = set()
     bracket_by_user: dict[int, int] = {}
     if global_league:
+        for p in db.query(models.Prediction).filter(
+            models.Prediction.league_id == global_league.id,
+            models.Prediction.boosted == True,
+        ).all():
+            global_boosted.add((p.user_id, p.match_id))
         for tp in db.query(models.TournamentPick).filter(
             models.TournamentPick.league_id == global_league.id
         ).all():
@@ -87,18 +96,28 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
         if not canon and u.id not in bracket_by_user:
             continue  # never predicted anything — skip
         match_pts = 0
+        boost_pts = 0  # extra points earned purely from the global 2x boost
         for mid, p in canon.items():
             m = finished.get(mid)
             if not m:
                 continue
-            if p.home_score_pred == m.home_score and p.away_score_pred == m.away_score:
-                match_pts += exact_pts
+            boosted = (u.id, mid) in global_boosted
+            is_exact = (p.home_score_pred == m.home_score and p.away_score_pred == m.away_score)
+            if is_exact:
+                if boosted:
+                    match_pts += exact_pts * boost_mult
+                    boost_pts += exact_pts * (boost_mult - 1)
+                else:
+                    match_pts += exact_pts
+            elif boosted:
+                pass  # boosted miss = 0 (double-or-nothing)
             elif _result(p.home_score_pred, p.away_score_pred) == _result(m.home_score, m.away_score):
                 match_pts += result_pts
         bracket_pts = bracket_by_user.get(u.id, 0)
         rows.append({
             "user": u,
             "match_pts": match_pts,
+            "boost_pts": boost_pts,
             "bracket_pts": bracket_pts,
             "total": match_pts + bracket_pts,
             "predictions": len(canon),
