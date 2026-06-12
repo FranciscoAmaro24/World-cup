@@ -220,6 +220,30 @@ def _seed_public_leagues():
         db.close()
 
 
+def _enroll_all_in_global():
+    """Make every user a member of the global league so the entire leaderboard shows everyone.
+
+    Idempotent. Runs before the prediction backfill so each user's predictions get replicated
+    into (and scored for) the global league.
+    """
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        global_league = db.query(models.League).filter(models.League.category == "global").first()
+        if not global_league:
+            return
+        existing = {
+            m.user_id for m in db.query(models.LeagueMember)
+            .filter(models.LeagueMember.league_id == global_league.id).all()
+        }
+        for u in db.query(models.User).all():
+            if u.id not in existing:
+                db.add(models.LeagueMember(league_id=global_league.id, user_id=u.id))
+        db.commit()
+    finally:
+        db.close()
+
+
 def _backfill_and_rescore_predictions():
     """Unify historical predictions across every league a user belongs to, and (re)score finished matches.
 
@@ -284,6 +308,7 @@ async def lifespan(app: FastAPI):
     _backup_db()                       # snapshot BEFORE any migration mutates data
     _migrate_db()
     _seed_public_leagues()
+    _enroll_all_in_global()
     _backfill_and_rescore_predictions()
     task = asyncio.create_task(results_fetcher.results_loop())
     yield

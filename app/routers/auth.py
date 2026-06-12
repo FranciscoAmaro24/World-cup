@@ -101,6 +101,13 @@ async def register(
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
+    # Auto-enroll into the global league so everyone shows on the entire leaderboard
+    global_league = db.query(models.League).filter(models.League.category == "global").first()
+    if global_league:
+        db.add(models.LeagueMember(league_id=global_league.id, user_id=new_user.id))
+        db.commit()
+
     token = auth.create_access_token(new_user.id)
     response = RedirectResponse("/", status_code=303)
     response.set_cookie("access_token", token, httponly=True, samesite="lax", max_age=604800)
