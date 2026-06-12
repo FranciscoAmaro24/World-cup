@@ -181,6 +181,45 @@ async def update_result(
     return RedirectResponse("/admin", status_code=303)
 
 
+@router.post("/recalc-points")
+async def recalc_points(request: Request, db: Session = Depends(get_db)):
+    """Recompute points_awarded for every prediction (and bracket pick) against current results.
+
+    Fixes any stale/incorrect points — e.g. rows scored before a match's final score was set,
+    or replica predictions created after a result was already entered.
+    """
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+
+    leagues = {l.id: l for l in db.query(models.League).all()}
+    finished = {
+        m.id: m for m in db.query(models.Match).filter(models.Match.status == "finished").all()
+    }
+
+    updated = 0
+    for pred in db.query(models.Prediction).all():
+        match = finished.get(pred.match_id)
+        league = leagues.get(pred.league_id)
+        if match and league and match.home_score is not None and match.away_score is not None:
+            new_pts = calculate_points(pred, match, league)
+            if pred.points_awarded != new_pts:
+                pred.points_awarded = new_pts
+                updated += 1
+
+    # Bracket points across all leagues
+    from bracket_utils import get_actual_bracket, calc_bracket_points
+    actual = get_actual_bracket(db)
+    for league in leagues.values():
+        for pick in db.query(models.TournamentPick).filter(
+            models.TournamentPick.league_id == league.id
+        ).all():
+            pick.points_awarded = calc_bracket_points(pick, league, actual)
+
+    db.commit()
+    return RedirectResponse(f"/admin?msg=recalc_{updated}", status_code=303)
+
+
 @router.post("/matches/{match_id}/reset")
 async def reset_result(request: Request, match_id: int, db: Session = Depends(get_db)):
     user = _require_admin(request, db)

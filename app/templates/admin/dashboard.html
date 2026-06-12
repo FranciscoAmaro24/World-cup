@@ -77,10 +77,21 @@
   <div class="card" style="margin-bottom:1.5rem">
     <div class="card-header">
       <span class="font-bold text-sm">Auto-Results Fetcher</span>
-      <form action="/admin/fetch" method="post" style="margin:0">
-        <button type="submit" class="btn btn-primary btn-sm">Fetch Now</button>
-      </form>
+      <div style="display:flex;gap:.4rem;margin:0">
+        <form action="/admin/recalc-points" method="post" style="margin:0"
+              onsubmit="return confirm('Recalculate points for every prediction and bracket pick across all leagues?')">
+          <button type="submit" class="btn btn-secondary btn-sm">Recalc Points</button>
+        </form>
+        <form action="/admin/fetch" method="post" style="margin:0">
+          <button type="submit" class="btn btn-primary btn-sm">Fetch Now</button>
+        </form>
+      </div>
     </div>
+    {% if request.query_params.get('msg', '').startswith('recalc_') %}
+    <div class="alert alert-info" style="margin:.5rem 1rem 0;font-size:.8rem">
+      Recalculated points for {{ request.query_params.get('msg')[7:] }} prediction(s).
+    </div>
+    {% endif %}
     <div class="card-body" style="display:flex;gap:2rem;flex-wrap:wrap">
       <div>
         <div class="text-xs text-muted mb-1">Source</div>
