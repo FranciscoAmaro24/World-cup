@@ -137,6 +137,7 @@ def _migrate_db():
         ("sweepstake_groups", "pts_win", "INTEGER"),
         ("sweepstake_assignments", "group_id", "INTEGER"),
         ("users", "main_league_id", "INTEGER"),
+        ("league_members", "bonus_points", "INTEGER DEFAULT 0"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]

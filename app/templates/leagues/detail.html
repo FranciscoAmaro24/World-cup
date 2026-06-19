@@ -99,6 +99,7 @@
                 <span style="margin-left:.4rem">{{ row.member.nickname or row.user.display_name or row.user.username }}</span>
                 {% if row.user.id == user.id %}<span class="you-badge">YOU</span>{% endif %}
                 {% if not row.has_bracket %}<span class="tag tag-gray" style="font-size:.55rem;margin-left:.3rem">{{ t('league.no_bracket', _lang) }}</span>{% endif %}
+                {% if row.bonus_points %}<span class="tag" style="font-size:.55rem;margin-left:.3rem;background:rgba(245,158,11,.15);color:#b45309" title="Bonus points granted by admin">{% if row.bonus_points > 0 %}+{% endif %}{{ row.bonus_points }} bonus</span>{% endif %}
               </td>
               <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--pg-muted)">{{ row.match_points }}</td>
               <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--pg-muted)">{{ row.bracket_points }}</td>
@@ -111,6 +112,35 @@
         <div class="card-body empty-state"><p>No predictions yet</p></div>
         {% endif %}
       </div>
+
+      <!-- ADMIN: grant bonus points (e.g. late-joiner catch-up) -->
+      {% if is_admin %}
+      <details class="card" style="margin-top:1rem">
+        <summary style="cursor:pointer;padding:.6rem 1rem;font-weight:700;font-size:.85rem;list-style:none;display:flex;align-items:center;gap:.4rem">
+          ⚙ Manage points
+          <span style="font-weight:400;font-size:.72rem;color:var(--pg-muted)">— grant or adjust points for members</span>
+        </summary>
+        <div class="card-body" style="border-top:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem">
+          {% for row in leaderboard %}
+          <form action="/leagues/{{ league.id }}/members/{{ row.user.id }}/points" method="post"
+                style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap">
+            <span style="min-width:130px;font-size:.82rem;display:flex;align-items:center;gap:.4rem">
+              {{ avatar_html(row.user, "xs") | safe }}
+              {{ row.member.nickname or row.user.display_name or row.user.username }}
+            </span>
+            <span style="font-size:.72rem;color:var(--pg-muted);min-width:70px">bonus: <strong style="color:var(--pg-ink)">{{ row.bonus_points }}</strong></span>
+            <input type="number" name="amount" value="0" style="width:72px;padding:.25rem .4rem;font-size:.8rem;background:var(--pg-card);border:1px solid var(--border);border-radius:4px;color:var(--pg-ink)">
+            <button type="submit" name="action" value="add" class="btn btn-sm btn-primary">+ Add</button>
+            <button type="submit" name="action" value="sub" class="btn btn-sm btn-secondary">− Take</button>
+            <button type="submit" name="action" value="set" class="btn btn-sm btn-secondary">Set</button>
+          </form>
+          {% endfor %}
+          <p style="font-size:.72rem;color:var(--pg-muted);margin:.25rem 0 0">
+            Bonus points are added to the member's total on this league's leaderboard. Use a negative value with “Set” to deduct.
+          </p>
+        </div>
+      </details>
+      {% endif %}
 
       <!-- SWEEPSTAKE STANDINGS (live) -->
       {% if sweep_lb %}

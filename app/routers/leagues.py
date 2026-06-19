@@ -64,12 +64,14 @@ def _get_leaderboard(league: models.League, db: Session):
         match_pts   = pred_pts.get(m.user_id, 0)
         bracket_pick = pick_by_user.get(m.user_id)
         bracket_pts  = bracket_pick.points_awarded if bracket_pick else 0
+        bonus_pts    = m.bonus_points or 0
         rows.append({
             "user":           m.user,
             "member":         m,
-            "points":         match_pts + bracket_pts,
+            "points":         match_pts + bracket_pts + bonus_pts,
             "match_points":   match_pts,
             "bracket_points": bracket_pts,
+            "bonus_points":   bonus_pts,
             "predictions":    pred_count.get(m.user_id, 0),
             "has_bracket":    bracket_pick is not None,
         })
@@ -524,6 +526,38 @@ async def set_nickname(
     ).first()
     if member:
         member.nickname = nickname.strip()[:50] or None
+        db.commit()
+    return RedirectResponse(f"/leagues/{league_id}", status_code=303)
+
+
+@router.post("/{league_id}/members/{member_user_id}/points")
+async def adjust_member_points(
+    request: Request,
+    league_id: int,
+    member_user_id: int,
+    action: str = Form(...),          # "add" | "sub" | "set"
+    amount: int = Form(0),
+    db: Session = Depends(get_db),
+):
+    """League admin grants/adjusts manual bonus points for a member (e.g. late-joiner catch-up)."""
+    user = auth.get_current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    league = db.query(models.League).filter(models.League.id == league_id).first()
+    if not league or (league.admin_id != user.id and not user.is_superadmin):
+        return RedirectResponse(f"/leagues/{league_id}", status_code=303)
+    member = db.query(models.LeagueMember).filter(
+        models.LeagueMember.league_id == league_id,
+        models.LeagueMember.user_id == member_user_id,
+    ).first()
+    if member:
+        current = member.bonus_points or 0
+        if action == "set":
+            member.bonus_points = amount
+        elif action == "add":
+            member.bonus_points = current + amount
+        elif action == "sub":
+            member.bonus_points = current - amount
         db.commit()
     return RedirectResponse(f"/leagues/{league_id}", status_code=303)
 

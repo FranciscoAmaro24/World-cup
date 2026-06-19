@@ -92,6 +92,7 @@ class LeagueMember(Base):
     league_id = Column(Integer, ForeignKey("leagues.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     nickname = Column(String(50), nullable=True)       # custom name shown on this league's leaderboard
+    bonus_points = Column(Integer, default=0)          # manual points granted by the league admin (e.g. late-joiner catch-up)
     sweepstake_paid = Column(Boolean, default=False)
     is_favourite = Column(Boolean, default=False)
     joined_at = Column(DateTime, default=datetime.utcnow)
