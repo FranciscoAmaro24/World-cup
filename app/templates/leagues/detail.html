@@ -99,7 +99,6 @@
                 <span style="margin-left:.4rem">{{ row.member.nickname or row.user.display_name or row.user.username }}</span>
                 {% if row.user.id == user.id %}<span class="you-badge">YOU</span>{% endif %}
                 {% if not row.has_bracket %}<span class="tag tag-gray" style="font-size:.55rem;margin-left:.3rem">{{ t('league.no_bracket', _lang) }}</span>{% endif %}
-                {% if row.bonus_points %}<span class="tag" style="font-size:.55rem;margin-left:.3rem;background:rgba(245,158,11,.15);color:#b45309" title="Bonus points granted by admin">{% if row.bonus_points > 0 %}+{% endif %}{{ row.bonus_points }} bonus</span>{% endif %}
               </td>
               <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--pg-muted)">{{ row.match_points }}</td>
               <td style="font-family:'Rajdhani',sans-serif;font-weight:700;color:var(--pg-muted)">{{ row.bracket_points }}</td>

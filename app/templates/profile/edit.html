@@ -57,6 +57,15 @@
         <input class="form-input" type="text" name="bio" value="{{ user.bio or '' }}" maxlength="120" placeholder="{{ t('profile.bio_hint', _lang) }}">
       </div>
 
+      <div class="form-group">
+        <label class="form-label">Recovery phrase
+          {% if user.recovery_phrase_hash %}<span class="tag tag-green" style="font-size:.55rem">set</span>{% else %}<span class="tag tag-gray" style="font-size:.55rem">not set</span>{% endif %}
+        </label>
+        <input class="form-input" type="text" name="recovery_phrase" autocomplete="off"
+               placeholder="{% if user.recovery_phrase_hash %}Enter a new phrase to change it{% else %}Set a phrase to enable password reset{% endif %}">
+        <p class="form-hint">Lets you reset your password if you forget it. Leave blank to keep your current one.</p>
+      </div>
+
       <hr class="form-divider">
       <p class="form-label">{{ t('profile.avatar_color', _lang) }}</p>
       <div class="color-picker mb-3" id="colorPicker">

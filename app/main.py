@@ -137,6 +137,7 @@ def _migrate_db():
         ("sweepstake_groups", "pts_win", "INTEGER"),
         ("sweepstake_assignments", "group_id", "INTEGER"),
         ("users", "main_league_id", "INTEGER"),
+        ("users", "recovery_phrase_hash", "VARCHAR(200)"),
         ("league_members", "bonus_points", "INTEGER DEFAULT 0"),
     ]
     for table, col, col_type in migrations:

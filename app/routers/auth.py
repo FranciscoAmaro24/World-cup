@@ -24,6 +24,16 @@ def _contains_banned_word(text: str) -> bool:
     return any(w in normalised for w in _BANNED_WORDS)
 
 
+def _normalise_phrase(phrase: str) -> str:
+    """Case/whitespace-insensitive so users can recover without exact-matching their phrase."""
+    return re.sub(r"\s+", " ", phrase.strip().lower())
+
+
+def _hash_recovery(phrase: str) -> str | None:
+    phrase = _normalise_phrase(phrase)
+    return auth.hash_password(phrase) if phrase else None
+
+
 @router.get("/login")
 async def login_page(request: Request, db: Session = Depends(get_db)):
     user = auth.get_current_user(request, db)
@@ -52,6 +62,49 @@ async def login(
     return response
 
 
+@router.get("/forgot-password")
+async def forgot_password_page(request: Request, db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if user:
+        return RedirectResponse("/", status_code=303)
+    return templates.TemplateResponse(
+        "forgot_password.html", {"request": request, "user": None, "error": None, "success": None}
+    )
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: Request,
+    username: str = Form(...),
+    recovery_phrase: str = Form(...),
+    new_password: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    def fail(msg: str):
+        return templates.TemplateResponse(
+            "forgot_password.html",
+            {"request": request, "user": None, "error": msg, "success": None},
+            status_code=400,
+        )
+
+    if len(new_password) < 6:
+        return fail("New password must be at least 6 characters")
+
+    user = db.query(models.User).filter(models.User.username == username).first()
+    phrase = _normalise_phrase(recovery_phrase)
+    # Same error whether the user exists or the phrase is wrong — don't leak which.
+    if not user or not user.recovery_phrase_hash or not auth.verify_password(phrase, user.recovery_phrase_hash):
+        return fail("Username and recovery phrase do not match")
+
+    user.password_hash = auth.hash_password(new_password)
+    db.commit()
+    return templates.TemplateResponse(
+        "forgot_password.html",
+        {"request": request, "user": None, "error": None,
+         "success": "Password updated — you can now log in with your new password."},
+    )
+
+
 @router.get("/register")
 async def register_page(request: Request, db: Session = Depends(get_db)):
     user = auth.get_current_user(request, db)
@@ -65,6 +118,7 @@ async def register(
     request: Request,
     username: str = Form(...),
     password: str = Form(...),
+    recovery_phrase: str = Form(""),
     db: Session = Depends(get_db),
 ):
     if len(username) < 3 or len(username) > 30:
@@ -96,6 +150,7 @@ async def register(
         username=username,
         email=f"_noemail.{username}@wc2026",
         password_hash=auth.hash_password(password),
+        recovery_phrase_hash=_hash_recovery(recovery_phrase),
         is_superadmin=is_first,
     )
     db.add(new_user)

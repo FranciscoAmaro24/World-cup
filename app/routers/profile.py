@@ -107,6 +107,7 @@ async def save_profile(
     avatar_icon: str = Form("⚽"),
     favorite_team_id: int = Form(0),
     profile_bg: str = Form("none"),
+    recovery_phrase: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = auth.get_current_user(request, db)
@@ -118,6 +119,10 @@ async def save_profile(
     user.avatar_icon = avatar_icon[:6]
     user.favorite_team_id = favorite_team_id if favorite_team_id > 0 else None
     user.profile_bg = profile_bg if profile_bg in _ALLOWED_BGS else None
+    # Only update the recovery phrase when a new one is entered (blank = leave unchanged)
+    if recovery_phrase.strip():
+        from routers.auth import _hash_recovery
+        user.recovery_phrase_hash = _hash_recovery(recovery_phrase)
     db.commit()
     teams = db.query(models.Team).order_by(models.Team.group_letter, models.Team.name).all()
     return templates.TemplateResponse(

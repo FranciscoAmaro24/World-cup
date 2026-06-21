@@ -17,6 +17,7 @@ class User(Base):
     username = Column(String(50), unique=True, nullable=False, index=True)
     email = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(200), nullable=False)
+    recovery_phrase_hash = Column(String(200), nullable=True)  # hashed answer used for self-service password reset
     is_superadmin = Column(Boolean, default=False)
     display_name = Column(String(50), nullable=True)
     bio = Column(String(120), nullable=True)
