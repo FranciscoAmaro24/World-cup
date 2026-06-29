@@ -105,6 +105,53 @@ async def forgot_password(
     )
 
 
+@router.get("/reset-password/{token}")
+async def reset_password_page(request: Request, token: str, db: Session = Depends(get_db)):
+    target = auth.verify_reset_token(token, db)
+    if not target:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "user": None, "token": token, "target": None,
+             "error": "This reset link is invalid or has expired. Ask an admin for a new one.", "success": None},
+            status_code=400,
+        )
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {"request": request, "user": None, "token": token, "target": target, "error": None, "success": None},
+    )
+
+
+@router.post("/reset-password/{token}")
+async def reset_password(
+    request: Request,
+    token: str,
+    new_password: str = Form(...),
+    db: Session = Depends(get_db),
+):
+    target = auth.verify_reset_token(token, db)
+    if not target:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "user": None, "token": token, "target": None,
+             "error": "This reset link is invalid or has expired. Ask an admin for a new one.", "success": None},
+            status_code=400,
+        )
+    if len(new_password) < 6:
+        return templates.TemplateResponse(
+            "reset_password.html",
+            {"request": request, "user": None, "token": token, "target": target,
+             "error": "Password must be at least 6 characters", "success": None},
+            status_code=400,
+        )
+    target.password_hash = auth.hash_password(new_password)
+    db.commit()  # password change invalidates the token (it was signed with the old hash)
+    return templates.TemplateResponse(
+        "reset_password.html",
+        {"request": request, "user": None, "token": token, "target": None,
+         "error": None, "success": "Password updated — you can now log in with your new password."},
+    )
+
+
 @router.get("/register")
 async def register_page(request: Request, db: Session = Depends(get_db)):
     user = auth.get_current_user(request, db)

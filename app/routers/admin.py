@@ -408,6 +408,25 @@ async def remove_user_from_league(
     return RedirectResponse("/admin#users", status_code=303)
 
 
+@router.post("/users/{user_id}/reset-link")
+async def generate_reset_link(request: Request, user_id: int, db: Session = Depends(get_db)):
+    """Superadmin generates a one-time password-reset link to hand to a user."""
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    target = db.query(models.User).filter(models.User.id == user_id).first()
+    if not target:
+        return RedirectResponse("/admin#users", status_code=303)
+    token = auth.create_reset_token(target)
+    base = str(request.base_url).rstrip("/")
+    link = f"{base}/reset-password/{token}"
+    from urllib.parse import quote
+    return RedirectResponse(
+        f"/admin?reset_user={quote(target.username)}&reset_link={quote(link, safe='')}#users",
+        status_code=303,
+    )
+
+
 @router.post("/users/{user_id}/main-league")
 async def set_main_league(
     request: Request, user_id: int, league_id: int = Form(...), db: Session = Depends(get_db)

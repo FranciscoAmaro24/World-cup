@@ -36,6 +36,38 @@ STAGE_REACHED = {
     "group": 0, "r32": 1, "r16": 2, "qf": 3, "sf": 4, "final": 5, "winner": 6,
 }
 
+# Knockout round start dates (from the ESPN tournament calendar). The round for any
+# match date is the last entry whose start date it has reached — this also disambiguates
+# the 3rd-place match (Jul 18) from the Final (Jul 19), which the API dates overlap on.
+_ROUND_DATES = [
+    (date(2026, 6, 11), "group"),
+    (date(2026, 6, 28), "r32"),
+    (date(2026, 7, 4),  "r16"),
+    (date(2026, 7, 9),  "qf"),
+    (date(2026, 7, 14), "sf"),
+    (date(2026, 7, 18), "third"),
+    (date(2026, 7, 19), "final"),
+]
+
+
+def _round_for_date(d: date) -> str:
+    code = "group"
+    for start, rc in _ROUND_DATES:
+        if d >= start:
+            code = rc
+    return code
+
+
+def _event_datetime(event: dict) -> Optional[datetime]:
+    ds = event.get("date")
+    if not ds:
+        return None
+    try:
+        return datetime.fromisoformat(ds.replace("Z", "+00:00")).replace(tzinfo=None)
+    except ValueError:
+        return None
+
+
 last_fetch: Optional[datetime] = None
 last_error: Optional[str] = None
 
@@ -72,11 +104,7 @@ def _dates_to_fetch(db) -> list[date]:
     """Return sorted list of dates that need an ESPN check."""
     from models import Match
     today = date.today()
-    end   = min(today, WC_END)
-    if end < WC_START:
-        return []
-
-    all_wc_dates = {WC_START + timedelta(days=i) for i in range((end - WC_START).days + 1)}
+    all_wc_dates = {WC_START + timedelta(days=i) for i in range((WC_END - WC_START).days + 1)}
 
     # Dates where we still have unfinished past matches (primary need)
     now = datetime.utcnow()
@@ -86,10 +114,11 @@ def _dates_to_fetch(db) -> list[date]:
         if m.match_date
     }
 
-    # Last 2 days as safety net (catches any missed updates)
-    safety = {today - timedelta(days=i) for i in range(3)}
+    # Last 3 days (safety net for missed updates) + next 8 days
+    # (so upcoming knockout matchups get pulled in as they're decided).
+    window = {today + timedelta(days=i) for i in range(-3, 9)}
 
-    return sorted((scheduled_dates | safety) & all_wc_dates)
+    return sorted((scheduled_dates | window) & all_wc_dates)
 
 
 async def _fetch_espn(db: Session) -> int:
@@ -112,8 +141,7 @@ async def _fetch_espn(db: Session) -> int:
                 continue
 
             for event in resp.json().get("events", []):
-                if not event.get("status", {}).get("type", {}).get("completed"):
-                    continue
+                completed = bool(event.get("status", {}).get("type", {}).get("completed"))
 
                 comp         = event["competitions"][0]
                 competitors  = comp.get("competitors", [])
@@ -125,24 +153,48 @@ async def _fetch_espn(db: Session) -> int:
                 home_abbr = ESPN_TO_CODE.get(home_comp["team"]["abbreviation"], home_comp["team"]["abbreviation"])
                 away_abbr = ESPN_TO_CODE.get(away_comp["team"]["abbreviation"], away_comp["team"]["abbreviation"])
 
-                try:
-                    home_score_val = int(home_comp["score"])
-                    away_score_val = int(away_comp["score"])
-                except (KeyError, ValueError, TypeError):
-                    continue
-
                 home_team = db.query(Team).filter(Team.code == home_abbr).first()
                 away_team = db.query(Team).filter(Team.code == away_abbr).first()
                 if not home_team or not away_team:
-                    logger.debug(f"ESPN: unknown team codes {home_abbr!r} or {away_abbr!r} — skipping")
+                    # Placeholder side (e.g. "3RD", "RD32") — matchup not decided yet
                     continue
 
+                # Determine the round from the match date (group vs r32/r16/qf/sf/third/final)
+                ev_dt      = _event_datetime(event)
+                round_code = _round_for_date(ev_dt.date()) if ev_dt else "group"
+
+                # Locate the DB match: prefer an exact team match; otherwise fill the next
+                # empty knockout placeholder for this round (this is how the bracket fills in).
                 match = db.query(Match).filter(
                     Match.home_team_id == home_team.id,
                     Match.away_team_id == away_team.id,
                 ).first()
+                if not match and round_code != "group":
+                    match = (
+                        db.query(Match)
+                        .filter(Match.round == round_code, Match.home_team_id.is_(None))
+                        .order_by(Match.match_date, Match.id)
+                        .first()
+                    )
+                    if match:
+                        match.home_team_id = home_team.id
+                        match.away_team_id = away_team.id
+                        if ev_dt:
+                            match.match_date = ev_dt
+                        logger.info(f"ESPN: bracket — set {round_code} matchup {home_abbr} vs {away_abbr}")
+                        if not completed:
+                            updated += 1  # populated an upcoming matchup
                 if not match:
-                    logger.debug(f"ESPN: no DB match for {home_abbr} vs {away_abbr}")
+                    logger.debug(f"ESPN: no DB slot for {home_abbr} vs {away_abbr} ({round_code})")
+                    continue
+
+                if not completed:
+                    continue  # matchup recorded; result not in yet
+
+                try:
+                    home_score_val = int(home_comp["score"])
+                    away_score_val = int(away_comp["score"])
+                except (KeyError, ValueError, TypeError):
                     continue
 
                 already_finished = match.status == "finished"

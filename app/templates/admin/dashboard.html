@@ -332,6 +332,19 @@
   <div class="card-header">
     <span class="font-bold text-sm">Users ({{ users | length }})</span>
   </div>
+  {% if request.query_params.get('reset_link') %}
+  <div class="alert alert-success" style="margin:.75rem 1rem;font-size:.82rem">
+    <div style="font-weight:700;margin-bottom:.35rem">Password reset link for {{ request.query_params.get('reset_user') }}</div>
+    <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap">
+      <input type="text" readonly value="{{ request.query_params.get('reset_link') }}" id="resetLinkBox"
+             style="flex:1;min-width:240px;font-size:.74rem;padding:.35rem .5rem;background:var(--pg-card);border:1px solid var(--border);border-radius:4px;color:var(--pg-ink)"
+             onclick="this.select()">
+      <button type="button" class="btn btn-sm btn-primary"
+              onclick="navigator.clipboard.writeText(document.getElementById('resetLinkBox').value);this.textContent='Copied!'">Copy</button>
+    </div>
+    <p style="font-size:.7rem;color:var(--pg-muted);margin:.4rem 0 0">Share this with the user. It expires in 24h and stops working once they set a new password.</p>
+  </div>
+  {% endif %}
   <div style="overflow-x:auto">
   <table style="width:100%;border-collapse:collapse;font-size:.82rem">
     <thead>
@@ -431,6 +444,14 @@
               </div>
             </div>
             {% endif %}
+
+            <!-- Reset password -->
+            <div>
+              <div style="font-size:.6rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--pg-muted);margin-bottom:.4rem">Password</div>
+              <form action="/admin/users/{{ u.id }}/reset-link" method="post" style="margin:0">
+                <button type="submit" class="btn btn-sm btn-secondary">Generate reset link</button>
+              </form>
+            </div>
 
             <!-- Delete user -->
             {% if not u.is_superadmin %}
