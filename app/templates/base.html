@@ -127,6 +127,40 @@
     <a href="/register" style="color:var(--pg-lime)">{{ t('nav.signup', _lang) }}</a>
     {% endif %}
   </div>
+  {% if user and not user.seen_rules_announcement %}
+  <div id="rulesAnnounce" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--pg-card,#fff);max-width:440px;width:100%;border-radius:12px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      <div style="background:var(--pg-green,#0a7d3c);color:#fff;padding:1rem 1.25rem;font-family:'Archivo Black',sans-serif;letter-spacing:.04em">
+        !!! New scoring rules !!!
+      </div>
+      <div style="padding:1.25rem">
+        <ul style="margin:0 0 1rem;padding-left:1.1rem;font-size:.88rem;line-height:1.7;color:var(--pg-ink,#222)">
+          <li><strong>2 pts</strong> for the correct result, <strong>4 pts</strong> for the exact score.</li>
+          <li>R32 stays 2/4, then <strong>+1 each round</strong> (R16 3/5 … Final 6/8).</li>
+          <li>The old 2× boost has been <strong>removed</strong>.</li>
+        </ul>
+        <form action="/scoring-vote" method="post">
+          <div style="background:var(--pg-foot,#f3f1ea);border-radius:8px;padding:.85rem 1rem;margin-bottom:1rem">
+            <div style="font-weight:800;font-size:.85rem;margin-bottom:.5rem">When should knockout results count?</div>
+            <p style="font-size:.78rem;color:var(--pg-muted,#666);margin:0 0 .75rem">We currently score at the 120th minute (incl. extra time). Cast your vote:</p>
+            <div style="display:flex;gap:.5rem">
+              <button type="submit" name="choice" value="90" class="btn btn-secondary" style="flex:1">90th minute</button>
+              <button type="submit" name="choice" value="120" class="btn btn-primary" style="flex:1">120th minute</button>
+            </div>
+          </div>
+          <label style="display:block;font-size:.8rem;font-weight:700;margin-bottom:.35rem">Thoughts or suggestions? <span style="font-weight:400;color:var(--pg-muted,#888)">(optional)</span></label>
+          <textarea name="feedback" rows="3" maxlength="1000" placeholder="Tell us what you think about the new rules…"
+                    style="width:100%;box-sizing:border-box;padding:.5rem .6rem;border:1px solid var(--border,#ccc);border-radius:6px;font-family:inherit;font-size:.82rem;resize:vertical;background:var(--pg-card,#fff);color:var(--pg-ink,#222)"></textarea>
+          <p style="font-size:.7rem;color:var(--pg-muted,#888);margin:.35rem 0 .75rem">Your comment is sent with your vote. Pick an option above, or skip below — either way your note is saved.</p>
+          <div style="text-align:center">
+            <button type="submit" name="choice" value="skip" style="background:none;border:none;color:var(--pg-muted,#888);font-size:.78rem;cursor:pointer;text-decoration:underline">Skip the vote (just send my note / dismiss)</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <main>{% block content %}{% endblock %}</main>
   <footer>
     <p>{{ t('footer.text', _lang) }}</p>

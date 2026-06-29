@@ -51,16 +51,11 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
     """Site-wide leaderboard ranking every user across all their predictions.
 
     Predictions are unified across leagues, so each (user, match) is deduped to the
-    latest-submitted prediction and scored once with the global league's config. The
-    2x boost is honoured if the user boosted that match in *any* league — boosts "leak"
-    into the global board so a user's choice counts no matter which league they made it
-    in. A boosted exact pays exact_pts × multiplier; a boosted miss pays 0 (double-or-nothing).
+    latest-submitted prediction and scored once with the global per-round point scheme.
     """
+    from routers.predictions import calculate_points
     user = auth.get_current_user(request, db)
     global_league = db.query(models.League).filter(models.League.category == "global").first()
-    exact_pts  = global_league.points_exact_score if global_league else 3
-    result_pts = global_league.points_correct_result if global_league else 1
-    boost_mult = (global_league.boost_multiplier if global_league else 2) or 2
 
     finished = {
         m.id: m for m in db.query(models.Match).filter(models.Match.status == "finished").all()
@@ -68,16 +63,13 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
     }
 
     # Canonical prediction per (user, match): latest submitted wins (scores are identical
-    # across a user's leagues). Track whether they boosted this match in ANY league.
+    # across a user's leagues).
     by_user: dict[int, dict[int, models.Prediction]] = {}
-    boosted_matches: set = set()  # (user_id, match_id) boosted somewhere
     for p in db.query(models.Prediction).all():
         d = by_user.setdefault(p.user_id, {})
         cur = d.get(p.match_id)
         if cur is None or (p.submitted_at and (not cur.submitted_at or p.submitted_at > cur.submitted_at)):
             d[p.match_id] = p
-        if p.boosted:
-            boosted_matches.add((p.user_id, p.match_id))
 
     bracket_by_user: dict[int, int] = {}
     if global_league:
@@ -91,29 +83,13 @@ async def global_leaderboard(request: Request, db: Session = Depends(get_db)):
         canon = by_user.get(u.id, {})
         if not canon and u.id not in bracket_by_user:
             continue  # never predicted anything — skip
-        match_pts = 0
-        boost_pts = 0  # extra points earned purely from the 2x boost
-        for mid, p in canon.items():
-            m = finished.get(mid)
-            if not m:
-                continue
-            boosted = (u.id, mid) in boosted_matches
-            is_exact = (p.home_score_pred == m.home_score and p.away_score_pred == m.away_score)
-            if is_exact:
-                if boosted:
-                    match_pts += exact_pts * boost_mult
-                    boost_pts += exact_pts * (boost_mult - 1)
-                else:
-                    match_pts += exact_pts
-            elif boosted:
-                pass  # boosted miss = 0 (double-or-nothing)
-            elif _result(p.home_score_pred, p.away_score_pred) == _result(m.home_score, m.away_score):
-                match_pts += result_pts
+        match_pts = sum(
+            calculate_points(p, finished[mid]) for mid, p in canon.items() if mid in finished
+        )
         bracket_pts = bracket_by_user.get(u.id, 0)
         rows.append({
             "user": u,
             "match_pts": match_pts,
-            "boost_pts": boost_pts,
             "bracket_pts": bracket_pts,
             "total": match_pts + bracket_pts,
             "predictions": len(canon),

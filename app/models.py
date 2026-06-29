@@ -29,6 +29,8 @@ class User(Base):
     profile_banner_url = Column(String(200), nullable=True)  # banner image on profile page
     favorite_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)
     main_league_id = Column(Integer, ForeignKey("leagues.id"), nullable=True)  # canonical league for home-page predictions
+    scoring_vote = Column(String(3), nullable=True)            # "90" or "120" — player's vote on knockout scoring minute
+    seen_rules_announcement = Column(Boolean, default=False)   # has the player seen the new-rules popup
     created_at = Column(DateTime, default=datetime.utcnow)
 
     memberships = relationship("LeagueMember", back_populates="user", cascade="all, delete-orphan")
@@ -132,8 +134,12 @@ class Match(Base):
     round = Column(String(20), nullable=False)  # group/r32/r16/qf/sf/third/final
     match_date = Column(DateTime, nullable=False)
     venue = Column(String(100), nullable=False)
-    home_score = Column(Integer, nullable=True)   # score after 90 min
+    home_score = Column(Integer, nullable=True)   # full result (incl. extra time for knockouts)
     away_score = Column(Integer, nullable=True)
+    home_score_reg = Column(Integer, nullable=True)  # regulation (90-min) score, when known
+    away_score_reg = Column(Integer, nullable=True)
+    home_pens = Column(Integer, nullable=True)       # penalty shootout score, when decided on pens
+    away_pens = Column(Integer, nullable=True)
     winner_team_id = Column(Integer, ForeignKey("teams.id"), nullable=True)  # who advanced (for ET/pens)
     status = Column(String(20), default="scheduled")  # scheduled/live/finished
 
@@ -343,4 +349,31 @@ class Bet(Base):
 
     market = relationship("Market", back_populates="bets")
     option = relationship("MarketOption")
+    user = relationship("User")
+
+
+class RoundScoring(Base):
+    """Global per-round match-prediction points. Editable by the superadmin."""
+    __tablename__ = "round_scoring"
+    id = Column(Integer, primary_key=True, index=True)
+    round_code = Column(String(10), unique=True, nullable=False)  # group/r32/r16/qf/sf/third/final
+    outcome_points = Column(Integer, default=0)   # correct winner/draw, not exact
+    exact_points = Column(Integer, default=0)     # exact scoreline
+
+
+class AppSetting(Base):
+    """Generic global key/value settings (e.g. scoring_minute)."""
+    __tablename__ = "app_settings"
+    key = Column(String(50), primary_key=True)
+    value = Column(String(200), nullable=True)
+
+
+class Feedback(Base):
+    """Free-text feedback/suggestions submitted via the rules announcement."""
+    __tablename__ = "feedback"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    message = Column(String(1000), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
     user = relationship("User")

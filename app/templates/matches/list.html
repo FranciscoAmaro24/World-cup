@@ -80,6 +80,9 @@
       <!-- Centre board: score or dashes -->
       {% if match.status == 'finished' and match.home_score is not none %}
         <div class="pg-led"><span>{{ match.home_score }} : {{ match.away_score }}</span></div>
+        {% if match.home_pens is not none and match.away_pens is not none %}
+        <div style="font-size:9px;font-weight:700;color:var(--pg-muted);text-align:center;margin-top:1px">{{ match.home_pens }}-{{ match.away_pens }} pens</div>
+        {% endif %}
       {% elif match.status == 'live' %}
         <div class="pg-led live"><span>
           {% if match.home_score is not none %}{{ match.home_score }} : {{ match.away_score }}{% else %}– : –{% endif %}

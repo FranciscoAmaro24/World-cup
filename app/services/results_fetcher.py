@@ -36,24 +36,25 @@ STAGE_REACHED = {
     "group": 0, "r32": 1, "r16": 2, "qf": 3, "sf": 4, "final": 5, "winner": 6,
 }
 
-# Knockout round start dates (from the ESPN tournament calendar). The round for any
-# match date is the last entry whose start date it has reached — this also disambiguates
-# the 3rd-place match (Jul 18) from the Final (Jul 19), which the API dates overlap on.
+# Knockout round start boundaries (UTC) from the ESPN tournament calendar. Each round
+# transitions at 07:00Z, so a match just after midnight UTC (e.g. a late-night kickoff in
+# the Americas) still belongs to the previous round — comparing full datetimes, not just
+# dates, keeps those on the correct side of the boundary.
 _ROUND_DATES = [
-    (date(2026, 6, 11), "group"),
-    (date(2026, 6, 28), "r32"),
-    (date(2026, 7, 4),  "r16"),
-    (date(2026, 7, 9),  "qf"),
-    (date(2026, 7, 14), "sf"),
-    (date(2026, 7, 18), "third"),
-    (date(2026, 7, 19), "final"),
+    (datetime(2026, 6, 11, 0, 0), "group"),
+    (datetime(2026, 6, 28, 7, 0), "r32"),
+    (datetime(2026, 7, 4, 7, 0),  "r16"),
+    (datetime(2026, 7, 9, 7, 0),  "qf"),
+    (datetime(2026, 7, 14, 7, 0), "sf"),
+    (datetime(2026, 7, 18, 7, 0), "third"),
+    (datetime(2026, 7, 19, 7, 0), "final"),
 ]
 
 
-def _round_for_date(d: date) -> str:
+def _round_for_date(dt: datetime) -> str:
     code = "group"
     for start, rc in _ROUND_DATES:
-        if d >= start:
+        if dt >= start:
             code = rc
     return code
 
@@ -126,11 +127,32 @@ async def _fetch_espn(db: Session) -> int:
     from models import Match, Team, Prediction, League, Goal
     from routers.predictions import calculate_points
 
+    updated = 0
+
+    # Safety: a finished match dated in the future is impossible — undo it. Guards against
+    # stale provisional results ESPN may have served for not-yet-played knockout games.
+    now = datetime.utcnow()
+    for m in db.query(Match).filter(Match.status == "finished", Match.match_date > now).all():
+        m.status = "scheduled"
+        m.home_score = m.away_score = None
+        m.home_score_reg = m.away_score_reg = None
+        m.home_pens = m.away_pens = None
+        if m.winner_team_id:
+            for tid in (m.home_team_id, m.away_team_id):
+                t = db.query(Team).filter(Team.id == tid).first()
+                if t:
+                    t.eliminated = False
+            m.winner_team_id = None
+        for pred in m.predictions:
+            pred.points_awarded = None
+        updated += 1
+        logger.info(f"ESPN: reset future-dated finished match #{m.match_number}")
+    if updated:
+        db.commit()
+
     dates = _dates_to_fetch(db)
     if not dates:
-        return 0
-
-    updated = 0
+        return updated
     async with httpx.AsyncClient(timeout=15.0) as client:
         for fetch_date in dates:
             try:
@@ -161,7 +183,7 @@ async def _fetch_espn(db: Session) -> int:
 
                 # Determine the round from the match date (group vs r32/r16/qf/sf/third/final)
                 ev_dt      = _event_datetime(event)
-                round_code = _round_for_date(ev_dt.date()) if ev_dt else "group"
+                round_code = _round_for_date(ev_dt) if ev_dt else "group"
 
                 # Locate the DB match: prefer an exact team match; otherwise fill the next
                 # empty knockout placeholder for this round (this is how the bracket fills in).
@@ -181,6 +203,10 @@ async def _fetch_espn(db: Session) -> int:
                         match.away_team_id = away_team.id
                         if ev_dt:
                             match.match_date = ev_dt
+                        # Flush so the next "find empty placeholder" query sees this slot as
+                        # filled (the session is autoflush=False, otherwise every matchup would
+                        # overwrite the same first empty slot and only one would stick).
+                        db.flush()
                         logger.info(f"ESPN: bracket — set {round_code} matchup {home_abbr} vs {away_abbr}")
                         if not completed:
                             updated += 1  # populated an upcoming matchup
@@ -189,6 +215,24 @@ async def _fetch_espn(db: Session) -> int:
                     continue
 
                 if not completed:
+                    # ESPN says this game hasn't finished. If we have it wrongly marked finished
+                    # (e.g. ESPN earlier served a provisional/simulated result for a future
+                    # knockout match), undo it — ESPN is the source of truth.
+                    if match.status == "finished":
+                        match.status = "scheduled"
+                        match.home_score = match.away_score = None
+                        match.home_score_reg = match.away_score_reg = None
+                        match.home_pens = match.away_pens = None
+                        if match.winner_team_id:
+                            for tid in (match.home_team_id, match.away_team_id):
+                                t = db.query(Team).filter(Team.id == tid).first()
+                                if t:
+                                    t.eliminated = False
+                            match.winner_team_id = None
+                        for pred in match.predictions:
+                            pred.points_awarded = None
+                        updated += 1
+                        logger.info(f"ESPN: reset wrongly-finished match {home_abbr} vs {away_abbr}")
                     continue  # matchup recorded; result not in yet
 
                 try:
@@ -201,6 +245,15 @@ async def _fetch_espn(db: Session) -> int:
                 match.home_score = home_score_val
                 match.away_score = away_score_val
                 match.status     = "finished"
+                # Regulation (90-min) score: group games never go to ET, so reg == final.
+                # For knockouts we default reg to the final too, but only when not already
+                # set — so an admin's manual 90-min correction for an extra-time game survives refetches.
+                if match.round == "group":
+                    match.home_score_reg = home_score_val
+                    match.away_score_reg = away_score_val
+                elif match.home_score_reg is None:
+                    match.home_score_reg = home_score_val
+                    match.away_score_reg = away_score_val
 
                 # Knockout winner + stage/elimination tracking
                 if match.round != "group":
@@ -208,6 +261,15 @@ async def _fetch_espn(db: Session) -> int:
                     if winner_comp:
                         w_abbr = ESPN_TO_CODE.get(winner_comp["team"]["abbreviation"], winner_comp["team"]["abbreviation"])
                         match.winner_team_id = home_team.id if w_abbr == home_abbr else away_team.id
+                    # Penalty shootout score, when ESPN provides it (don't clobber a manual entry)
+                    try:
+                        hp = home_comp.get("shootoutScore")
+                        ap = away_comp.get("shootoutScore")
+                        if hp is not None and ap is not None:
+                            match.home_pens = int(hp)
+                            match.away_pens = int(ap)
+                    except (ValueError, TypeError):
+                        pass
                     if match.winner_team_id:
                         loser_id = away_team.id if match.winner_team_id == home_team.id else home_team.id
                         _update_stage(db, match.winner_team_id, match.round, winner=(match.round == "final"))

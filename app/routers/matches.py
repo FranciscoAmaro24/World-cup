@@ -87,7 +87,6 @@ async def knockout_bracket(request: Request, db: Session = Depends(get_db)):
     ko_matches = (
         db.query(models.Match)
         .filter(models.Match.round.in_(["r32", "r16", "qf", "sf", "final"]))
-        .order_by(models.Match.match_number)
         .all()
     )
 
@@ -96,10 +95,23 @@ async def knockout_bracket(request: Request, db: Session = Depends(get_db)):
         if m.round in rounds:
             rounds[m.round].append(m)
 
+    # Order each round chronologically (filled matchups carry their real date; empty
+    # placeholders fall to the end), so the bracket reads top-to-bottom by kickoff time.
+    far = datetime(2027, 1, 1)
+    for rnd in rounds:
+        rounds[rnd].sort(key=lambda m: (m.home_team_id is None, m.match_date or far))
+
     # Pad each round to expected count with None slots
     for rnd, expected in ROUND_SIZES.items():
         while len(rounds[rnd]) < expected:
             rounds[rnd].append(None)
+
+    # League used for "click to predict" links (admin-set main league, else first membership)
+    predict_league_id = None
+    if user and user.memberships:
+        member_ids = {mm.league_id for mm in user.memberships}
+        predict_league_id = (user.main_league_id if user.main_league_id in member_ids
+                             else user.memberships[0].league_id)
 
     # Build paired structure: list of (match_a, match_b) for each round
     # Final has just one match
@@ -123,6 +135,7 @@ async def knockout_bracket(request: Request, db: Session = Depends(get_db)):
             "request": request,
             "user": user,
             "bracket": bracket,
+            "predict_league_id": predict_league_id,
             "now": datetime.utcnow(),
         },
     )

@@ -10,9 +10,6 @@
   'I':'#6366f1','J':'#c2410c','K':'#0f766e','L':'#9333ea'
 } %}
 {% set grp_color = gc.get(match.group_letter, '#0a7d3c') %}
-{% set exact_pts = league.points_exact_score %}
-{% set result_pts = league.points_correct_result %}
-{% set boost_mult = league.boost_multiplier or 2 %}
 {% set init_h = prediction.home_score_pred if prediction else 0 %}
 {% set init_a = prediction.away_score_pred if prediction else 0 %}
 
@@ -55,7 +52,6 @@
     <form id="predictForm" action="/leagues/{{ league.id }}/predict/{{ match.id }}" method="post">
       <input type="hidden" name="home_score" id="fHomeScore" value="{{ init_h }}">
       <input type="hidden" name="away_score" id="fAwayScore" value="{{ init_a }}">
-      <input type="hidden" name="boosted" id="fBoosted" value="{{ '1' if prediction and prediction.boosted else '' }}">
 
       <!-- Score hero -->
       <div class="pkd-score" style="position:relative;overflow:hidden">
@@ -98,20 +94,6 @@
           <span class="pkd-team-label away">Away</span>
         </div>
       </div><!-- /pkd-score -->
-
-      <!-- Boost toggle -->
-      <button type="button" class="pg-boost{% if prediction and prediction.boosted %} on{% endif %}" id="boostBtn" onclick="toggleBoost()">
-        <span class="pg-boost-icon">
-          <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" style="display:block">
-            <path d="M9.4.6 3 9.3h3.7L5.9 15.4 13 6.4H8.5z"/>
-          </svg>
-        </span>
-        <span class="pg-boost-tx">
-          <span class="pg-boost-title" id="boostTitle">{% if prediction and prediction.boosted %}Boosted ×{{ boost_mult }}{% else %}Boost this pick{% endif %}</span>
-          <span class="pg-boost-sub" id="boostSub">{% if prediction and prediction.boosted %}Double if exact — zero if you miss{% else %}Double-or-nothing on the exact score{% endif %}</span>
-        </span>
-        <span class="pg-boost-sw"><i id="boostKnob"></i></span>
-      </button>
 
       <!-- Desktop footer: cancel + lock in -->
       <div class="pkd-foot">
@@ -292,7 +274,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   var home = {{ init_h }};
   var away = {{ init_a }};
-  var boosted = {{ 'true' if prediction and prediction.boosted else 'false' }};
   var exactPts = {{ exact_pts }};
 
   function clamp(v) { return Math.max(0, Math.min(20, v)); }
@@ -305,9 +286,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var pill = home + '–' + away;
     document.getElementById('ctaPill').textContent = pill;
     document.getElementById('stakeScore').textContent = pill;
-    var pts = boosted ? exactPts * {{ boost_mult }} : exactPts;
-    document.getElementById('ctaPts').textContent = '+' + pts + ' pts';
-    document.getElementById('stakeVal').textContent = '+' + pts;
+    document.getElementById('ctaPts').textContent = '+' + exactPts + ' pts';
+    document.getElementById('stakeVal').textContent = '+' + exactPts;
   }
 
   document.querySelectorAll('.step-up, .step-down').forEach(function(btn) {
@@ -320,17 +300,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  window.toggleBoost = function() {
-    boosted = !boosted;
-    var btn = document.getElementById('boostBtn');
-    btn.classList.toggle('on', boosted);
-    document.getElementById('fBoosted').value = boosted ? '1' : '';
-    document.getElementById('boostTitle').textContent = boosted ? 'Boosted ×{{ boost_mult }}' : 'Boost this pick';
-    document.getElementById('boostSub').textContent = boosted
-      ? 'Double if exact — zero if you miss'
-      : 'Double-or-nothing on the exact score';
-    update();
-  };
 
   update();
 });

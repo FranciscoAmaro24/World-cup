@@ -70,6 +70,20 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
     )
     all_teams = db.query(models.Team).order_by(models.Team.group_letter, models.Team.name).all()
     all_users = db.query(models.User).order_by(models.User.created_at).all()
+
+    # Per-round scoring (ordered) + scoring-minute setting + 90/120 vote tally
+    rs = {r.round_code: r for r in db.query(models.RoundScoring).all()}
+    round_scoring = [
+        {"code": c, "name": ROUND_NAMES[c],
+         "outcome": rs[c].outcome_points if c in rs else 0,
+         "exact": rs[c].exact_points if c in rs else 0}
+        for c in ROUND_ORDER
+    ]
+    minute_setting = db.query(models.AppSetting).filter_by(key="scoring_minute").first()
+    votes_90 = db.query(models.User).filter(models.User.scoring_vote == "90").count()
+    votes_120 = db.query(models.User).filter(models.User.scoring_vote == "120").count()
+    feedback = db.query(models.Feedback).order_by(models.Feedback.created_at.desc()).limit(100).all()
+
     return templates.TemplateResponse(
         "admin/dashboard.html",
         {
@@ -84,6 +98,11 @@ async def admin_dashboard(request: Request, db: Session = Depends(get_db)):
             "last_error": results_fetcher.last_error,
             "bg_videos": _list_videos(),
             "active_video": _active_video(),
+            "round_scoring": round_scoring,
+            "scoring_minute": (minute_setting.value if minute_setting else "120"),
+            "votes_90": votes_90,
+            "votes_120": votes_120,
+            "feedback": feedback,
         },
     )
 
@@ -97,6 +116,10 @@ async def update_result(
     winner_team_id: int = Form(0),
     home_scorers: str = Form(""),
     away_scorers: str = Form(""),
+    home_score_reg: str = Form(""),   # optional 90-min score (for extra-time knockouts)
+    away_score_reg: str = Form(""),
+    home_pens: str = Form(""),        # optional penalty-shootout score
+    away_pens: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = _require_admin(request, db)
@@ -109,6 +132,13 @@ async def update_result(
     match.home_score = home_score
     match.away_score = away_score
     match.status = "finished"
+    # Regulation (90-min) score: use the explicit override if given, else default to the
+    # full score (group games and knockouts decided in 90 are identical at the 90th minute).
+    match.home_score_reg = int(home_score_reg) if home_score_reg.strip().lstrip("-").isdigit() else home_score
+    match.away_score_reg = int(away_score_reg) if away_score_reg.strip().lstrip("-").isdigit() else away_score
+    # Penalty shootout (optional; blank clears it)
+    match.home_pens = int(home_pens) if home_pens.strip().isdigit() else None
+    match.away_pens = int(away_pens) if away_pens.strip().isdigit() else None
 
     # For knockout matches, record the advancing team
     if match.is_knockout():
@@ -179,6 +209,56 @@ async def update_result(
 
     db.commit()
     return RedirectResponse("/admin", status_code=303)
+
+
+ROUND_ORDER = ["group", "r32", "r16", "qf", "sf", "third", "final"]
+ROUND_NAMES = {"group": "Group Stage", "r32": "Round of 32", "r16": "Round of 16",
+               "qf": "Quarter-final", "sf": "Semi-final", "third": "Third Place", "final": "Final"}
+
+
+@router.post("/scoring/rounds")
+async def update_round_scoring(request: Request, db: Session = Depends(get_db)):
+    """Save per-round match points (outcome_<code> / exact_<code> form fields)."""
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    form = await request.form()
+    for code in ROUND_ORDER:
+        row = db.query(models.RoundScoring).filter_by(round_code=code).first()
+        if not row:
+            row = models.RoundScoring(round_code=code, outcome_points=0, exact_points=0)
+            db.add(row)
+        try:
+            row.outcome_points = max(0, int(form.get(f"outcome_{code}", row.outcome_points)))
+            row.exact_points = max(0, int(form.get(f"exact_{code}", row.exact_points)))
+        except (ValueError, TypeError):
+            pass
+    db.commit()
+    from routers.predictions import clear_scoring_cache
+    clear_scoring_cache()
+    # Re-score everything with the new values
+    await recalc_points(request, db)
+    return RedirectResponse("/admin?msg=scoring_saved#scoring", status_code=303)
+
+
+@router.post("/scoring/minute")
+async def update_scoring_minute(request: Request, minute: str = Form(...), db: Session = Depends(get_db)):
+    """Set whether knockout results are scored at the 90th or 120th minute."""
+    admin = _require_admin(request, db)
+    if not admin:
+        return RedirectResponse("/", status_code=303)
+    if minute not in ("90", "120"):
+        return RedirectResponse("/admin#scoring", status_code=303)
+    s = db.query(models.AppSetting).filter_by(key="scoring_minute").first()
+    if not s:
+        s = models.AppSetting(key="scoring_minute")
+        db.add(s)
+    s.value = minute
+    db.commit()
+    from routers.predictions import clear_scoring_cache
+    clear_scoring_cache()
+    await recalc_points(request, db)
+    return RedirectResponse("/admin?msg=minute_saved#scoring", status_code=303)
 
 
 @router.post("/recalc-points")

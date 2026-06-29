@@ -123,6 +123,79 @@
     </div>
   </div>
 
+  <!-- Scoring config -->
+  <div class="card" id="scoring" style="margin-bottom:1.5rem;overflow:hidden">
+    <div class="card-header"><span class="font-bold text-sm">Scoring</span></div>
+    {% if request.query_params.get('msg') in ('scoring_saved','minute_saved') %}
+    <div class="alert alert-success" style="margin:.6rem 1rem 0;font-size:.8rem">Saved and all predictions re-scored.</div>
+    {% endif %}
+    <div class="card-body" style="display:flex;flex-direction:column;gap:1.25rem">
+
+      <!-- Per-round points -->
+      <form action="/admin/scoring/rounds" method="post">
+        <div class="text-xs text-muted mb-1" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase">Points per round</div>
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+          <thead>
+            <tr style="text-align:left;color:var(--text-3)">
+              <th style="padding:.3rem .5rem;font-size:.6rem;text-transform:uppercase">Round</th>
+              <th style="padding:.3rem .5rem;font-size:.6rem;text-transform:uppercase">Correct result</th>
+              <th style="padding:.3rem .5rem;font-size:.6rem;text-transform:uppercase">Exact score</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in round_scoring %}
+            <tr style="border-top:1px solid var(--border)">
+              <td style="padding:.35rem .5rem;font-weight:600">{{ r.name }}</td>
+              <td style="padding:.35rem .5rem"><input type="number" name="outcome_{{ r.code }}" value="{{ r.outcome }}" min="0" max="50" style="width:70px;padding:.2rem .4rem;background:var(--pg-card);border:1px solid var(--border);border-radius:4px;color:var(--pg-ink)"></td>
+              <td style="padding:.35rem .5rem"><input type="number" name="exact_{{ r.code }}" value="{{ r.exact }}" min="0" max="50" style="width:70px;padding:.2rem .4rem;background:var(--pg-card);border:1px solid var(--border);border-radius:4px;color:var(--pg-ink)"></td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <button type="submit" class="btn btn-sm btn-primary" style="margin-top:.6rem">Save round points & re-score</button>
+      </form>
+
+      <!-- 90 vs 120 minute -->
+      <div style="border-top:1px solid var(--border);padding-top:1rem">
+        <div class="text-xs text-muted mb-1" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase">Knockout result counts at</div>
+        <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+          <form action="/admin/scoring/minute" method="post" style="display:flex;gap:.5rem;align-items:center">
+            <select name="minute" style="padding:.3rem .5rem;background:var(--pg-card);border:1px solid var(--border);border-radius:4px;color:var(--pg-ink)">
+              <option value="120" {% if scoring_minute=='120' %}selected{% endif %}>120th minute (incl. extra time)</option>
+              <option value="90" {% if scoring_minute=='90' %}selected{% endif %}>90th minute (regulation only)</option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+          </form>
+          <div style="font-size:.8rem;color:var(--text-2)">
+            Player votes — <strong style="color:var(--pg-green)">90': {{ votes_90 }}</strong> &nbsp;·&nbsp; <strong style="color:var(--pg-green)">120': {{ votes_120 }}</strong>
+          </div>
+        </div>
+        <p class="text-xs text-muted" style="margin-top:.4rem">90-minute scoring uses the regulation score when it's known; otherwise it falls back to the full result.</p>
+      </div>
+
+      <!-- Player feedback -->
+      <div style="border-top:1px solid var(--border);padding-top:1rem">
+        <div class="text-xs text-muted mb-1" style="font-weight:700;letter-spacing:.06em;text-transform:uppercase">Player feedback ({{ feedback | length }})</div>
+        {% if feedback %}
+        <div style="display:flex;flex-direction:column;gap:.5rem;max-height:320px;overflow-y:auto">
+          {% for f in feedback %}
+          <div style="background:var(--pg-foot);border:1px solid var(--border);border-radius:6px;padding:.55rem .7rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;margin-bottom:.25rem">
+              <span style="font-size:.78rem;font-weight:700">{{ f.user.display_name or f.user.username if f.user else 'Unknown' }}</span>
+              <span style="font-size:.65rem;color:var(--pg-muted)">{{ f.created_at.strftime('%d %b %H:%M') }}</span>
+            </div>
+            <div style="font-size:.82rem;color:var(--text-2);white-space:pre-wrap;word-break:break-word">{{ f.message }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-xs text-muted">No feedback submitted yet.</p>
+        {% endif %}
+      </div>
+
+    </div>
+  </div>
+
   <!-- Tabs -->
   <div class="tabs">
     <div class="tab active" data-tab="group">Group Stage ({{ group_matches|length }})</div>
@@ -177,6 +250,28 @@
                       style="width:160px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.3rem;font-size:.75rem;resize:none">{{ match.goals | selectattr('team_id', 'equalto', match.away_team_id) | map(attribute='player_name') | join('\n') if match.goals else '' }}</textarea>
           </div>
           <input type="hidden" name="winner_team_id" value="0">
+          {% if match.round != 'group' %}
+          <div style="display:flex;align-items:center;gap:.3rem" title="90-minute score (only needed if the game went to extra time)">
+            <span class="text-muted" style="font-size:.6rem;text-transform:uppercase;letter-spacing:.05em">90'</span>
+            <input type="number" name="home_score_reg" placeholder="H"
+                   value="{{ match.home_score_reg if match.home_score_reg is not none else '' }}"
+                   style="width:42px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.25rem;font-size:.85rem" min="0" max="20">
+            <span class="text-muted">–</span>
+            <input type="number" name="away_score_reg" placeholder="A"
+                   value="{{ match.away_score_reg if match.away_score_reg is not none else '' }}"
+                   style="width:42px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.25rem;font-size:.85rem" min="0" max="20">
+          </div>
+          <div style="display:flex;align-items:center;gap:.3rem" title="Penalty shootout score (leave blank if not decided on penalties)">
+            <span class="text-muted" style="font-size:.6rem;text-transform:uppercase;letter-spacing:.05em">PENS</span>
+            <input type="number" name="home_pens" placeholder="H"
+                   value="{{ match.home_pens if match.home_pens is not none else '' }}"
+                   style="width:42px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.25rem;font-size:.85rem" min="0" max="30">
+            <span class="text-muted">–</span>
+            <input type="number" name="away_pens" placeholder="A"
+                   value="{{ match.away_pens if match.away_pens is not none else '' }}"
+                   style="width:42px;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;color:white;padding:.25rem;font-size:.85rem" min="0" max="30">
+          </div>
+          {% endif %}
           <button type="submit" class="btn btn-primary btn-sm" style="align-self:flex-start">Save</button>
         </form>
         {% if match.status == 'finished' %}

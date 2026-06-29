@@ -375,7 +375,6 @@ async def update_settings(
     sweepstake: bool = Form(False),
     buy_in: float = Form(10.0),
     teams_per_person: int = Form(1),
-    boost_multiplier: int = Form(2),
     sweep_pts_win: int = Form(2),
     sweep_pts_draw: int = Form(0),
     sweep_pts_goal: int = Form(0),
@@ -406,7 +405,6 @@ async def update_settings(
     league.sweepstake_enabled = sweepstake
     league.sweepstake_buy_in = max(0, buy_in)
     league.sweepstake_teams_per_person = max(1, teams_per_person)
-    league.boost_multiplier = max(2, boost_multiplier)
     league.sweep_pts_win = max(0, sweep_pts_win)
     league.sweep_pts_draw = max(0, sweep_pts_draw)
     league.sweep_pts_goal = max(0, sweep_pts_goal)

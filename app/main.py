@@ -138,7 +138,13 @@ def _migrate_db():
         ("sweepstake_assignments", "group_id", "INTEGER"),
         ("users", "main_league_id", "INTEGER"),
         ("users", "recovery_phrase_hash", "VARCHAR(200)"),
+        ("users", "scoring_vote", "VARCHAR(3)"),
+        ("users", "seen_rules_announcement", "BOOLEAN DEFAULT 0"),
         ("league_members", "bonus_points", "INTEGER DEFAULT 0"),
+        ("matches", "home_score_reg", "INTEGER"),
+        ("matches", "away_score_reg", "INTEGER"),
+        ("matches", "home_pens", "INTEGER"),
+        ("matches", "away_pens", "INTEGER"),
     ]
     for table, col, col_type in migrations:
         existing = [r[1] for r in cur.execute(f"PRAGMA table_info({table})")]
@@ -217,6 +223,28 @@ def _seed_public_leagues():
                     is_public=True,
                     category="country",
                 ))
+        db.commit()
+    finally:
+        db.close()
+
+
+def _seed_scoring_config():
+    """Create default per-round scoring and the scoring-minute setting if missing."""
+    from database import SessionLocal
+    db = SessionLocal()
+    try:
+        # Per-round points: group & R32 are 2/4, then +1 each round from the Round of 16 on
+        defaults = {
+            "group": (2, 4), "r32": (2, 4), "r16": (3, 5),
+            "qf": (4, 6), "sf": (5, 7), "third": (5, 7), "final": (6, 8),
+        }
+        existing = {r.round_code for r in db.query(models.RoundScoring).all()}
+        for code, (outcome, exact) in defaults.items():
+            if code not in existing:
+                db.add(models.RoundScoring(round_code=code, outcome_points=outcome, exact_points=exact))
+        # Global scoring minute (default 120 — the full result incl. extra time)
+        if not db.query(models.AppSetting).filter_by(key="scoring_minute").first():
+            db.add(models.AppSetting(key="scoring_minute", value="120"))
         db.commit()
     finally:
         db.close()
@@ -310,6 +338,7 @@ async def lifespan(app: FastAPI):
     _backup_db()                       # snapshot BEFORE any migration mutates data
     _migrate_db()
     _seed_public_leagues()
+    _seed_scoring_config()
     _enroll_all_in_global()
     _backfill_and_rescore_predictions()
     task = asyncio.create_task(results_fetcher.results_loop())
@@ -420,6 +449,19 @@ async def index(request: Request, db: Session = Depends(get_db)):
             "first_league_id": first_league_id,
         },
     )
+
+
+@app.post("/scoring-vote")
+async def scoring_vote(request: Request, choice: str = Form(""), feedback: str = Form(""), db: Session = Depends(get_db)):
+    user = auth.get_current_user(request, db)
+    if user:
+        if choice in ("90", "120"):
+            user.scoring_vote = choice
+        user.seen_rules_announcement = True
+        if feedback.strip():
+            db.add(models.Feedback(user_id=user.id, message=feedback.strip()[:1000]))
+        db.commit()
+    return RedirectResponse(request.headers.get("referer", "/"), status_code=303)
 
 
 @app.get("/rules")

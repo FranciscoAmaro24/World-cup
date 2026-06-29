@@ -46,9 +46,7 @@
   <!-- Scoring pills + actions -->
   <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-bottom:1.75rem">
     <div style="display:flex;gap:.4rem;flex-wrap:wrap;align-items:center">
-      <span class="tag tag-green">Exact: {{ league.points_exact_score }}pts</span>
-      <span class="tag tag-gray">Result: {{ league.points_correct_result }}pts</span>
-      <span class="tag tag-green" title="Boosted exact score">Boost ×{{ league.boost_multiplier or 2 }}: {{ league.points_exact_score * (league.boost_multiplier or 2) }}pts</span>
+      <span class="tag tag-green" title="Group stage; +1 each knockout round">Result 2 · Exact 4 <span style="opacity:.7">(+1 / round)</span></span>
       <span class="tag tag-gold">{{ t('league.winner_pick', _lang) }}: {{ league.points_bracket_winner }}pts</span>
       {% if not league.banner_url and is_admin %}
       <button type="button" onclick="document.getElementById('bannerInputNew')?.click()"
@@ -232,8 +230,13 @@
               {% if match.home_team %}<img src="{{ flag_url(match.home_team.code) }}" class="pg-flag pg-flag-mid" alt="">{% endif %}
               <span class="pg-team-name" style="font-size:14px">{{ match.home_team.name if match.home_team else 'TBD' }}</span>
             </div>
-            <div class="pg-led" style="font-size:20px;padding:3px 10px;min-width:62px">
-              <span>{{ match.home_score }} : {{ match.away_score }}</span>
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1px">
+              <div class="pg-led" style="font-size:20px;padding:3px 10px;min-width:62px">
+                <span>{{ match.home_score }} : {{ match.away_score }}</span>
+              </div>
+              {% if match.home_pens is not none and match.away_pens is not none %}
+              <span style="font-size:9px;font-weight:700;color:var(--pg-muted);letter-spacing:.03em">{{ match.home_pens }}-{{ match.away_pens }} pens</span>
+              {% endif %}
             </div>
             <div class="pg-team away" style="flex:1;min-width:0">
               {% if match.away_team %}<img src="{{ flag_url(match.away_team.code) }}" class="pg-flag pg-flag-mid" alt="">{% endif %}
@@ -247,17 +250,11 @@
               {% set is_exact = pred.home_score_pred == match.home_score and pred.away_score_pred == match.away_score %}
               <div style="font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;
                 color:{% if is_exact %}var(--pg-green){% elif pred.points_awarded %}var(--pg-muted){% else %}var(--pg-muted){% endif %}">
-                {{ pred.home_score_pred }}–{{ pred.away_score_pred }}{% if pred.boosted %} <span style="font-size:.7em;font-weight:900;color:var(--pg-green)">×{{ league.boost_multiplier or 2 }}</span>{% endif %}
+                {{ pred.home_score_pred }}–{{ pred.away_score_pred }}
               </div>
               <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:10px;letter-spacing:.06em;
-                color:{% if is_exact %}var(--pg-green){% elif pred.points_awarded %}var(--pg-muted){% else %}#dc2626{% endif %}">
-                {% if is_exact %}
-                  +{{ league.points_exact_score * (league.boost_multiplier or 2) if pred.boosted else league.points_exact_score }} pts
-                {% elif pred.points_awarded %}
-                  +{{ pred.points_awarded }} pts
-                {% else %}
-                  0 pts
-                {% endif %}
+                color:{% if pred.points_awarded %}var(--pg-green){% else %}#dc2626{% endif %}">
+                {% if pred.points_awarded %}+{{ pred.points_awarded }} pts{% else %}0 pts{% endif %}
               </div>
             {% else %}
             <span style="font-family:'Archivo',sans-serif;font-size:.6rem;color:var(--pg-muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase">no pick</span>
@@ -322,7 +319,7 @@
           <div style="padding:0 14px;text-align:right;display:flex;flex-direction:column;justify-content:center;gap:4px">
             {% if not match.is_locked() %}
               {% if pred %}
-                <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="pg-btn-edit">Edit{% if pred.boosted %} <span style="font-size:.7em;font-weight:900">×{{ league.boost_multiplier or 2 }}</span>{% endif %}</a>
+                <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="pg-btn-edit">Edit</a>
               {% else %}
                 <a href="/leagues/{{ league.id }}/predict/{{ match.id }}" class="pg-btn-predict">Predict ▸</a>
               {% endif %}

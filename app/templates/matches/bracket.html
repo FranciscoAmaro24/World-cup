@@ -101,8 +101,26 @@
   overflow: hidden;
   cursor: default;
 }
-.ko-match:hover { border-color: #444; }
-.ko-match-done  { border-color: #2c2c2c; background: var(--bg-1); }
+.ko-match:hover { border-color: var(--pg-green); }
+.ko-match-done  { border-color: var(--border-2); background: var(--bg-1); }
+/* Clickable (predictable) matches */
+.ko-match-clickable { cursor: pointer; }
+.ko-link:hover .ko-match-clickable {
+  border-color: var(--pg-green);
+  box-shadow: 0 0 0 2px rgba(10,125,60,.12);
+}
+.ko-predict-hint {
+  margin-top: 2px;
+  font-size: .56rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--pg-green);
+  text-align: right;
+  opacity: 0;
+  transition: opacity .15s;
+}
+.ko-link:hover .ko-predict-hint { opacity: 1; }
 .ko-match-live  { border-color: var(--red); box-shadow: 0 0 0 2px rgba(239,68,68,.1); }
 .ko-match-empty { opacity: .22; pointer-events: none; }
 .ko-match-final {
@@ -180,10 +198,11 @@
   text-align: right;
   flex-shrink: 0;
 }
-.ko-score-w { color: #fff; }
+.ko-score-w { color: var(--pg-green); }
+.ko-pens { font-size: .6rem; font-weight: 700; color: var(--pg-muted); margin-left: 2px; }
 
-/* Winner glow on winning team row */
-.ko-match-done .ko-team:not(.ko-team-loser) .ko-name { color: #fff; }
+/* Winner highlighted in green on the winning team row */
+.ko-match-done .ko-team:not(.ko-team-loser) .ko-name { color: var(--pg-green); font-weight: 800; }
 
 /* Winner champion badge on final */
 .ko-winner-badge {
@@ -210,12 +229,15 @@
 
 {% block content %}
 {# ─── match card macro ──────────────────────────────── #}
-{% macro render_match(m, is_final=false) %}
+{% macro render_match(m, is_final=false, plid=none) %}
 {% if m %}
 {% set done = m.status == 'finished' %}
 {% set live = m.status == 'live' %}
 {% set hw = m.winner_team_id == m.home_team_id if (done and m.winner_team_id) else none %}
-<div class="ko-match{% if done %} ko-match-done{% elif live %} ko-match-live{% endif %}{% if is_final %} ko-match-final{% endif %}">
+{% set can_predict = m and plid and m.home_team and m.away_team and m.status == 'scheduled' and not m.is_locked() %}
+{% set href = '/leagues/' ~ plid ~ '/predict/' ~ m.id if can_predict else none %}
+{% if href %}<a href="{{ href }}" class="ko-link" style="text-decoration:none;color:inherit;display:block">{% endif %}
+<div class="ko-match{% if done %} ko-match-done{% elif live %} ko-match-live{% endif %}{% if is_final %} ko-match-final{% endif %}{% if can_predict %} ko-match-clickable{% endif %}">
   <div class="ko-match-date">
     {% if live %}<span class="ko-live-pip"></span>LIVE · {% endif %}
     {{ m.match_date.strftime('%d %b, %H:%M') }}
@@ -228,7 +250,7 @@
       <span class="ko-tbd-box"></span>
       <span class="ko-name ko-name-tbd">TBD</span>
     {% endif %}
-    {% if done or live %}<span class="ko-score{% if hw == true %} ko-score-w{% endif %}">{{ m.home_score if m.home_score is not none else '–' }}</span>{% endif %}
+    {% if done or live %}<span class="ko-score{% if hw == true %} ko-score-w{% endif %}">{{ m.home_score if m.home_score is not none else '–' }}{% if m.home_pens is not none %}<span class="ko-pens">({{ m.home_pens }})</span>{% endif %}</span>{% endif %}
   </div>
   <div class="ko-divider"></div>
   <div class="ko-team{% if done and hw == true %} ko-team-loser{% endif %}">
@@ -239,7 +261,7 @@
       <span class="ko-tbd-box"></span>
       <span class="ko-name ko-name-tbd">TBD</span>
     {% endif %}
-    {% if done or live %}<span class="ko-score{% if hw == false %} ko-score-w{% endif %}">{{ m.away_score if m.away_score is not none else '–' }}</span>{% endif %}
+    {% if done or live %}<span class="ko-score{% if hw == false %} ko-score-w{% endif %}">{{ m.away_score if m.away_score is not none else '–' }}{% if m.away_pens is not none %}<span class="ko-pens">({{ m.away_pens }})</span>{% endif %}</span>{% endif %}
   </div>
   {% if is_final and done and m.winner_team_id %}
   {% if m.winner_team_id == m.home_team_id and m.home_team %}
@@ -248,7 +270,9 @@
   <div class="ko-winner-badge">{{ m.away_team.name }} — Champion</div>
   {% endif %}
   {% endif %}
+  {% if can_predict %}<div class="ko-predict-hint">Predict ▸</div>{% endif %}
 </div>
+{% if href %}</a>{% endif %}
 {% else %}
 <div class="ko-match ko-match-empty">
   <div class="ko-match-date">TBD</div>
@@ -290,8 +314,8 @@
         <div class="ko-col" id="ko-r32">
           {% for ma, mb in bracket.r32 %}
           <div class="ko-pair" data-pair="{{ loop.index0 }}">
-            {{ render_match(ma) }}
-            {{ render_match(mb) }}
+            {{ render_match(ma, plid=predict_league_id) }}
+            {{ render_match(mb, plid=predict_league_id) }}
           </div>
           {% endfor %}
         </div>
@@ -300,8 +324,8 @@
         <div class="ko-col" id="ko-r16">
           {% for ma, mb in bracket.r16 %}
           <div class="ko-pair" data-pair="{{ loop.index0 }}">
-            {{ render_match(ma) }}
-            {{ render_match(mb) }}
+            {{ render_match(ma, plid=predict_league_id) }}
+            {{ render_match(mb, plid=predict_league_id) }}
           </div>
           {% endfor %}
         </div>
@@ -310,8 +334,8 @@
         <div class="ko-col" id="ko-qf">
           {% for ma, mb in bracket.qf %}
           <div class="ko-pair" data-pair="{{ loop.index0 }}">
-            {{ render_match(ma) }}
-            {{ render_match(mb) }}
+            {{ render_match(ma, plid=predict_league_id) }}
+            {{ render_match(mb, plid=predict_league_id) }}
           </div>
           {% endfor %}
         </div>
@@ -320,15 +344,15 @@
         <div class="ko-col" id="ko-sf">
           {% for ma, mb in bracket.sf %}
           <div class="ko-pair" data-pair="{{ loop.index0 }}">
-            {{ render_match(ma) }}
-            {{ render_match(mb) }}
+            {{ render_match(ma, plid=predict_league_id) }}
+            {{ render_match(mb, plid=predict_league_id) }}
           </div>
           {% endfor %}
         </div>
 
         <!-- Final: single match -->
         <div class="ko-col ko-col-final" id="ko-final">
-          {{ render_match(bracket.final, is_final=true) }}
+          {{ render_match(bracket.final, is_final=true, plid=predict_league_id) }}
         </div>
 
       </div><!-- .ko-bracket -->
